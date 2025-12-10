@@ -1,0 +1,40 @@
+{% extends "admin/layout/base.html" %}
+
+{% block title %}Workers — {{ dept_name }}{% endblock %}
+{% block page_title %}Workers in {{ dept_name }}{% endblock %}
+
+{% block content %}
+
+<a href="/main/admin/departments/" class="btn btn-secondary mb-3">← Back to Departments</a>
+
+<div class="card p-3 shadow-sm">
+    <h4 class="fw-bold mb-3">{{ dept_name }}</h4>
+
+    {% if workers %}
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Position</th>
+                <th>Contact</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for worker in workers %}
+            <tr>
+                <td>{{ worker.get_full_name|default:"No Name" }}</td>
+                <td>{{ worker.username }}</td>
+                <td>{{ worker.position_title|default:"—" }}</td>
+                <td>{{ worker.contact_number|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+        <p class="text-muted">No workers in this department.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

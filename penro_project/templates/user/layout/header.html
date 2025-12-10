@@ -1,0 +1,8 @@
+<div class="top-header">
+    <h5 class="m-0 fw-bold">{% block page_title %}Dashboard{% endblock %}</h5>
+
+    <div>
+        <span class="me-3">Welcome, {{ request.user.get_full_name|default:request.user.username }}</span>
+        <a href="{% url 'logout' %}" class="btn btn-sm btn-danger">Logout</a>
+    </div>
+</div>

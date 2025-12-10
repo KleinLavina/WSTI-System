@@ -1,0 +1,57 @@
+{% extends "admin/layout/base.html" %}
+
+{% block title %}Departments{% endblock %}
+{% block page_title %}Departments Overview{% endblock %}
+
+{% block content %}
+
+<style>
+.card-dept {
+    transition: transform .2s ease, box-shadow .2s ease;
+    cursor: pointer;
+}
+.card-dept:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+.count-badge {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #155d27;
+}
+</style>
+
+<div class="row g-4">
+
+    <!-- ALL WORKERS CARD -->
+    <div class="col-md-4">
+        <div class="card card-dept p-3 h-100"
+             onclick="window.location.href='/main/admin/departments/0/workers/'">
+           
+            <h4 class="fw-bold">All Workers</h4>
+            <p class="text-muted small">All workers across all departments.</p>
+            <hr>
+            <div class="count-badge">{{ total_workers }}</div>
+        </div>
+    </div>
+
+    <!-- INDIVIDUAL DEPARTMENT CARDS -->
+    {% for dept in departments %}
+    <div class="col-md-4">
+        <div class="card card-dept p-3 h-100"
+             onclick="window.location.href='/main/admin/departments/{{ dept.id }}/workers/'">
+
+            <h4 class="fw-bold">{{ dept.name }}</h4>
+            <p class="text-muted small">{{ dept.description|default:"No description provided." }}</p>
+
+            <hr>
+
+            <div class="count-badge">{{ dept.users.count }}</div>
+            <span class="text-muted small">Workers</span>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+{% endblock %}
