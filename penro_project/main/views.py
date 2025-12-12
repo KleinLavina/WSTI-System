@@ -197,7 +197,3 @@ def deadline_status_view(request, deadline_id):
     }
 
     return render(request, "admin/page/deadline_worker_statuses.html", context)
-
-@login_required
-def user_dashboard(request):
-    return render(request, "user/page/dashboard.html")

@@ -12,6 +12,4 @@ urlpatterns = [
     path("admin/deadlines/<int:pk>/edit/", views.deadline_edit, name="deadline-edit"),
     path("admin/deadlines/<int:pk>/delete/", views.deadline_delete, name="deadline-delete"),
     path("admin/deadlines/<int:deadline_id>/statuses/", views.deadline_status_view, name="deadline-status"),
-
-    path("user/", views.user_dashboard, name='user'),
 ]

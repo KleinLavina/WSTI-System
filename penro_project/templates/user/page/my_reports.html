@@ -1,0 +1,123 @@
+{% extends "user/layout/base.html" %}
+{% load static %}
+
+{% block title %}My Reports{% endblock %}
+{% block page_title %}My Assigned Reports{% endblock %}
+
+{% block content %}
+
+<style>
+.report-card {
+    border-radius: 12px;
+    padding: 1.2rem;
+    border: 1px solid #e5e7eb;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.report-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.10);
+}
+
+.badge-status {
+    font-size: .8rem;
+    padding: 5px 10px;
+    border-radius: 6px;
+}
+
+.progress-modern {
+    position: relative;
+    height: 10px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.progress-green {
+    height: 100%;
+    background: #198754;
+    width: 0%;
+    transition: width 1s ease;
+}
+.progress-late {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    width: 0%;
+    background: #ffc107;
+    opacity: .85;
+    transition: width 1s ease;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("[data-progress]").forEach(el => {
+        el.style.width = el.dataset.progress + "%";
+    });
+});
+</script>
+
+<div class="row g-4">
+
+{% for sub in submissions %}
+    <div class="col-md-4">
+        <div class="card report-card h-100">
+
+            <div class="d-flex justify-content-between">
+                <h5 class="fw-bold">{{ sub.deadline.title }}</h5>
+
+                {% if sub.obj.status == "pending" %}
+                    <span class="badge bg-secondary badge-status">Pending</span>
+
+                {% elif sub.obj.status == "in_progress" %}
+                    <span class="badge bg-info text-dark badge-status">In Progress</span>
+
+                {% elif sub.obj.status == "overdue" %}
+                    <span class="badge bg-danger badge-status">Overdue</span>
+
+                {% elif sub.obj.status == "late" %}
+                    <span class="badge bg-warning text-dark badge-status">Late</span>
+
+                {% elif sub.obj.status == "complete" %}
+                    <span class="badge bg-success badge-status">Completed</span>
+                {% endif %}
+            </div>
+
+            <p class="text-muted small mt-2">{{ sub.deadline.description|truncatechars:120 }}</p>
+
+            <hr>
+
+            <p class="small"><strong>Deadline:</strong> {{ sub.deadline.deadline_date }}</p>
+
+            {% if sub.show_progress %}
+            <div class="progress-modern mt-2">
+                <div class="progress-green" data-progress="{{ sub.progress_pct }}"></div>
+
+                {% if sub.late_pct > 0 %}
+                <div class="progress-late" data-progress="{{ sub.late_pct }}"></div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="mt-2">
+                {% if sub.remaining_days >= 0 %}
+                    <small class="text-muted">{{ sub.remaining_days }} days remaining</small>
+                {% else %}
+                    <small class="text-danger">Overdue by {{ sub.lateness_days }} days</small>
+                {% endif %}
+            </div>
+
+            <hr>
+
+            <a href="#" class="btn btn-primary btn-sm w-100 mt-1">
+                Upload Report
+            </a>
+
+        </div>
+    </div>
+{% empty %}
+    <p class="text-muted">No assigned reports.</p>
+{% endfor %}
+
+</div>
+
+{% endblock %}

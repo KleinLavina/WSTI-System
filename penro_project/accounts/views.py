@@ -35,7 +35,7 @@ def redirect_user_by_role(user):
         return redirect("/main/manager/")
 
     else:  # regular user
-        return redirect("/main/user/")
+        return redirect("/workers/user/")
     
 def logout_view(request):
     logout(request)
