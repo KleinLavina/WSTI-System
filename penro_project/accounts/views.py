@@ -4,6 +4,7 @@ from django.contrib import messages
 
 
 def login_view(request):
+    login_error = None  # <-- FIX: define before any branch
 
     # 🚫 Prevent authenticated users from accessing login page
     if request.user.is_authenticated:
@@ -17,16 +18,19 @@ def login_view(request):
         if user is not None:
             login(request, user)
 
-            # redirect to next=... if present
+            # Redirect to next=... if present
             next_url = request.GET.get("next")
             if next_url:
                 return redirect(next_url)
 
             return redirect_user_by_role(user)
 
-        messages.error(request, "Invalid username or password.")
+        # ❌ invalid login
+        login_error = "Invalid username or password."
 
-    return render(request, "auth/login.html")
+    return render(request, "auth/login.html", {
+        "login_error": login_error,
+    })
 
 def redirect_user_by_role(user):
     if user.permission_role == "admin":
