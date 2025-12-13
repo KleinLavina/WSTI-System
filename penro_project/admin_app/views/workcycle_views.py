@@ -7,23 +7,31 @@ from django.shortcuts import get_object_or_404
 from admin_app.services.workcycle_reassign_service import (
     reassign_workcycle as reassign_workcycle_service
 )
+from accounts.models import WorkCycle, WorkAssignment, WorkItem, TeamMembership
 
 
 def workcycle_list(request):
-    workcycles = WorkCycle.objects.all().order_by("-created_at")
+    workcycles = (
+        WorkCycle.objects
+        .all()
+        .prefetch_related("assignments__assigned_team")
+        .order_by("-created_at")
+    )
+
+    for wc in workcycles:
+        wc.has_team_assignment = wc.assignments.filter(
+            assigned_team__isnull=False
+        ).exists()
 
     return render(
         request,
         "admin/page/workcycles.html",
         {
             "workcycles": workcycles,
-
-            # REQUIRED for modal dropdowns
             "users": User.objects.filter(is_active=True),
             "teams": Team.objects.all(),
         },
     )
-
 
 def create_workcycle(request):
     if request.method == "POST":
@@ -106,3 +114,21 @@ def reassign_workcycle(request):
 
     messages.success(request, "Work cycle reassigned successfully.")
     return redirect("admin_app:workcycles")
+
+def workcycle_assignments(request, pk):
+    workcycle = get_object_or_404(WorkCycle, pk=pk)
+
+    assignments = WorkAssignment.objects.filter(workcycle=workcycle)
+    active_items = WorkItem.objects.filter(workcycle=workcycle, is_active=True)
+    archived_items = WorkItem.objects.filter(workcycle=workcycle, is_active=False)
+
+    return render(
+        request,
+        "admin/page/workcycle_assignments.html",
+        {
+            "workcycle": workcycle,
+            "assignments": assignments,
+            "active_items": active_items,
+            "archived_items": archived_items,
+        },
+    )

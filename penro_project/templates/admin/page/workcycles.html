@@ -57,9 +57,18 @@
 
               <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                 <li>
-                  <a class="dropdown-item" href="#">
-                    <i class="far fa-eye me-2"></i> View
+                  <a class="dropdown-item"
+                    href="{% url 'admin_app:workcycle-assignments' wc.id %}">
+                    <i class="far fa-eye me-2"></i>
+
+                    {% if wc.has_team_assignment %}
+                      View More
+                    {% else %}
+                      View More
+                    {% endif %}
+
                   </a>
+
                 </li>
                 <li>
                   <button type="button"

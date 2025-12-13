@@ -1,9 +1,12 @@
 <div class="sidebar">
     <h4>PENRO SYSTEM</h4>
 
-    <a href="{% url 'workers:user' %}">🏠 Dashboard</a>
-    <a href="{% url 'workers:my-reports' %}">📁 Submission Overview</a>
-    <a href="{% url 'workers:my-notifications' %}">📄 Notifications</a>
+    <a href="{% url 'user_app:dashboard' %}">🏠 Dashboard</a>
+    <a href="{% url 'user_app:work-items' %}">
+        <i class="fas fa-tasks me-2"></i>
+        My Work Items
+        </a>
+
     <a href="#">📤 Review Queue</a>
     <a href="#">📊 Metrics & Reports</a>
 </div>

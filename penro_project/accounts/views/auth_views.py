@@ -19,11 +19,11 @@ def login_view(request):
 
             # Optional role-based redirect
             if user.login_role == "admin":
-                return redirect("/")
+                return redirect("/admin/")
             elif user.login_role == "manager":
                 return redirect("/manager")
             else:
-                return redirect("/")
+                return redirect("/user/")
         messages.error(request, "Invalid username or password")
 
     return render(request, "auth/login.html")

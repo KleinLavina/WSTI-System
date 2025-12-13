@@ -1,0 +1,245 @@
+{% extends "user/layout/base.html" %}
+{% block title %}Work Item{% endblock %}
+
+{% block content %}
+
+<style>
+/* ===== Sun-radiant white glow ===== */
+.card {
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+  border: 1px solid #e6ecf5;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06),
+              inset 0 1px 0 rgba(255,255,255,0.9);
+}
+.badge {
+  font-weight: 600;
+}
+</style>
+
+<!-- ================= HEADER ================= -->
+<div class="mb-4 d-flex justify-content-between align-items-start">
+
+  <div>
+    <h4 class="mb-1 text-dark">
+      <i class="fas fa-tasks me-2 text-primary"></i>
+      {{ work_item.workcycle.title }}
+    </h4>
+
+    <div class="text-secondary small">
+      <i class="far fa-calendar-alt me-1"></i>
+      Due {{ work_item.workcycle.due_at|date:"M d, Y · H:i" }}
+    </div>
+
+    {% if work_item.workcycle.description %}
+      <p class="mt-2 mb-0 text-dark">
+        {{ work_item.workcycle.description }}
+      </p>
+    {% endif %}
+  </div>
+
+  <a href="{% url 'user_app:work-items' %}"
+     class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-1"></i>
+    Back
+  </a>
+
+</div>
+
+<!-- ================= DETAILS ================= -->
+<div class="card mb-4">
+  <div class="card-header fw-semibold">
+    <i class="fas fa-info-circle me-1 text-primary"></i>
+    Work Item Details
+  </div>
+
+  <div class="card-body">
+
+    <!-- STATUS -->
+    <div class="mb-3">
+      <strong>Status:</strong>
+
+      {% if can_edit %}
+        <form method="post" class="d-inline">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_status">
+          {% for value, label in status_choices %}
+            {% if value != "done" %}
+              <button type="submit"
+                      name="status"
+                      value="{{ value }}"
+                      class="badge rounded-pill px-3 py-2 me-1
+                      {% if work_item.status == value %}
+                        bg-primary
+                      {% else %}
+                        bg-light text-dark border
+                      {% endif %}">
+                {{ label }}
+              </button>
+            {% endif %}
+          {% endfor %}
+        </form>
+      {% else %}
+        <span class="badge bg-success ms-1">
+          {{ work_item.get_status_display }}
+        </span>
+      {% endif %}
+    </div>
+
+    <!-- REVIEW -->
+    <div class="mb-3">
+      <strong>Review:</strong>
+      <span class="badge bg-info text-white ms-1">
+        {{ work_item.get_review_decision_display }}
+      </span>
+    </div>
+
+    <!-- SUBMISSION INFO -->
+    <div class="mb-2">
+      <strong>Submitted:</strong>
+      <span class="text-secondary ms-1">
+        {% if work_item.submitted_at %}
+          {{ work_item.submitted_at|date:"M d, Y · H:i" }}
+        {% else %}
+          Not yet submitted
+        {% endif %}
+      </span>
+    </div>
+
+    <div class="text-secondary small">
+      Assigned on {{ work_item.created_at|date:"M d, Y · H:i" }}
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= STATUS LABEL + MESSAGE (ALWAYS EDITABLE) ================= -->
+<div class="card mb-4">
+  <div class="card-header fw-semibold">
+    <i class="fas fa-comment-dots me-1"></i>
+    Status Label & Notes
+  </div>
+
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="update_context">
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Status Label</label>
+        <input type="text"
+               name="status_label"
+               class="form-control"
+               value="{{ work_item.status_label }}"
+               placeholder="e.g. Waiting for approval, Added clarification file">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Message / Notes</label>
+        <textarea name="message"
+                  class="form-control"
+                  rows="3"
+                  placeholder="Add progress updates or context...">{{ work_item.message }}</textarea>
+      </div>
+
+      <button class="btn btn-outline-primary btn-sm">
+        Save Notes
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= ATTACHMENTS ================= -->
+<div class="card mb-4">
+  <div class="card-header fw-semibold">
+    <i class="fas fa-paperclip me-1"></i>
+    Attachments
+  </div>
+
+  <div class="card-body">
+    {% if work_item.attachments.all %}
+      <ul class="list-group list-group-flush">
+        {% for file in work_item.attachments.all %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>
+              <i class="far fa-file me-2 text-secondary"></i>
+              <a href="{{ file.file.url }}" download>
+                {{ file.file.name|slice:"-60:" }}
+              </a>
+
+              {% if work_item.submitted_at and file.uploaded_at > work_item.submitted_at %}
+                <span class="badge bg-warning text-dark ms-2">Added after submission</span>
+              {% endif %}
+            </span>
+            <small class="text-secondary">
+              {{ file.uploaded_at|date:"M d, Y · H:i" }}
+            </small>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <span class="text-secondary fst-italic">No attachments uploaded yet.</span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ================= SUBMISSION ================= -->
+{% if can_edit %}
+<div class="card">
+  <div class="card-header fw-semibold">
+    <i class="fas fa-upload me-1"></i>
+    Submit Work
+  </div>
+
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="submit_work">
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">
+          Attach Files <span class="text-danger">*</span>
+        </label>
+        <input type="file"
+               name="attachments"
+               class="form-control"
+               multiple
+               required>
+      </div>
+
+      <button type="submit" class="btn btn-success">
+        Submit Work
+      </button>
+    </form>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+  This work item is submitted and pending review.
+</div>
+{% endif %}
+
+<!-- ================= POST-SUBMISSION ATTACHMENTS ================= -->
+{% if not can_edit %}
+<div class="card mt-3">
+  <div class="card-header fw-semibold">
+    <i class="fas fa-paperclip me-1"></i>
+    Add Additional Attachment
+  </div>
+
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_attachment">
+      <input type="file"
+             name="attachments"
+             class="form-control mb-2"
+             multiple
+             required>
+      <button class="btn btn-outline-primary btn-sm">Upload</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
