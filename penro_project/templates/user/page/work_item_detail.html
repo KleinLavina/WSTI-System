@@ -4,73 +4,301 @@
 {% block content %}
 
 <style>
-/* ===== Sun-radiant white glow ===== */
-.card {
-  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
-  border: 1px solid #e6ecf5;
-  border-radius: 14px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06),
-              inset 0 1px 0 rgba(255,255,255,0.9);
+/* ===== Enhanced Sun UI Design ===== */
+:root {
+  --sun-primary: #4f46e5;
+  --sun-primary-light: #6366f1;
+  --sun-bg: #f8fafc;
+  --sun-border: #e2e8f0;
+  --sun-text: #334155;
+  --sun-text-light: #64748b;
+  --sun-success: #10b981;
+  --sun-warning: #f59e0b;
+  --sun-info: #3b82f6;
 }
-.badge {
+
+body {
+  background-color: var(--sun-bg);
+}
+
+/* Card Enhancement */
+.card {
+  background: white;
+  border: 1px solid var(--sun-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04),
+              0 2px 8px rgba(15, 23, 42, 0.06);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08),
+              0 8px 32px rgba(15, 23, 42, 0.05);
+  transform: translateY(-1px);
+}
+
+.card-header {
+  background: linear-gradient(to right, #f8fafc, #ffffff);
+  border-bottom: 1px solid var(--sun-border);
+  padding: 1rem 1.5rem;
   font-weight: 600;
+  color: var(--sun-text);
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Badge Refinement */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+}
+
+/* Button Enhancement */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  border-width: 1px;
+}
+
+.btn-outline-secondary {
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+  color: #475569;
+}
+
+.btn-outline-primary {
+  border-color: var(--sun-primary-light);
+  color: var(--sun-primary);
+}
+
+.btn-outline-primary:hover {
+  background-color: #eff6ff;
+  border-color: var(--sun-primary);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  border: none;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #0da271, #2bbf8b);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Form Controls */
+.form-control {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background-color: white;
+}
+
+.form-control:focus {
+  border-color: var(--sun-primary-light);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  outline: none;
+}
+
+.form-label {
+  font-weight: 500;
+  color: var(--sun-text);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Status Buttons */
+button[type="submit"].badge {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+button[type="submit"].badge:after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%);
+  transform-origin: 50% 50%;
+}
+
+button[type="submit"].badge:focus:not(:active)::after {
+  animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(20, 20);
+    opacity: 0;
+  }
+}
+
+/* List Items */
+.list-group-item {
+  padding: 0.75rem 0;
+  border-color: #f1f5f9;
+  transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+  background-color: #f8fafc;
+}
+
+.list-group-item a {
+  color: var(--sun-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 500;
+}
+
+.list-group-item a:hover {
+  color: var(--sun-primary-light);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Alert Enhancement */
+.alert-info {
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+
+/* Header Enhancement */
+h4 {
+  color: var(--sun-text);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.text-secondary {
+  color: var(--sun-text-light) !important;
+}
+
+.text-dark {
+  color: var(--sun-text) !important;
+}
+
+/* Icon Consistency */
+.fas, .far {
+  width: 1em;
+  text-align: center;
+}
+
+/* File Input Enhancement */
+input[type="file"] {
+  border: 2px dashed #e2e8f0;
+  padding: 1rem;
+  background: #f8fafc;
+}
+
+input[type="file"]:hover {
+  border-color: var(--sun-primary-light);
+  background: white;
+}
+
+/* Small Text Enhancement */
+.small {
+  font-size: 0.8125rem;
+  opacity: 0.9;
 }
 </style>
 
 <!-- ================= HEADER ================= -->
-<div class="mb-4 d-flex justify-content-between align-items-start">
+<div class="mb-5 d-flex justify-content-between align-items-start">
 
   <div>
-    <h4 class="mb-1 text-dark">
+    <h4 class="mb-2 text-dark">
       <i class="fas fa-tasks me-2 text-primary"></i>
       {{ work_item.workcycle.title }}
     </h4>
 
-    <div class="text-secondary small">
+    <div class="text-secondary small mb-2">
       <i class="far fa-calendar-alt me-1"></i>
-      Due {{ work_item.workcycle.due_at|date:"M d, Y · H:i" }}
+      <strong>Due:</strong>
+      {{ work_item.workcycle.due_at|date:"M d, Y · H:i" }}
     </div>
 
     {% if work_item.workcycle.description %}
-      <p class="mt-2 mb-0 text-dark">
+      <p class="mt-3 mb-0 text-dark" style="max-width: 600px; line-height: 1.6;">
         {{ work_item.workcycle.description }}
       </p>
     {% endif %}
   </div>
 
   <a href="{% url 'user_app:work-items' %}"
-     class="btn btn-outline-secondary">
-    <i class="fas fa-arrow-left me-1"></i>
-    Back
+     class="btn btn-outline-secondary btn-sm d-flex align-items-center">
+    <i class="fas fa-arrow-left me-2"></i>
+    Back to List
   </a>
 
 </div>
 
 <!-- ================= DETAILS ================= -->
 <div class="card mb-4">
-  <div class="card-header fw-semibold">
-    <i class="fas fa-info-circle me-1 text-primary"></i>
+  <div class="card-header">
+    <i class="fas fa-info-circle me-2 text-primary"></i>
     Work Item Details
   </div>
 
   <div class="card-body">
 
     <!-- STATUS -->
-    <div class="mb-3">
-      <strong>Status:</strong>
+    <div class="mb-4">
+      <strong class="d-block mb-2">Status:</strong>
 
       {% if can_edit %}
         <form method="post" class="d-inline">
           {% csrf_token %}
           <input type="hidden" name="action" value="update_status">
+
           {% for value, label in status_choices %}
             {% if value != "done" %}
               <button type="submit"
                       name="status"
                       value="{{ value }}"
-                      class="badge rounded-pill px-3 py-2 me-1
+                      class="badge rounded-pill me-2 mb-2
                       {% if work_item.status == value %}
-                        bg-primary
+                        bg-primary text-white
                       {% else %}
                         bg-light text-dark border
                       {% endif %}">
@@ -80,24 +308,24 @@
           {% endfor %}
         </form>
       {% else %}
-        <span class="badge bg-success ms-1">
+        <span class="badge bg-success text-white ms-1">
           {{ work_item.get_status_display }}
         </span>
       {% endif %}
     </div>
 
     <!-- REVIEW -->
-    <div class="mb-3">
-      <strong>Review:</strong>
-      <span class="badge bg-info text-white ms-1">
+    <div class="mb-4">
+      <strong class="d-block mb-1">Review:</strong>
+      <span class="badge bg-info text-white">
         {{ work_item.get_review_decision_display }}
       </span>
     </div>
 
     <!-- SUBMISSION INFO -->
-    <div class="mb-2">
-      <strong>Submitted:</strong>
-      <span class="text-secondary ms-1">
+    <div class="mb-3">
+      <strong class="d-block mb-1">Submitted:</strong>
+      <span class="text-secondary">
         {% if work_item.submitted_at %}
           {{ work_item.submitted_at|date:"M d, Y · H:i" }}
         {% else %}
@@ -106,17 +334,18 @@
       </span>
     </div>
 
-    <div class="text-secondary small">
+    <div class="text-secondary small mt-4 pt-3 border-top">
+      <i class="far fa-clock me-1"></i>
       Assigned on {{ work_item.created_at|date:"M d, Y · H:i" }}
     </div>
 
   </div>
 </div>
 
-<!-- ================= STATUS LABEL + MESSAGE (ALWAYS EDITABLE) ================= -->
+<!-- ================= STATUS LABEL + NOTES ================= -->
 <div class="card mb-4">
-  <div class="card-header fw-semibold">
-    <i class="fas fa-comment-dots me-1"></i>
+  <div class="card-header">
+    <i class="fas fa-comment-dots me-2"></i>
     Status Label & Notes
   </div>
 
@@ -131,18 +360,19 @@
                name="status_label"
                class="form-control"
                value="{{ work_item.status_label }}"
-               placeholder="e.g. Waiting for approval, Added clarification file">
+               placeholder="e.g. Waiting for approval, In progress...">
       </div>
 
-      <div class="mb-3">
+      <div class="mb-4">
         <label class="form-label fw-semibold">Message / Notes</label>
         <textarea name="message"
                   class="form-control"
-                  rows="3"
-                  placeholder="Add progress updates or context...">{{ work_item.message }}</textarea>
+                  rows="4"
+                  placeholder="Add progress updates, comments, or any relevant information...">{{ work_item.message }}</textarea>
       </div>
 
-      <button class="btn btn-outline-primary btn-sm">
+      <button class="btn btn-outline-primary">
+        <i class="fas fa-save me-1"></i>
         Save Notes
       </button>
     </form>
@@ -151,8 +381,8 @@
 
 <!-- ================= ATTACHMENTS ================= -->
 <div class="card mb-4">
-  <div class="card-header fw-semibold">
-    <i class="fas fa-paperclip me-1"></i>
+  <div class="card-header">
+    <i class="fas fa-paperclip me-2"></i>
     Attachments
   </div>
 
@@ -161,15 +391,20 @@
       <ul class="list-group list-group-flush">
         {% for file in work_item.attachments.all %}
           <li class="list-group-item d-flex justify-content-between align-items-center">
-            <span>
-              <i class="far fa-file me-2 text-secondary"></i>
-              <a href="{{ file.file.url }}" download>
-                {{ file.file.name|slice:"-60:" }}
-              </a>
-
-              {% if work_item.submitted_at and file.uploaded_at > work_item.submitted_at %}
-                <span class="badge bg-warning text-dark ms-2">Added after submission</span>
-              {% endif %}
+            <span class="d-flex align-items-center">
+              <i class="far fa-file me-3 text-secondary"></i>
+              <div>
+                <a href="{{ file.file.url }}" download class="d-block">
+                  {{ file.file.name|slice:"-60:" }}
+                </a>
+                
+                {% if work_item.submitted_at and file.uploaded_at > work_item.submitted_at %}
+                  <span class="badge bg-warning text-dark mt-1">
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    Added after submission
+                  </span>
+                {% endif %}
+              </div>
             </span>
             <small class="text-secondary">
               {{ file.uploaded_at|date:"M d, Y · H:i" }}
@@ -178,7 +413,10 @@
         {% endfor %}
       </ul>
     {% else %}
-      <span class="text-secondary fst-italic">No attachments uploaded yet.</span>
+      <div class="text-center py-3">
+        <i class="fas fa-folder-open text-secondary mb-2" style="font-size: 2rem;"></i>
+        <p class="text-secondary mb-0">No attachments uploaded yet.</p>
+      </div>
     {% endif %}
   </div>
 </div>
@@ -186,8 +424,8 @@
 <!-- ================= SUBMISSION ================= -->
 {% if can_edit %}
 <div class="card">
-  <div class="card-header fw-semibold">
-    <i class="fas fa-upload me-1"></i>
+  <div class="card-header">
+    <i class="fas fa-upload me-2"></i>
     Submit Work
   </div>
 
@@ -196,8 +434,9 @@
       {% csrf_token %}
       <input type="hidden" name="action" value="submit_work">
 
-      <div class="mb-3">
+      <div class="mb-4">
         <label class="form-label fw-semibold">
+          <i class="fas fa-paperclip me-1"></i>
           Attach Files <span class="text-danger">*</span>
         </label>
         <input type="file"
@@ -205,25 +444,33 @@
                class="form-control"
                multiple
                required>
+        <div class="form-text">
+          You can select multiple files. Allowed formats may vary.
+        </div>
       </div>
 
-      <button type="submit" class="btn btn-success">
+      <button type="submit" class="btn btn-success px-4">
+        <i class="fas fa-paper-plane me-2"></i>
         Submit Work
       </button>
     </form>
   </div>
 </div>
 {% else %}
-<div class="alert alert-info">
-  This work item is submitted and pending review.
+<div class="alert alert-info d-flex align-items-center">
+  <i class="fas fa-info-circle me-3" style="font-size: 1.25rem;"></i>
+  <div>
+    <strong>Status:</strong> This work item is submitted and pending review.
+    You can add additional attachments below if needed.
+  </div>
 </div>
 {% endif %}
 
 <!-- ================= POST-SUBMISSION ATTACHMENTS ================= -->
 {% if not can_edit %}
-<div class="card mt-3">
-  <div class="card-header fw-semibold">
-    <i class="fas fa-paperclip me-1"></i>
+<div class="card mt-4">
+  <div class="card-header">
+    <i class="fas fa-plus-circle me-2"></i>
     Add Additional Attachment
   </div>
 
@@ -231,12 +478,17 @@
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <input type="hidden" name="action" value="add_attachment">
-      <input type="file"
-             name="attachments"
-             class="form-control mb-2"
-             multiple
-             required>
-      <button class="btn btn-outline-primary btn-sm">Upload</button>
+      <div class="mb-3">
+        <input type="file"
+               name="attachments"
+               class="form-control"
+               multiple
+               required>
+      </div>
+      <button class="btn btn-outline-primary">
+        <i class="fas fa-upload me-1"></i>
+        Upload Files
+      </button>
     </form>
   </div>
 </div>

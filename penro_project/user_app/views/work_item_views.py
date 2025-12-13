@@ -15,13 +15,17 @@ from ..services.work_item_service import (
 @login_required
 def user_work_items(request):
     """
-    List all ACTIVE work items assigned to the logged-in user
+    List ALL work items assigned to the user.
+    Inactive ones remain visible but marked.
     """
     work_items = (
         WorkItem.objects
         .select_related("workcycle")
-        .filter(owner=request.user, is_active=True)
-        .order_by("workcycle__due_at")
+        .filter(owner=request.user)
+        .order_by(
+            "-is_active",          # active items first
+            "workcycle__due_at"
+        )
     )
 
     return render(
@@ -29,6 +33,7 @@ def user_work_items(request):
         "user/page/work_items.html",
         {"work_items": work_items}
     )
+
 
 
 @login_required
