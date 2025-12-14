@@ -1,8 +1,178 @@
-<div class="top-header">
-    <h5 class="m-0 fw-bold">{% block page_title %}Dashboard{% endblock %}</h5>
+<div class="dashboard-header">
+    <div class="page-title-section">
+        <h1 class="page-title">
+            <i class="fas fa-leaf me-2"></i>
+            Dashboard
+        </h1>
+    </div>
 
-    <div>
-        <span class="me-3">Welcome, {{ request.user.get_full_name|default:request.user.username }}</span>
-        <a href="{% url 'logout' %}" class="btn btn-sm btn-danger">Logout</a>
+    <div class="user-menu-wrapper">
+        <div class="user-box">
+            <i class="fas fa-user-circle user-icon"></i>
+            <span class="username">{{ request.user.username }}</span>
+            <i class="fas fa-chevron-down dropdown-arrow"></i>
+        </div>
+
+        <!-- Dropdown Menu -->
+        <div class="user-dropdown">
+            <a href="#" class="dropdown-item">
+                <i class="fas fa-id-card me-2"></i> View Profile
+            </a>
+            <a href="#" class="dropdown-item">
+                <i class="fas fa-cog me-2"></i> Settings
+            </a>
+            <a href="{% url 'logout' %}" class="dropdown-item logout">
+                <i class="fas fa-sign-out-alt me-2"></i> Logout
+            </a>
+        </div>
     </div>
 </div>
+<style>
+/* MAIN HEADER */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0;  /* 👈 SMALLER HEIGHT */
+    margin-bottom: 1.2rem;
+    border-bottom: 1px solid rgba(26, 116, 49, 0.15);
+}
+
+/* PAGE TITLE */
+.page-title {
+    font-size: 1.4rem; /* smaller */
+    font-weight: 700;
+    color: #1a7431;
+    display: flex;
+    align-items: center;
+}
+
+.page-title i {
+    font-size: 1.4rem;
+    color: #2d5a27;
+}
+
+/* USER MENU WRAPPER */
+.user-menu-wrapper {
+    position: relative;
+}
+
+/* USER BOX (Clickable) */
+.user-box {
+    display: flex;
+    align-items: center;
+    padding: 0.45rem 0.9rem;
+    background: #ffffff;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid rgba(26, 116, 49, 0.2);
+
+    /* 3D shadow */
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.10);
+
+    transition: all 0.2s ease-in-out;
+}
+
+.user-box:hover {
+    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.user-icon {
+    font-size: 1.6rem;
+    color: #1a7431;
+    margin-right: 8px;
+}
+
+.username {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2d5a27;
+}
+
+.dropdown-arrow {
+    font-size: 0.85rem;
+    margin-left: 6px;
+    color: #6c757d;
+}
+
+/* DROPDOWN MENU */
+.user-dropdown {
+    position: absolute;
+    right: 0;
+    margin-top: 8px;
+    width: 170px;
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid rgba(26, 116, 49, 0.15);
+
+    /* 3D dropdown shadow */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+
+    display: none;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease;
+    z-index: 10;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    color: #2d5a27;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.dropdown-item:hover {
+    background: #e8f5e9;
+    color: #1a7431;
+}
+
+.dropdown-item.logout {
+    color: #c82333;
+}
+
+.dropdown-item.logout:hover {
+    background: #f8d7da;
+}
+
+/* ANIMATION */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* JS adds class "active" */
+.user-dropdown.active {
+    display: block;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 1.3rem;
+    }
+    .user-box {
+        padding: 0.4rem 0.7rem;
+    }
+}
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const userBox = document.querySelector(".user-box");
+    const dropdown = document.querySelector(".user-dropdown");
+
+    userBox.addEventListener("click", () => {
+        dropdown.classList.toggle("active");
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+        if (!userBox.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove("active");
+        }
+    });
+});
+</script>

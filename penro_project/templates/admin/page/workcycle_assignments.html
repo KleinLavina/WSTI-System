@@ -7,7 +7,7 @@
 <div class="mb-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
 
   <div>
-    <h3 class="mb-1 d-flex align-items-center gap-2">
+    <h3 class="mb-1 fw-bold d-flex align-items-center gap-2">
       <i class="fas fa-tasks text-primary"></i>
       {{ workcycle.title }}
     </h3>
@@ -27,10 +27,9 @@
     {% endif %}
   </div>
 
-  <!-- RETURN BUTTON -->
   <div>
     <a href="{% url 'admin_app:workcycles' %}"
-       class="btn btn-outline-secondary">
+       class="btn btn-outline-secondary shadow-sm">
       <i class="fas fa-arrow-left me-1"></i>
       Back to Work Cycles
     </a>
@@ -38,10 +37,9 @@
 
 </div>
 
-
-<!-- ASSIGNMENT INTENT -->
-<div class="card mb-4 shadow-sm">
-  <div class="card-header fw-semibold d-flex align-items-center gap-2">
+<!-- ASSIGNMENT -->
+<div class="card ui-card mb-4">
+  <div class="card-header ui-card-header">
     <i class="fas fa-user-check text-success"></i>
     Assigned To
   </div>
@@ -51,12 +49,12 @@
       <div class="d-flex flex-wrap gap-2">
         {% for a in assignments %}
           {% if a.assigned_user %}
-            <span class="badge rounded-pill bg-primary-subtle text-primary px-3 py-2">
+            <span class="badge ui-pill user-pill">
               <i class="far fa-user me-1"></i>
               {{ a.assigned_user.get_full_name|default:a.assigned_user.username }}
             </span>
           {% elif a.assigned_team %}
-            <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
+            <span class="badge ui-pill team-pill">
               <i class="fas fa-users me-1"></i>
               {{ a.assigned_team.name }}
             </span>
@@ -72,15 +70,15 @@
 </div>
 
 <!-- ACTIVE WORK -->
-<div class="card mb-4 shadow-sm">
-  <div class="card-header fw-semibold d-flex align-items-center gap-2">
+<div class="card ui-card mb-4">
+  <div class="card-header ui-card-header">
     <i class="fas fa-play-circle text-primary"></i>
     Active Work Items
   </div>
 
   <div class="card-body p-0">
     {% if active_items %}
-    <table class="table table-hover mb-0 align-middle">
+    <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
         <tr>
           <th>User</th>
@@ -96,16 +94,19 @@
             <i class="far fa-user me-1 text-muted"></i>
             {{ item.owner.get_full_name|default:item.owner.username }}
           </td>
+
           <td>
-            <span class="badge bg-secondary-subtle text-secondary">
+            <span class="badge ui-badge status">
               {{ item.get_status_display }}
             </span>
           </td>
+
           <td>
-            <span class="badge bg-info-subtle text-info">
+            <span class="badge ui-badge review">
               {{ item.get_review_decision_display }}
             </span>
           </td>
+
           <td>
             {% if item.submitted_at %}
               <i class="far fa-clock me-1 text-muted"></i>
@@ -127,16 +128,16 @@
   </div>
 </div>
 
-<!-- ARCHIVED WORK -->
-<div class="card border-secondary shadow-sm">
-  <div class="card-header fw-semibold text-secondary d-flex align-items-center gap-2">
+<!-- ARCHIVED -->
+<div class="card ui-card border-secondary">
+  <div class="card-header ui-card-header text-secondary">
     <i class="fas fa-archive"></i>
     Archived (Reassigned)
   </div>
 
   <div class="card-body p-0">
     {% if archived_items %}
-    <table class="table table-hover mb-0 align-middle">
+    <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
         <tr>
           <th>User</th>
@@ -150,9 +151,7 @@
             <i class="far fa-user me-1"></i>
             {{ item.owner.get_full_name|default:item.owner.username }}
           </td>
-          <td>
-            {{ item.get_status_display }}
-          </td>
+          <td>{{ item.get_status_display }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -165,5 +164,72 @@
     {% endif %}
   </div>
 </div>
+
+<style>
+
+/* ===== Base Card ===== */
+.ui-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.05);
+  box-shadow:
+    0 6px 18px rgba(0,0,0,.06),
+    0 2px 6px rgba(0,0,0,.04);
+}
+
+/* Header */
+.ui-card-header {
+  background: transparent;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+
+/* Pills */
+.ui-pill {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+}
+
+.user-pill {
+  background: rgba(13,110,253,.12);
+  color: #0d6efd;
+}
+
+.team-pill {
+  background: rgba(25,135,84,.14);
+  color: #198754;
+}
+
+/* Badges */
+.ui-badge {
+  padding: 6px 10px;
+  font-size: .7rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.ui-badge.status {
+  background: rgba(108,117,125,.15);
+  color: #495057;
+}
+
+.ui-badge.review {
+  background: rgba(13,202,240,.18);
+  color: #0dcaf0;
+}
+
+/* Tables */
+.table td, .table th {
+  vertical-align: middle;
+}
+
+</style>
 
 {% endblock %}

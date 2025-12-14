@@ -4,7 +4,7 @@
 {% block content %}
 
 <style>
-/* ===== Production-ready inline styles ===== */
+/* ===== Base styles ===== */
 .card {
   background: #ffffff;
   border-radius: 14px;
@@ -23,10 +23,6 @@
   border-left: 4px solid #f59e0b;
 }
 
-.card-body h5 {
-  color: #0f172a;
-}
-
 .small.text-muted {
   color: #64748b !important;
 }
@@ -34,6 +30,38 @@
 .badge {
   font-size: 0.75rem;
   padding: 4px 8px;
+}
+
+/* ===== Work Status colors (word label only) ===== */
+.badge-status-not-started {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.badge-status-working {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.badge-status-done {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+/* ===== Review Decision colors (word label only) ===== */
+.badge-review-pending {
+  background-color: #fde68a;
+  color: #92400e;
+}
+
+.badge-review-approved {
+  background-color: #22c55e;
+  color: #ffffff;
+}
+
+.badge-review-revision {
+  background-color: #ef4444;
+  color: #ffffff;
 }
 
 .btn-outline-primary {
@@ -91,34 +119,50 @@
 
         <!-- STATUS -->
         <div class="small text-muted mb-1">
-          <i class="fas fa-info-circle me-1"></i>
-          <strong>Status</strong>
+          <i class="fas fa-tasks me-1"></i>
+          <strong>Work Status</strong>
         </div>
 
-        <!-- STATUS + ACTION -->
-        <div class="mt-auto d-flex justify-content-between align-items-center">
+        <span class="badge mb-2
+          {% if item.status == 'not_started' %}badge-status-not-started{% endif %}
+          {% if item.status == 'working_on_it' %}badge-status-working{% endif %}
+          {% if item.status == 'done' %}badge-status-done{% endif %}
+        ">
+          {{ item.get_status_display }}
+        </span>
 
-          <div>
-            <span class="badge bg-secondary">
-              {{ item.get_status_display }}
+        <!-- REVIEW DECISION -->
+        <div class="small text-muted mb-1 mt-2">
+          <i class="fas fa-check-circle me-1"></i>
+          <strong>Review Status</strong>
+        </div>
+
+        <span class="badge
+          {% if item.review_decision == 'pending' %}badge-review-pending{% endif %}
+          {% if item.review_decision == 'approved' %}badge-review-approved{% endif %}
+          {% if item.review_decision == 'revision' %}badge-review-revision{% endif %}
+        ">
+          {{ item.get_review_decision_display }}
+        </span>
+
+        <!-- ACTION -->
+        <div class="mt-auto pt-3 d-flex justify-content-between align-items-center">
+
+          {% if not item.is_active %}
+            <span class="badge bg-warning text-dark">
+              <i class="fas fa-archive me-1"></i>
+              Inactive
             </span>
-
-            {% if not item.is_active %}
-              <span class="badge bg-warning text-dark ms-1">
-                <i class="fas fa-archive me-1"></i>
-                Inactive
-              </span>
-            {% endif %}
-          </div>
+          {% endif %}
 
           {% if item.is_active %}
             <a href="{% url 'user_app:work-item-detail' item.id %}"
-               class="btn btn-sm btn-outline-primary">
+               class="btn btn-sm btn-outline-primary ms-auto">
               <i class="far fa-eye me-1"></i>
               Open
             </a>
           {% else %}
-            <button class="btn btn-sm btn-outline-secondary" disabled>
+            <button class="btn btn-sm btn-outline-secondary ms-auto" disabled>
               <i class="fas fa-lock me-1"></i>
               Archived
             </button>

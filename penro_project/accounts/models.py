@@ -262,3 +262,54 @@ class WorkItemAttachment(models.Model):
     def __str__(self):
         return f"Attachment for {self.work_item}"
 
+class WorkItemMessage(models.Model):
+    work_item = models.ForeignKey(
+        WorkItem,
+        on_delete=models.CASCADE,
+        related_name="messages"
+    )
+
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="work_item_messages"
+    )
+
+    sender_role = models.CharField(
+        max_length=50,
+        choices=[
+            ("admin", "Admin"),
+            ("manager", "Manager"),
+            ("user", "User"),
+        ],
+        db_index=True
+    )
+
+    message = models.TextField(
+        help_text="Message regarding status, review, or work clarification"
+    )
+
+    # Optional context (VERY useful)
+    related_status = models.CharField(
+        max_length=30,
+        blank=True,
+        help_text="Status this message refers to (optional)"
+    )
+
+    related_review = models.CharField(
+        max_length=30,
+        blank=True,
+        help_text="Review decision this message refers to (optional)"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        indexes = [
+            models.Index(fields=["sender_role"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.sender} → {self.work_item}"

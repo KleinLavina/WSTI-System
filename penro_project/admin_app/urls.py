@@ -2,9 +2,9 @@ from django.urls import path
 from admin_app.views import (
     dashboard,
     workcycle_list, create_workcycle, edit_workcycle, reassign_workcycle, workcycle_assignments,  
-    review_work_items,
     teams,
-    users, create_user, update_user, delete_user
+    users, create_user, update_user, delete_user,
+    completed_work_summary, done_workers_by_workcycle,
 )
 
 app_name = "admin_app"
@@ -24,10 +24,18 @@ urlpatterns = [
     name="workcycle-assignments",
 ),
 
-
+    path(
+        "analytics/completed-work/",
+        completed_work_summary,
+        name="completed-work-summary"
+    ),
+    path(
+        "analytics/workcycle/<int:workcycle_id>/done-workers/",
+        done_workers_by_workcycle,
+        name="done-workers-by-workcycle"
+    ),
     
 
-    path("review-work-items/", review_work_items, name="review-work-items"),
     path("teams/", teams, name="teams"),
 
     path("users/<int:user_id>/update/", update_user, name="user-update"),
