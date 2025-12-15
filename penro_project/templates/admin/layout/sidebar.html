@@ -1,44 +1,291 @@
-<div class="sidebar p-3" id="adminSidebar">
-    <h4 class="text-white">PENRO Admin</h4>
-    <hr class="border-light">
+<div class="sidebar" id="adminSidebar">
+    <!-- Brand Header -->
+    <div class="sidebar-header">
+        <div class="d-flex align-items-center gap-3">
+            <div class="sidebar-logo">
+                <i class="fas fa-landmark"></i>
+            </div>
+            <div>
+                <h5 class="mb-0 fw-bold">PENRO Admin</h5>
+                <small class="text-muted">Management Panel</small>
+            </div>
+        </div>
+    </div>
 
-    <ul class="nav flex-column" id="navMenu">
-
+    <!-- Navigation Menu -->
+    <ul class="nav-menu">
         <li class="nav-item">
-            <a href="{% url 'admin_app:dashboard' %}" class="nav-link text-white">
-                <i class="fas fa-tachometer-alt"></i>
-                Dashboard
+            <a href="{% url 'admin_app:dashboard' %}" class="nav-link">
+                <span class="nav-icon">
+                    <i class="fas fa-tachometer-alt"></i>
+                </span>
+                <span class="nav-text">Dashboard</span>
             </a>
         </li>
 
         <li class="nav-item">
-            <a href="{% url 'admin_app:workcycles' %}" class="nav-link text-white">
-                <i class="fas fa-calendar-alt"></i>
-                Work Cycles
+            <a href="{% url 'admin_app:workcycles' %}" class="nav-link">
+                <span class="nav-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </span>
+                <span class="nav-text">Work Cycles</span>
             </a>
         </li>
 
         <li class="nav-item">
-            <a href="{% url 'admin_app:completed-work-summary' %}" class="nav-link text-white">
-                <i class="fas fa-clipboard-check"></i>
-                Review Work Items
+            <a href="{% url 'admin_app:completed-work-summary' %}" class="nav-link">
+                <span class="nav-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </span>
+                <span class="nav-text">Review Work Items</span>
             </a>
         </li>
 
         <li class="nav-item">
-            <a href="{% url 'admin_app:users' %}" class="nav-link text-white">
-                <i class="fas fa-user-cog"></i>
-                Workforces
+            <a href="{% url 'admin_app:users' %}" class="nav-link">
+                <span class="nav-icon">
+                    <i class="fas fa-user-cog"></i>
+                </span>
+                <span class="nav-text">Workforces</span>
             </a>
         </li>
 
         <li class="nav-item">
-            <a href="#" class="nav-link text-white disabled">
-                <i class="fas fa-chart-line"></i>
-                Reports
-                <span class="badge bg-secondary ms-auto">Soon</span>
+            <a href="#" class="nav-link disabled">
+                <span class="nav-icon">
+                    <i class="fas fa-chart-line"></i>
+                </span>
+                <span class="nav-text">Reports</span>
+                <span class="nav-badge">Soon</span>
             </a>
         </li>
-
     </ul>
 </div>
+
+<style>
+/* ===== Sidebar Container ===== */
+.sidebar {
+    width: 240px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    left: 0;
+    background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+    color: #ffffff;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Scrollbar Styling */
+.sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+/* ===== Sidebar Header ===== */
+.sidebar-header {
+    padding-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-logo {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.sidebar-header h5 {
+    font-size: 1.1rem;
+    color: white;
+    line-height: 1.2;
+}
+
+.sidebar-header small {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* ===== Navigation Menu ===== */
+.nav-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+}
+
+.nav-item {
+    margin-bottom: 0.5rem;
+}
+
+/* ===== Navigation Links ===== */
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: translateX(5px);
+}
+
+.nav-link.active {
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+    color: white;
+    border-left: 3px solid #3b82f6;
+}
+
+.nav-link.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.nav-link.disabled:hover {
+    background: transparent;
+    transform: none;
+}
+
+/* ===== Navigation Icons ===== */
+.nav-icon {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover .nav-icon,
+.nav-link.active .nav-icon {
+    color: white;
+    transform: scale(1.1);
+}
+
+/* ===== Navigation Text ===== */
+.nav-text {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+/* ===== Badge ===== */
+.nav-badge {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    margin-left: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover .nav-badge {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+/* Active Link Indicator */
+.nav-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%) scaleY(0);
+    width: 2px;
+    height: 60%;
+    background: #3b82f6;
+    border-radius: 0 2px 2px 0;
+    transition: transform 0.2s ease;
+}
+
+.nav-link.active::before {
+    transform: translateY(-50%) scaleY(1);
+}
+
+/* ===== Main Content Adjustment ===== */
+.main-content {
+    margin-left: 240px;
+    padding: 1.5rem;
+    min-height: 100vh;
+    background: #f8fafc;
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 220px;
+        position: fixed;
+        left: -220px;
+        transition: left 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .sidebar.active {
+        left: 0;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .sidebar-toggle {
+        display: block;
+    }
+}
+</style>
+
+<script>
+// Add active class to current page link
+document.addEventListener('DOMContentLoaded', function() {
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.nav-link:not(.disabled)');
+    
+    navLinks.forEach(link => {
+        if (link.href && currentPath.includes(new URL(link.href).pathname)) {
+            link.classList.add('active');
+        }
+    });
+    
+    // Smooth hover effect
+    navLinks.forEach(link => {
+        link.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateX(5px)';
+        });
+        
+        link.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateX(0)';
+        });
+    });
+});
+</script>

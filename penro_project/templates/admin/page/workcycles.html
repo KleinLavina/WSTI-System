@@ -3,71 +3,438 @@
 
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h3 class="mb-0 fw-bold">
-      <i class="fas fa-layer-group me-2 text-primary"></i>
-      Work Cycles
-    </h3>
-    <small class="text-muted">Manage active and archived work cycles</small>
-  </div>
+<style>
+/* ===== Modern Design System ===== */
+:root {
+  --primary: #4361ee;
+  --primary-light: #edf2ff;
+  --secondary: #64748b;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.12);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.15);
+}
 
-  <button class="btn btn-success shadow-sm"
-          data-bs-toggle="modal"
-          data-bs-target="#createWorkcycleModal">
-    <i class="fas fa-plus me-1"></i>
-    Add Work Cycle
-  </button>
+/* ===== Compact Card Design ===== */
+.workcycle-card {
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  min-height: 300px;
+}
+
+.workcycle-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: #d1d9ff;
+}
+
+/* Compact header */
+.card-header-compact {
+  background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%);
+  padding: 1.25rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* ===== Compact Typography ===== */
+.section-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.section-title i {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.3;
+  margin: 0 0 0.75rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ===== Compact Status Badges ===== */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.status-chip.active {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-chip.archived {
+  background: rgba(100, 116, 139, 0.1);
+  color: #475569;
+  border: 1px solid rgba(100, 116, 139, 0.15);
+}
+
+/* ===== Compact Due Date Display ===== */
+.due-date-compact {
+  background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.due-date-compact::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+}
+
+.due-date-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.due-date-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.due-date-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.due-date-full {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.due-date-full i {
+  color: #f59e0b;
+  font-size: 0.875rem;
+}
+
+.time-details {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.time-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(245, 158, 11, 0.1);
+  color: #92400e;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.time-badge i {
+  font-size: 0.65rem;
+}
+
+/* ===== Compact Description ===== */
+.description-container {
+  background: var(--surface-alt);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  border: 1px solid var(--border-light);
+}
+
+.description-text {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ===== Compact Meta Information ===== */
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.meta-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.meta-value {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.meta-value i {
+  color: var(--primary);
+  width: 14px;
+  font-size: 0.75rem;
+}
+
+/* ===== Compact Action Menu ===== */
+.card-actions-absolute {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 10;
+}
+
+.action-menu-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  font-size: 0.875rem;
+}
+
+.action-menu-btn:hover {
+  background: var(--surface);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: rotate(90deg);
+}
+
+/* ===== Compact Page Header ===== */
+.page-header {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-light);
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.page-subtitle {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin: 0.25rem 0 0 0;
+}
+
+/* ===== Compact Button ===== */
+.btn-success {
+  background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 0.625rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.2);
+}
+
+.btn-success:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+/* ===== Compact Grid Layout ===== */
+.grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+  margin: 0;
+}
+
+/* ===== Compact Stats Badges ===== */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+}
+
+/* ===== Compact Empty State ===== */
+.empty-state-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.empty-state-icon {
+  font-size: 2.5rem;
+  color: #cbd5e1;
+  margin-bottom: 1rem;
+}
+
+.empty-state-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state-subtitle {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-bottom: 1.25rem;
+}
+</style>
+
+<!-- Compact Page Header -->
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h1 class="page-title">
+        <i class="fas fa-layer-group me-2" style="color: var(--primary);"></i>
+        Work Cycles
+      </h1>
+      <p class="page-subtitle">Manage and monitor work cycles</p>
+    </div>
+    
+    <button class="btn btn-success"
+            data-bs-toggle="modal"
+            data-bs-target="#createWorkcycleModal">
+      <i class="fas fa-plus me-1"></i>
+      New Cycle
+    </button>
+  </div>
+  
+  <!-- Quick Stats -->
+  <div class="d-flex gap-2 mt-3">
+    <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary px-2 py-1">
+      <i class="fas fa-sync-alt me-1"></i>
+      {{ workcycles|length }} Total
+    </span>
+    <span class="badge rounded-pill bg-success bg-opacity-10 text-success px-2 py-1">
+      <i class="fas fa-play-circle me-1"></i>
+      {{ active_count }} Active
+    </span>
+    <span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary px-2 py-1">
+      <i class="fas fa-archive me-1"></i>
+      {{ archived_count }} Archived
+    </span>
+  </div>
 </div>
 
 {% if workcycles %}
-<div class="row g-4">
-
+<!-- Compact Cards Grid -->
+<div class="grid-layout">
   {% for wc in workcycles %}
-  <div class="col-md-6 col-xl-4">
-    <div class="card h-100 workcycle-card position-relative">
-
-      <div class="card-body d-flex flex-column">
-
-        <!-- Header -->
-        <div class="mb-2">
-          <span class="card-label">
-            <i class="fas fa-clipboard-list me-1"></i>
-            Work Cycle
+  <div class="workcycle-card">
+    
+    <!-- Card Header -->
+    <div class="card-header-compact">
+      <div class="d-flex justify-content-between align-items-start">
+        <div style="flex: 1;">
+          <span class="section-title">
+            <i class="fas fa-clipboard-list"></i>
+            WORK CYCLE
           </span>
-
-          <h5 class="fw-semibold mb-1 text-truncate">
+          
+          <h3 class="card-title" title="{{ wc.title }}">
             {{ wc.title }}
-          </h5>
-
-          {% if wc.is_active %}
-            <span class="status-badge active">
-              <i class="fas fa-check-circle me-1"></i> Active
-            </span>
-          {% else %}
-            <span class="status-badge archived">
-              <i class="fas fa-archive me-1"></i> Archived
-            </span>
-          {% endif %}
+          </h3>
+          
+          <span class="status-chip {% if wc.is_active %}active{% else %}archived{% endif %}">
+            <i class="fas {% if wc.is_active %}fa-play-circle{% else %}fa-archive{% endif %}"></i>
+            {% if wc.is_active %}Active{% else %}Archived{% endif %}
+          </span>
         </div>
-
-        <!-- Actions -->
+        
+        <!-- Action Menu -->
         <div class="card-actions-absolute">
           <div class="dropdown">
-            <button class="btn btn-sm btn-icon action-btn-bg"
+            <button class="action-menu-btn"
                     type="button"
-                    data-bs-toggle="dropdown">
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
               <i class="fas fa-ellipsis-v"></i>
             </button>
-
-            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+            
+            <ul class="dropdown-menu dropdown-menu-end">
               <li>
                 <a class="dropdown-item"
                    href="{% url 'admin_app:workcycle-assignments' wc.id %}">
-                  <i class="far fa-eye me-2"></i> View Details
+                  <i class="far fa-eye me-2"></i>
+                  View Details
                 </a>
               </li>
-
+              
               <li>
                 <button type="button"
                         class="dropdown-item"
@@ -77,80 +444,140 @@
                         data-title="{{ wc.title|escapejs }}"
                         data-description="{{ wc.description|default:''|escapejs }}"
                         data-due="{{ wc.due_at|date:'Y-m-d H:i' }}">
-                  <i class="far fa-edit me-2"></i> Edit
+                  <i class="far fa-edit me-2"></i>
+                  Edit
                 </button>
               </li>
-
+              
               <li>
                 <a class="dropdown-item"
                    href="#"
                    data-bs-toggle="modal"
                    data-bs-target="#reassignWorkcycleModal"
                    data-id="{{ wc.id }}">
-                  <i class="fas fa-random me-2"></i> Reassign
+                  <i class="fas fa-random me-2"></i>
+                  Reassign
                 </a>
               </li>
-
+              
               <li><hr class="dropdown-divider"></li>
-
+              
               <li>
-                <a class="dropdown-item text-danger" href="#">
-                  <i class="far fa-trash-alt me-2"></i> Delete
+                <a class="dropdown-item text-danger" 
+                   href="#"
+                   onclick="return confirm('Are you sure you want to delete this work cycle?')">
+                  <i class="far fa-trash-alt me-2"></i>
+                  Delete
                 </a>
               </li>
             </ul>
           </div>
         </div>
-
-        <!-- Description -->
-        <div class="mt-3">
-          <span class="card-label">
-            <i class="far fa-file-alt me-1"></i>
-            Description
+      </div>
+    </div>
+    
+    <!-- Card Body -->
+    <div class="card-body d-flex flex-column" style="padding: 1rem 1.25rem 1.25rem;">
+      
+      <!-- Compact Due Date Display -->
+      <div class="due-date-compact">
+        <div class="due-date-header">
+          <span class="due-date-label">
+            <i class="fas fa-hourglass-half"></i>
+            DEADLINE
           </span>
-
-          {% if wc.description %}
-          <p class="small text-muted description-clamp mb-0">
-            {{ wc.description }}
-          </p>
-          {% else %}
-          <p class="small text-muted fst-italic mb-0">
-            No description provided
-          </p>
+          {% if wc.due_at < now %}
+          <span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1" style="font-size: 0.7rem;">
+            <i class="fas fa-exclamation-circle me-1"></i>
+            Overdue
+          </span>
           {% endif %}
         </div>
-
-        <!-- Meta -->
-        <div class="mt-auto pt-3 border-top meta-section">
-          <div class="meta-item">
-            <span class="meta-label">Due Date</span>
-            <span class="meta-value">
-              <i class="far fa-calendar-alt"></i>
-              {{ wc.due_at|date:"M d, Y · H:i" }}
-            </span>
+        
+        <div class="due-date-details">
+          <div class="due-date-full">
+            <i class="far fa-calendar-check"></i>
+            {{ wc.due_at|date:"l, M d, Y" }}
           </div>
-
-          <div class="meta-item mt-2">
-            <span class="meta-label">Created By</span>
-            <span class="meta-value">
-              <i class="far fa-user"></i>
-              {{ wc.created_by|default:"System" }}
+          
+          <div class="time-details">
+            <span class="time-badge">
+              <i class="far fa-clock"></i>
+              {{ wc.due_at|time:"g:i A" }}
             </span>
+            
+           
           </div>
         </div>
-
       </div>
+      
+      <!-- Compact Description -->
+      {% if wc.description %}
+      <div class="description-container">
+        <span class="section-title">
+          <i class="far fa-file-alt"></i>
+          DESCRIPTION
+        </span>
+        <p class="description-text">
+          {{ wc.description|truncatechars:120 }}
+        </p>
+      </div>
+      {% endif %}
+      
+      <!-- Compact Meta Information -->
+      <div class="meta-grid">
+        <div class="meta-item">
+          <span class="meta-label">Created By</span>
+          <span class="meta-value">
+            <i class="far fa-user"></i>
+            {{ wc.created_by|default:"System" }}
+          </span>
+        </div>
+        
+        <div class="meta-item">
+          <span class="meta-label">Created On</span>
+          <span class="meta-value">
+            <i class="far fa-clock"></i>
+            {{ wc.created_at|date:"M d, Y" }}
+          </span>
+        </div>
+        
+        <div class="meta-item">
+          <span class="meta-label">Status</span>
+          <span class="meta-value">
+            <i class="fas {% if wc.is_active %}fa-circle-play text-success{% else %}fa-circle-pause text-secondary{% endif %}"></i>
+            {% if wc.is_active %}Active{% else %}Archived{% endif %}
+          </span>
+        </div>
+        
+        <div class="meta-item">
+          <span class="meta-label">Assignments</span>
+          <span class="meta-value">
+            <i class="fas fa-users"></i>
+            {{ wc.assignment_count|default:"0" }}
+          </span>
+        </div>
+      </div>
+      
     </div>
   </div>
   {% endfor %}
-
 </div>
+
 {% else %}
-<div class="card shadow-sm">
-  <div class="card-body text-center text-muted py-5">
-    <i class="fas fa-folder-open fa-2x mb-3"></i>
-    <p class="mb-0">No work cycles yet.</p>
+<!-- Compact Empty State -->
+<div class="empty-state-card">
+  <div class="empty-state-icon">
+    <i class="fas fa-folder-open"></i>
   </div>
+  <h3 class="empty-state-title">No Work Cycles Yet</h3>
+  <p class="empty-state-subtitle">Create your first work cycle to get started</p>
+  <button class="btn btn-primary"
+          data-bs-toggle="modal"
+          data-bs-target="#createWorkcycleModal">
+    <i class="fas fa-plus me-2"></i>
+    Create Work Cycle
+  </button>
 </div>
 {% endif %}
 
@@ -158,113 +585,17 @@
 {% include "admin/page/modals/edit_workcycle_modal.html" %}
 {% include "admin/page/modals/reassign_workcycle_modal.html" %}
 
-<style>
-
-/* ===== Bright, Clean Surface ===== */
-.workcycle-card {
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.04);
-  box-shadow:
-    0 6px 18px rgba(0,0,0,0.06),
-    0 2px 6px rgba(0,0,0,0.04);
-  transition: transform .2s ease, box-shadow .2s ease;
-}
-
-.workcycle-card:hover {
-  transform: translateY(-4px);
-  box-shadow:
-    0 18px 40px rgba(0,0,0,0.12),
-    0 6px 16px rgba(0,0,0,0.08);
-}
-
-/* Labels */
-.card-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: #8b8f97;
-  margin-bottom: 4px;
-}
-
-/* Status */
-.status-badge {
-  font-size: .7rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.status-badge.active {
-  background: rgba(25,135,84,.14);
-  color: #198754;
-}
-
-.status-badge.archived {
-  background: rgba(108,117,125,.16);
-  color: #6c757d;
-}
-
-/* Meta */
-.meta-section {
-  font-size: .8rem;
-  color: #6c757d;
-}
-
-.meta-label {
-  font-size: .65rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  color: #9aa0a6;
-}
-
-.meta-value {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* Clamp */
-.description-clamp {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;  
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Actions */
-.card-actions-absolute {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-}
-
-.btn-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-btn-bg {
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
-}
-
-.action-btn-bg:hover {
-  background: #f8f9fa;
-}
-
-</style>
+<script>
+// Hover effect for cards
+document.querySelectorAll('.workcycle-card').forEach(card => {
+  card.addEventListener('mouseenter', function() {
+    this.style.zIndex = '10';
+  });
+  
+  card.addEventListener('mouseleave', function() {
+    this.style.zIndex = '1';
+  });
+});
+</script>
 
 {% endblock %}

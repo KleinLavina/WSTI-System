@@ -1,178 +1,191 @@
-<div class="dashboard-header">
-    <div class="page-title-section">
-        <h1 class="page-title">
-            <i class="fas fa-leaf me-2"></i>
-            Dashboard
-        </h1>
-    </div>
+<header class="dashboard-header">
 
-    <div class="user-menu-wrapper">
-        <div class="user-box">
-            <i class="fas fa-user-circle user-icon"></i>
-            <span class="username">{{ request.user.username }}</span>
-            <i class="fas fa-chevron-down dropdown-arrow"></i>
-        </div>
+  <!-- LEFT: PAGE TITLE -->
+  <div class="page-title-section">
+    <h1 class="page-title">
+      <i class="fas fa-leaf"></i>
+      Dashboard
+    </h1>
+  </div>
 
-        <!-- Dropdown Menu -->
-        <div class="user-dropdown">
-            <a href="#" class="dropdown-item">
-                <i class="fas fa-id-card me-2"></i> View Profile
-            </a>
-            <a href="#" class="dropdown-item">
-                <i class="fas fa-cog me-2"></i> Settings
-            </a>
-            <a href="{% url 'logout' %}" class="dropdown-item logout">
-                <i class="fas fa-sign-out-alt me-2"></i> Logout
-            </a>
-        </div>
+  <!-- RIGHT: USER MENU -->
+  <div class="user-menu-wrapper" data-user-menu>
+    <button
+      class="user-box"
+      type="button"
+      aria-haspopup="true"
+      aria-expanded="false"
+    >
+      <i class="fas fa-user-circle user-icon"></i>
+      <span class="username">{{ request.user.username }}</span>
+      <i class="fas fa-chevron-down dropdown-arrow"></i>
+    </button>
+
+    <div class="user-dropdown" role="menu">
+      <a href="#" class="dropdown-item" role="menuitem">
+        <i class="fas fa-id-card me-2"></i>
+        View Profile
+      </a>
+
+      <a href="#" class="dropdown-item" role="menuitem">
+        <i class="fas fa-cog me-2"></i>
+        Settings
+      </a>
+
+      <a href="{% url 'logout' %}" class="dropdown-item logout" role="menuitem">
+        <i class="fas fa-sign-out-alt me-2"></i>
+        Logout
+      </a>
     </div>
-</div>
+  </div>
+
+</header>
+
 <style>
-/* MAIN HEADER */
+/* ================= HEADER ================= */
 .dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.6rem 0;  /* 👈 SMALLER HEIGHT */
-    margin-bottom: 1.2rem;
-    border-bottom: 1px solid rgba(26, 116, 49, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 0.5rem 0;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(26,116,49,.15);
 }
 
-/* PAGE TITLE */
+/* ================= TITLE ================= */
 .page-title {
-    font-size: 1.4rem; /* smaller */
-    font-weight: 700;
-    color: #1a7431;
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a7431;
+  margin: 0;
 }
 
 .page-title i {
-    font-size: 1.4rem;
-    color: #2d5a27;
+  color: #2d5a27;
 }
 
-/* USER MENU WRAPPER */
+/* ================= USER MENU ================= */
 .user-menu-wrapper {
-    position: relative;
+  position: relative;
 }
 
-/* USER BOX (Clickable) */
 .user-box {
-    display: flex;
-    align-items: center;
-    padding: 0.45rem 0.9rem;
-    background: #ffffff;
-    border-radius: 10px;
-    cursor: pointer;
-    border: 1px solid rgba(26, 116, 49, 0.2);
-
-    /* 3D shadow */
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.10);
-
-    transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .45rem .9rem;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(26,116,49,.2);
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0,0,0,.1);
+  transition: box-shadow .2s ease, transform .2s ease;
 }
 
 .user-box:hover {
-    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.16);
+  transform: translateY(-1px);
 }
 
 .user-icon {
-    font-size: 1.6rem;
-    color: #1a7431;
-    margin-right: 8px;
+  font-size: 1.6rem;
+  color: #1a7431;
 }
 
 .username {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #2d5a27;
+  font-size: .95rem;
+  font-weight: 600;
+  color: #2d5a27;
 }
 
 .dropdown-arrow {
-    font-size: 0.85rem;
-    margin-left: 6px;
-    color: #6c757d;
+  font-size: .75rem;
+  color: #6c757d;
+  transition: transform .2s ease;
 }
 
-/* DROPDOWN MENU */
+.user-box.active .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* ================= DROPDOWN ================= */
 .user-dropdown {
-    position: absolute;
-    right: 0;
-    margin-top: 8px;
-    width: 170px;
-    background: #ffffff;
-    border-radius: 10px;
-    border: 1px solid rgba(26, 116, 49, 0.15);
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 180px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(26,116,49,.15);
+  box-shadow: 0 12px 30px rgba(0,0,0,.14);
+  display: none;
+  overflow: hidden;
+  z-index: 100;
+  animation: fadeIn .18s ease;
+}
 
-    /* 3D dropdown shadow */
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-
-    display: none;
-    overflow: hidden;
-    animation: fadeIn 0.2s ease;
-    z-index: 10;
+.user-dropdown.active {
+  display: block;
 }
 
 .dropdown-item {
-    display: flex;
-    align-items: center;
-    padding: 10px 14px;
-    font-size: 0.9rem;
-    color: #2d5a27;
-    text-decoration: none;
-    transition: 0.2s;
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  font-size: .9rem;
+  color: #2d5a27;
+  text-decoration: none;
+  transition: background .15s ease;
 }
 
 .dropdown-item:hover {
-    background: #e8f5e9;
-    color: #1a7431;
+  background: #e8f5e9;
 }
 
 .dropdown-item.logout {
-    color: #c82333;
+  color: #c82333;
 }
 
 .dropdown-item.logout:hover {
-    background: #f8d7da;
+  background: #f8d7da;
 }
 
-/* ANIMATION */
+/* ================= ANIMATION ================= */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* JS adds class "active" */
-.user-dropdown.active {
-    display: block;
-}
-
-/* RESPONSIVE */
+/* ================= RESPONSIVE ================= */
 @media (max-width: 768px) {
-    .page-title {
-        font-size: 1.3rem;
-    }
-    .user-box {
-        padding: 0.4rem 0.7rem;
-    }
+  .page-title {
+    font-size: 1.25rem;
+  }
 }
 </style>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const userBox = document.querySelector(".user-box");
-    const dropdown = document.querySelector(".user-dropdown");
+  document.querySelectorAll("[data-user-menu]").forEach(wrapper => {
+    const button = wrapper.querySelector(".user-box");
+    const dropdown = wrapper.querySelector(".user-dropdown");
 
-    userBox.addEventListener("click", () => {
-        dropdown.classList.toggle("active");
+    button.addEventListener("click", e => {
+      e.stopPropagation();
+      const isOpen = dropdown.classList.toggle("active");
+      button.classList.toggle("active", isOpen);
+      button.setAttribute("aria-expanded", isOpen);
     });
 
-    // Hide dropdown when clicking outside
-    document.addEventListener("click", (e) => {
-        if (!userBox.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.remove("active");
-        }
+    document.addEventListener("click", () => {
+      dropdown.classList.remove("active");
+      button.classList.remove("active");
+      button.setAttribute("aria-expanded", "false");
     });
+  });
 });
 </script>
