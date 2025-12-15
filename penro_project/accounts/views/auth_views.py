@@ -6,7 +6,7 @@ from django.conf import settings
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect("/")  # change later to dashboard
+        return redirect("root")
 
     if request.method == "POST":
         username = request.POST.get("username")
@@ -14,16 +14,14 @@ def login_view(request):
 
         user = authenticate(request, username=username, password=password)
 
-        if user is not None:
+        if user:
             login(request, user)
 
-            # Optional role-based redirect
             if user.login_role == "admin":
-                return redirect("/admin/")
-            elif user.login_role == "manager":
-                return redirect("/manager")
+                return redirect("admin_app:dashboard")
             else:
-                return redirect("/user/")
+                return redirect("user_app:dashboard")
+
         messages.error(request, "Invalid username or password")
 
     return render(request, "auth/login.html")

@@ -2,6 +2,7 @@ from django.conf import settings
 from django.shortcuts import redirect
 from django.urls import resolve, Resolver404
 
+
 class LoginRequiredMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -11,7 +12,7 @@ class LoginRequiredMiddleware:
             "/auth/",
             "/static/",
             "/media/",
-            "/penro/django/admin/",
+            "/penro/django/admin/",  # Django admin (staff only)
         )
 
     def __call__(self, request):
@@ -25,12 +26,23 @@ class LoginRequiredMiddleware:
         if not request.user.is_authenticated:
             return redirect(settings.LOGIN_URL)
 
-        # Authenticated user — validate URL
+        # 🔒 ROLE-BASED ACCESS CONTROL
+        role = request.user.login_role
+
+        # Admin app protection
+        if path.startswith("/admin/") and role != "admin":
+            return redirect("user_app:dashboard")
+
+        # User app protection
+        if path.startswith("/user/") and role == "admin":
+            return redirect("admin_app:dashboard")
+
+        # Optional: validate URL exists
         try:
             resolve(path)
         except Resolver404:
-            # Invalid URL → redirect safely
-            if request.user.login_role == "admin":
+            # Invalid URL → send to role dashboard
+            if role == "admin":
                 return redirect("admin_app:dashboard")
             return redirect("user_app:dashboard")
 

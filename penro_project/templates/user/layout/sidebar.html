@@ -1,12 +1,24 @@
-<div class="sidebar">
-    <h4>PENRO SYSTEM</h4>
 
-    <a href="{% url 'user_app:dashboard' %}">🏠 Dashboard</a>
-    <a href="{% url 'user_app:work-items' %}">
-        <i class="fas fa-tasks me-2"></i>
-        My Work Items
-        </a>
+<div class="sidebar p-3" id="userSidebar">
+    <h4 class="text-white">PENRO </h4>
+    <hr class="border-light">
 
-    <a href="#">📤 Review Queue</a>
-    <a href="#">📊 Metrics & Reports</a>
+    <ul class="nav flex-column" id="navMenu">
+
+        <li class="nav-item">
+            <a href="{% url 'user_app:dashboard' %}" class="nav-link text-white">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="{% url 'user_app:work-items' %}" class="nav-link text-white">
+                <i class="fas fa-calendar-alt"></i>
+                Work Cycles
+            </a>
+        </li>
+
+
+    </ul>
 </div>

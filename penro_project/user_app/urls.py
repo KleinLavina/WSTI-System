@@ -9,7 +9,7 @@ from .views.work_item_views import (
 app_name = "user_app"
 
 urlpatterns = [
-    path("", dashboard, name="dashboard"),
+    path("dashboard/", dashboard, name="dashboard"),
     path("work-items/", user_work_items, name="work-items"),
     path("work-items/<int:item_id>/", user_work_item_detail, name="work-item-detail"),
 ]

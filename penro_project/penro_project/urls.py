@@ -12,15 +12,21 @@ def root_redirect(request):
         return redirect("user_app:dashboard")
     return redirect("login")
 
+
 urlpatterns = [
+    # ROOT
     path("", root_redirect, name="root"),
 
+    # DJANGO ADMIN (TEST / STAFF ONLY)
     path("penro/django/admin/", admin.site.urls),
+
+    # AUTH
     path("auth/", include("accounts.urls")),
+
+    # ROLE DASHBOARDS
     path("admin/", include("admin_app.urls")),
     path("user/", include("user_app.urls")),
 ]
-
 
 if settings.DEBUG:
     urlpatterns += static(
