@@ -113,11 +113,12 @@
   </div>
 
   <div class="d-flex gap-2">
-    <button class="btn btn-sm btn-outline-primary" disabled>
-      <i class="fas fa-comment-dots me-1"></i>
-      Message
-      <span class="badge bg-secondary-subtle text-secondary ms-1">Soon</span>
-    </button>
+    <a href="{% url 'user_app:work-item-comments' work_item.id %}"
+   class="btn btn-sm btn-outline-primary">
+  <i class="fas fa-comment-dots me-1"></i>
+  Discussion
+</a>
+
 
     <a href="{% url 'user_app:work-items' %}" class="btn btn-sm btn-outline-secondary">
       <i class="fas fa-arrow-left me-1"></i>Back

@@ -15,6 +15,11 @@
       {{ work_item.workcycle.title }}
     </div>
   </div>
+<a href="{% url 'admin_app:work-item-discussion' work_item.id %}"
+   class="btn btn-sm btn-outline-primary d-flex align-items-center gap-2">
+  <i class="fas fa-comment-dots"></i>
+  Discussion
+</a>
 
  <a href="{% url 'admin_app:done-workers-by-workcycle' work_item.workcycle.id %}"
    class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 shadow-sm">
@@ -130,17 +135,7 @@
       </form>
 
       <!-- FUTURE CHAT BUTTON (STATIC) -->
-      <div class="mt-3">
-        <button type="button"
-                class="btn btn-sm btn-outline-primary d-flex align-items-center gap-2"
-                disabled>
-          <i class="fas fa-comment-dots"></i>
-          Send a message
-          <span class="badge bg-secondary-subtle text-secondary ms-1">
-            Coming soon
-          </span>
-        </button>
-      </div>
+      
 
     </div>
 

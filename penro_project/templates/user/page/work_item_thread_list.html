@@ -1,0 +1,53 @@
+{% extends "user/layout/base.html" %}
+{% block title %}Discussions{% endblock %}
+{% block content %}
+
+<div class="work-wrapper">
+
+  <h5 class="fw-semibold mb-3">
+    <i class="fas fa-comment-dots text-primary me-1"></i>
+    Discussions
+  </h5>
+
+  {% if work_items %}
+    <div class="list-group">
+
+      {% for item in work_items %}
+      <a href="{% url 'user_app:work-item-comments' item.id %}"
+         class="list-group-item list-group-item-action">
+
+        <div class="d-flex justify-content-between">
+          <div>
+            <strong>{{ item.workcycle.title }}</strong>
+            <div class="small text-muted">
+              Due {{ item.workcycle.due_at|date:"M d, Y" }}
+            </div>
+          </div>
+
+          <div class="text-end small text-muted">
+            {% if item.message_count %}
+              {{ item.message_count }} message{{ item.message_count|pluralize }}
+            {% else %}
+              No messages
+            {% endif %}
+            {% if item.last_message_at %}
+              <div>
+                {{ item.last_message_at|date:"M d · H:i" }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </a>
+      {% endfor %}
+
+    </div>
+  {% else %}
+    <div class="text-muted fst-italic">
+      No discussion threads yet.
+    </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}

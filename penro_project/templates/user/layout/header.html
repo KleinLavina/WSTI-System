@@ -1,178 +1,198 @@
-<div class="dashboard-header">
-    <div class="page-title-section">
-        <h1 class="page-title">
-            <i class="fas fa-leaf me-2"></i>
-            Dashboard
-        </h1>
+<header class="ah">
+  <div class="logo">
+    <span class="ico"><i class="fas fa-landmark"></i></span>
+    <div>
+      <b>Dashboard</b><br>
+      <small>PENRO Work Submission Tracker & Indicator System</small>
     </div>
+  </div>
 
-    <div class="user-menu-wrapper">
-        <div class="user-box">
-            <i class="fas fa-user-circle user-icon"></i>
-            <span class="username">{{ request.user.username }}</span>
-            <i class="fas fa-chevron-down dropdown-arrow"></i>
-        </div>
+  <nav class="nav">
+    <a href="{% url 'user_app:dashboard' %}">
+      <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+    </a>
+    <a href="{% url 'user_app:work-items' %}">
+      <i class="fas fa-calendar-alt"></i><span>Work Cycles</span>
+    </a>
+    <a class="disabled">
+      <i class="fas fa-chart-line"></i><span>Notifications</span><em>Soon</em>
+    </a>
+    <a href="{% url 'user_app:discussion-list' %}">
+      <i class="fas fa-comments"></i> 
+      <span>Messages</span><em>Soon</em>
+    </a>
+    <a class="disabled">
+      <i class="fas fa-chart-line"></i><span>Reports</span><em>Soon</em>
+    </a>
+  </nav>
 
-        <!-- Dropdown Menu -->
-        <div class="user-dropdown">
-            <a href="#" class="dropdown-item">
-                <i class="fas fa-id-card me-2"></i> View Profile
-            </a>
-            <a href="#" class="dropdown-item">
-                <i class="fas fa-cog me-2"></i> Settings
-            </a>
-            <a href="{% url 'logout' %}" class="dropdown-item logout">
-                <i class="fas fa-sign-out-alt me-2"></i> Logout
-            </a>
-        </div>
+  <div class="user" data-user-menu>
+    <button class="ubox" type="button">
+      <i class="fas fa-user-circle"></i>
+      <span>{{ request.user.username|truncatechars:15 }}</span>
+      <i class="fas fa-chevron-down"></i>
+    </button>
+
+    <div class="udrop">
+      <a href="#"><i class="fas fa-id-card"></i>Profile</a>
+      <a href="#"><i class="fas fa-cog"></i>Settings</a>
+      <a href="{% url 'logout' %}" class="out">
+        <i class="fas fa-sign-out-alt"></i>Logout
+      </a>
     </div>
-</div>
+  </div>
+</header>
+
 <style>
-/* MAIN HEADER */
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.6rem 0;  /* 👈 SMALLER HEIGHT */
-    margin-bottom: 1.2rem;
-    border-bottom: 1px solid rgba(26, 116, 49, 0.15);
+/* HEADER */
+.ah{
+  position:sticky;
+  top:0;
+  z-index:1050;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  padding:.7rem 1.2rem;
+  background:linear-gradient(90deg,#1e293b,#334155);
+  color:#fff;
+  box-shadow:0 2px 10px rgba(0,0,0,.15);
 }
 
-/* PAGE TITLE */
-.page-title {
-    font-size: 1.4rem; /* smaller */
-    font-weight: 700;
-    color: #1a7431;
-    display: flex;
-    align-items: center;
+/* LOGO */
+.logo{display:flex;align-items:center;gap:.6rem}
+.ico{
+  width:34px;height:34px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#3b82f6,#1d4ed8);
+  border-radius:8px
+}
+.logo b{font-size:.95rem}
+.logo small{font-size:.65rem;opacity:.7}
+
+/* NAV */
+.nav{
+  flex:1;
+  display:flex;
+  justify-content:center;
+  gap:.4rem
+}
+.nav a{
+  display:flex;
+  align-items:center;
+  gap:.4rem;
+  padding:.45rem .8rem;
+  font-size:.85rem;
+  color:#e5e7eb;
+  text-decoration:none;
+  border-radius:8px;
+  transition:.15s;
 }
 
-.page-title i {
-    font-size: 1.4rem;
-    color: #2d5a27;
+/* HOVER (ONLY WHEN NOT ACTIVE) */
+.nav a:not(.active):hover{
+  background:rgba(255,255,255,.12);
+  color:#fff;
 }
 
-/* USER MENU WRAPPER */
-.user-menu-wrapper {
-    position: relative;
+/* ACTIVE (FIXED) */
+.nav a.active{
+  background:rgba(59,130,246,.35);
+  color:#fff;
+  font-weight:600;
 }
 
-/* USER BOX (Clickable) */
-.user-box {
-    display: flex;
-    align-items: center;
-    padding: 0.45rem 0.9rem;
-    background: #ffffff;
-    border-radius: 10px;
-    cursor: pointer;
-    border: 1px solid rgba(26, 116, 49, 0.2);
-
-    /* 3D shadow */
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.10);
-
-    transition: all 0.2s ease-in-out;
+/* DISABLED */
+.nav a.disabled{
+  opacity:.4;
+  pointer-events:none
+}
+.nav em{
+  font-size:.6rem;
+  padding:.1rem .35rem;
+  border-radius:4px;
+  background:rgba(255,255,255,.18)
 }
 
-.user-box:hover {
-    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
+/* USER */
+.user{position:relative}
+.ubox{
+  display:flex;
+  align-items:center;
+  gap:.45rem;
+  padding:.35rem .7rem;
+  border-radius:8px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);
+  color:#fff;
+  cursor:pointer
+}
+.ubox i:last-child{
+  font-size:.7rem;
+  transition:.2s
+}
+.ubox.active i:last-child{
+  transform:rotate(180deg)
 }
 
-.user-icon {
-    font-size: 1.6rem;
-    color: #1a7431;
-    margin-right: 8px;
+/* DROPDOWN */
+.udrop{
+  position:absolute;
+  right:0;
+  top:calc(100% + 8px);
+  z-index:1100;
+  width:160px;
+  background:#fff;
+  border-radius:8px;
+  border:1px solid #e5e7eb;
+  box-shadow:0 10px 25px rgba(0,0,0,.2);
+  display:none
 }
-
-.username {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #2d5a27;
+.udrop a{
+  display:flex;
+  gap:.5rem;
+  padding:.55rem .7rem;
+  font-size:.85rem;
+  color:#334155;
+  text-decoration:none
 }
-
-.dropdown-arrow {
-    font-size: 0.85rem;
-    margin-left: 6px;
-    color: #6c757d;
-}
-
-/* DROPDOWN MENU */
-.user-dropdown {
-    position: absolute;
-    right: 0;
-    margin-top: 8px;
-    width: 170px;
-    background: #ffffff;
-    border-radius: 10px;
-    border: 1px solid rgba(26, 116, 49, 0.15);
-
-    /* 3D dropdown shadow */
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-
-    display: none;
-    overflow: hidden;
-    animation: fadeIn 0.2s ease;
-    z-index: 10;
-}
-
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    padding: 10px 14px;
-    font-size: 0.9rem;
-    color: #2d5a27;
-    text-decoration: none;
-    transition: 0.2s;
-}
-
-.dropdown-item:hover {
-    background: #e8f5e9;
-    color: #1a7431;
-}
-
-.dropdown-item.logout {
-    color: #c82333;
-}
-
-.dropdown-item.logout:hover {
-    background: #f8d7da;
-}
-
-/* ANIMATION */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* JS adds class "active" */
-.user-dropdown.active {
-    display: block;
-}
+.udrop a:hover{background:#f8fafc}
+.udrop .out{color:#dc2626}
+.udrop.show{display:block}
 
 /* RESPONSIVE */
-@media (max-width: 768px) {
-    .page-title {
-        font-size: 1.3rem;
-    }
-    .user-box {
-        padding: 0.4rem 0.7rem;
-    }
+@media(max-width:1024px){
+  .nav span,.user span{display:none}
+}
+@media(max-width:768px){
+  .logo small{display:none}
 }
 </style>
+
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const userBox = document.querySelector(".user-box");
-    const dropdown = document.querySelector(".user-dropdown");
+/* USER DROPDOWN */
+document.addEventListener("click",e=>{
+  document.querySelectorAll("[data-user-menu]").forEach(w=>{
+    const b=w.querySelector(".ubox"),
+          d=w.querySelector(".udrop");
+    if(b.contains(e.target)){
+      d.classList.toggle("show");
+      b.classList.toggle("active");
+    }else{
+      d.classList.remove("show");
+      b.classList.remove("active");
+    }
+  });
+});
 
-    userBox.addEventListener("click", () => {
-        dropdown.classList.toggle("active");
-    });
+/* ACTIVE NAV — EXACT MATCH (FIXED) */
+const currentPath = location.pathname.replace(/\/$/, "");
 
-    // Hide dropdown when clicking outside
-    document.addEventListener("click", (e) => {
-        if (!userBox.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.remove("active");
-        }
-    });
+document.querySelectorAll(".nav a[href]").forEach(link=>{
+  const linkPath = new URL(link.href).pathname.replace(/\/$/, "");
+  if(currentPath === linkPath){
+    link.classList.add("active");
+  }else{
+    link.classList.remove("active");
+  }
 });
 </script>

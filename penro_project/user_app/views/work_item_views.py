@@ -103,3 +103,40 @@ def user_work_item_detail(request, item_id):
             "status_choices": WorkItem._meta.get_field("status").choices,
         }
     )
+from accounts.models import WorkItem, WorkItemMessage
+
+@login_required
+def user_work_item_comments(request, item_id):
+    work_item = get_object_or_404(
+        WorkItem,
+        id=item_id,
+        owner=request.user,
+        is_active=True
+    )
+
+    if request.method == "POST":
+        text = request.POST.get("message", "").strip()
+        if text:
+            WorkItemMessage.objects.create(
+                work_item=work_item,
+                sender=request.user,
+                sender_role=request.user.login_role,
+                message=text
+            )
+            messages.success(request, "Comment posted.")
+            return redirect(
+                "user_app:work-item-comments",
+                item_id=work_item.id
+            )
+
+    messages_qs = work_item.messages.select_related("sender")
+
+    return render(
+        request,
+        "user/page/work_item_comments.html",
+        {
+            "work_item": work_item,
+            "messages": messages_qs,
+        }
+    )
+

@@ -1,191 +1,230 @@
-<header class="dashboard-header">
-
-  <!-- LEFT: PAGE TITLE -->
-  <div class="page-title-section">
-    <h1 class="page-title">
-      <i class="fas fa-leaf"></i>
-      Dashboard
-    </h1>
-  </div>
-
-  <!-- RIGHT: USER MENU -->
-  <div class="user-menu-wrapper" data-user-menu>
-    <button
-      class="user-box"
-      type="button"
-      aria-haspopup="true"
-      aria-expanded="false"
-    >
-      <i class="fas fa-user-circle user-icon"></i>
-      <span class="username">{{ request.user.username }}</span>
-      <i class="fas fa-chevron-down dropdown-arrow"></i>
-    </button>
-
-    <div class="user-dropdown" role="menu">
-      <a href="#" class="dropdown-item" role="menuitem">
-        <i class="fas fa-id-card me-2"></i>
-        View Profile
-      </a>
-
-      <a href="#" class="dropdown-item" role="menuitem">
-        <i class="fas fa-cog me-2"></i>
-        Settings
-      </a>
-
-      <a href="{% url 'logout' %}" class="dropdown-item logout" role="menuitem">
-        <i class="fas fa-sign-out-alt me-2"></i>
-        Logout
-      </a>
+<header class="ah">
+  <div class="logo">
+    <span class="ico"><i class="fas fa-landmark"></i></span>
+    <div class="logo-text">
+      <b>Admin</b>
+      <small>PENRO Work Submission Tracker</small>
     </div>
   </div>
 
+  <nav class="nav">
+    <a href="{% url 'admin_app:dashboard' %}">
+      <i class="fas fa-tachometer-alt"></i>
+      <span>Dashboard</span>
+    </a>
+
+    <a href="{% url 'admin_app:workcycles' %}">
+      <i class="fas fa-calendar-alt"></i>
+      <span>Work Cycles</span>
+    </a>
+
+    <a href="{% url 'admin_app:completed-work-summary' %}">
+      <i class="fas fa-clipboard-check"></i>
+      <span>Review</span>
+    </a>
+
+    <a href="{% url 'admin_app:users' %}">
+      <i class="fas fa-user-cog"></i>
+      <span>Workforces</span>
+    </a>
+
+    <a class="disabled">
+      <i class="fas fa-chart-line"></i>
+      <span>Reports</span><em>Soon</em>
+    </a>
+
+     <a href="{% url 'admin_app:discussion-list' %}">
+      <i class="fas fa-comments"></i> 
+      <span>Messages</span><em>Soon</em>
+    </a>
+
+    <a class="disabled">
+      <i class="fas fa-bell"></i>
+      <span>Notifications</span><em>Soon</em>
+    </a>
+  </nav>
+
+  <div class="user" data-user-menu>
+    <button class="ubox" type="button">
+      <i class="fas fa-user-circle"></i>
+      <span>{{ request.user.username|truncatechars:12 }}</span>
+      <i class="fas fa-chevron-down"></i>
+    </button>
+
+    <div class="udrop">
+      <a href="#"><i class="fas fa-id-card"></i>Profile</a>
+      <a href="#"><i class="fas fa-cog"></i>Settings</a>
+      <a href="{% url 'logout' %}" class="out">
+        <i class="fas fa-sign-out-alt"></i>Logout
+      </a>
+    </div>
+  </div>
 </header>
-
 <style>
-/* ================= HEADER ================= */
-.dashboard-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 56px;
-  padding: 0.5rem 0;
-  margin-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(26,116,49,.15);
+/* HEADER */
+.ah{
+  position:sticky;
+  top:0;
+  z-index:1050;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+  padding:.6rem 1.1rem;
+  background:linear-gradient(90deg,#1e293b,#334155);
+  color:#fff;
+  box-shadow:0 2px 10px rgba(0,0,0,.15);
 }
 
-/* ================= TITLE ================= */
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #1a7431;
-  margin: 0;
+/* LOGO */
+.logo{display:flex;align-items:center;gap:.6rem}
+.ico{
+  width:34px;height:34px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#3b82f6,#1d4ed8);
+  border-radius:8px
+}
+.logo-text b{font-size:.9rem}
+.logo-text small{font-size:.6rem;opacity:.7}
+
+/* NAV */
+.nav{
+  flex:1;
+  display:flex;
+  justify-content:center;
+  gap:.35rem;
 }
 
-.page-title i {
-  color: #2d5a27;
+/* ICON-ONLY LINKS */
+.nav a{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:42px;
+  height:38px;
+  color:#e5e7eb;
+  border-radius:10px;
+  text-decoration:none;
+  transition:.15s;
 }
 
-/* ================= USER MENU ================= */
-.user-menu-wrapper {
-  position: relative;
+/* ICON */
+.nav a i{
+  font-size:1rem;
 }
 
-.user-box {
-  display: flex;
-  align-items: center;
-  gap: .45rem;
-  padding: .45rem .9rem;
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid rgba(26,116,49,.2);
-  cursor: pointer;
-  box-shadow: 0 3px 12px rgba(0,0,0,.1);
-  transition: box-shadow .2s ease, transform .2s ease;
+/* LABEL (HIDDEN) */
+.nav a span{
+  position:absolute;
+  left:50%;
+  bottom:-30px;
+  transform:translateX(-50%);
+  background:#111827;
+  color:#fff;
+  font-size:.7rem;
+  padding:.2rem .45rem;
+  border-radius:6px;
+  white-space:nowrap;
+  opacity:0;
+  pointer-events:none;
+  transition:.15s;
 }
 
-.user-box:hover {
-  box-shadow: 0 6px 20px rgba(0,0,0,.16);
-  transform: translateY(-1px);
+/* SOON BADGE */
+.nav em{
+  position:absolute;
+  top:-4px;
+  right:-6px;
+  font-size:.55rem;
+  padding:.05rem .3rem;
+  border-radius:6px;
+  background:rgba(255,255,255,.25);
 }
 
-.user-icon {
-  font-size: 1.6rem;
-  color: #1a7431;
+/* HOVER */
+.nav a:hover{
+  background:rgba(255,255,255,.14);
+  color:#fff;
+}
+.nav a:hover span{
+  opacity:1;
+  bottom:-26px;
 }
 
-.username {
-  font-size: .95rem;
-  font-weight: 600;
-  color: #2d5a27;
+/* ACTIVE */
+.nav a.active{
+  background:rgba(59,130,246,.4);
+  color:#fff;
 }
 
-.dropdown-arrow {
-  font-size: .75rem;
-  color: #6c757d;
-  transition: transform .2s ease;
+/* DISABLED */
+.nav a.disabled{
+  opacity:.45;
+  pointer-events:none;
 }
 
-.user-box.active .dropdown-arrow {
-  transform: rotate(180deg);
+/* USER */
+.user{position:relative}
+.ubox{
+  display:flex;
+  align-items:center;
+  gap:.45rem;
+  padding:.35rem .7rem;
+  border-radius:8px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);
+  color:#fff;
+  cursor:pointer
 }
+.ubox i:last-child{
+  font-size:.7rem;
+  transition:.2s
+}
+.ubox.active i:last-child{transform:rotate(180deg)}
 
-/* ================= DROPDOWN ================= */
-.user-dropdown {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 8px);
-  width: 180px;
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid rgba(26,116,49,.15);
-  box-shadow: 0 12px 30px rgba(0,0,0,.14);
-  display: none;
-  overflow: hidden;
-  z-index: 100;
-  animation: fadeIn .18s ease;
+/* DROPDOWN */
+.udrop{
+  position:absolute;
+  right:0;
+  top:calc(100% + 8px);
+  z-index:1100;
+  width:160px;
+  background:#fff;
+  border-radius:8px;
+  border:1px solid #e5e7eb;
+  box-shadow:0 10px 25px rgba(0,0,0,.2);
+  display:none
 }
-
-.user-dropdown.active {
-  display: block;
+.udrop a{
+  display:flex;
+  gap:.5rem;
+  padding:.55rem .7rem;
+  font-size:.85rem;
+  color:#334155;
+  text-decoration:none
 }
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 14px;
-  font-size: .9rem;
-  color: #2d5a27;
-  text-decoration: none;
-  transition: background .15s ease;
-}
-
-.dropdown-item:hover {
-  background: #e8f5e9;
-}
-
-.dropdown-item.logout {
-  color: #c82333;
-}
-
-.dropdown-item.logout:hover {
-  background: #f8d7da;
-}
-
-/* ================= ANIMATION ================= */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ================= RESPONSIVE ================= */
-@media (max-width: 768px) {
-  .page-title {
-    font-size: 1.25rem;
-  }
-}
+.udrop a:hover{background:#f8fafc}
+.udrop .out{color:#dc2626}
+.udrop.show{display:block}
 </style>
-
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("[data-user-menu]").forEach(wrapper => {
-    const button = wrapper.querySelector(".user-box");
-    const dropdown = wrapper.querySelector(".user-dropdown");
-
-    button.addEventListener("click", e => {
-      e.stopPropagation();
-      const isOpen = dropdown.classList.toggle("active");
-      button.classList.toggle("active", isOpen);
-      button.setAttribute("aria-expanded", isOpen);
-    });
-
-    document.addEventListener("click", () => {
-      dropdown.classList.remove("active");
-      button.classList.remove("active");
-      button.setAttribute("aria-expanded", "false");
-    });
+document.addEventListener("click",e=>{
+  document.querySelectorAll("[data-user-menu]").forEach(w=>{
+    const b=w.querySelector(".ubox"),
+          d=w.querySelector(".udrop");
+    if(b.contains(e.target)){
+      d.classList.toggle("show");
+      b.classList.toggle("active");
+    }else{
+      d.classList.remove("show");
+      b.classList.remove("active");
+    }
   });
+});
+
+const currentPath = location.pathname.replace(/\/$/, "");
+document.querySelectorAll(".nav a[href]").forEach(link=>{
+  const linkPath = new URL(link.href).pathname.replace(/\/$/, "");
+  if(currentPath === linkPath) link.classList.add("active");
 });
 </script>
