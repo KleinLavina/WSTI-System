@@ -3,174 +3,274 @@
 
 {% block content %}
 
-<!-- HEADER -->
-<div class="mb-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
+<style>
+/* ===============================
+   MONDAY-STYLE REVIEW UI
+================================ */
+.review-layout{
+  display:grid;
+  grid-template-columns:1fr 340px;
+  gap:20px;
+}
 
-  <div>
-    <h4 class="fw-bold mb-1 d-flex align-items-center gap-2">
-      <i class="fas fa-eye text-primary"></i>
+/* HEADER */
+.review-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:18px;
+}
+
+.review-title h4{
+  margin:0;
+  font-weight:700;
+}
+
+.review-sub{
+  font-size:.8rem;
+  color:#6b7280;
+}
+
+/* LEFT PANEL */
+.review-main{
+  background:#fff;
+  border-radius:16px;
+  border:1px solid #e5e7eb;
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+  padding:20px;
+}
+
+/* INFO ROW */
+.review-info{
+  display:flex;
+  gap:20px;
+  font-size:.8rem;
+  color:#6b7280;
+  margin-bottom:14px;
+}
+
+.review-pill{
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:.7rem;
+  font-weight:700;
+}
+
+.review-pill.approved{ background:#d1fae5;color:#065f46; }
+.review-pill.revision{ background:#fee2e2;color:#991b1b; }
+.review-pill.pending{ background:#fef3c7;color:#92400e; }
+
+/* SECTIONS */
+.review-section{
+  margin-top:16px;
+}
+
+.review-section-title{
+  font-size:.7rem;
+  font-weight:800;
+  color:#6b7280;
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+
+/* MESSAGE */
+.review-message{
+  background:#f9fafb;
+  border-radius:12px;
+  padding:14px;
+  font-size:.85rem;
+  line-height:1.5;
+}
+
+/* ATTACHMENTS */
+.review-attachments{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.review-attachment{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 12px;
+  border-radius:10px;
+  background:#f9fafb;
+  font-size:.8rem;
+}
+
+/* RIGHT PANEL */
+.review-side{
+  position:sticky;
+  top:20px;
+  height:fit-content;
+  background:#fff;
+  border-radius:16px;
+  border:1px solid #e5e7eb;
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+  padding:18px;
+}
+
+.review-side h6{
+  font-weight:800;
+  margin-bottom:12px;
+}
+
+/* ACTION BUTTONS */
+.review-actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.review-btn{
+  width:100%;
+  padding:10px;
+  border-radius:12px;
+  font-weight:700;
+  font-size:.8rem;
+  border:1px solid transparent;
+  transition:.2s ease;
+}
+
+.review-btn.pending{
+  background:#fef3c7;
+  color:#92400e;
+  border-color:#fde68a;
+}
+
+.review-btn.approved{
+  background:#d1fae5;
+  color:#065f46;
+  border-color:#6ee7b7;
+}
+
+.review-btn.revision{
+  background:#fee2e2;
+  color:#991b1b;
+  border-color:#fecaca;
+}
+
+.review-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 16px rgba(15,23,42,.12);
+}
+</style>
+
+<!-- HEADER -->
+<div class="review-header">
+  <div class="review-title">
+    <h4>
+      <i class="fas fa-eye text-primary me-1"></i>
       Review Submission
     </h4>
-    <div class="text-muted small">
+    <div class="review-sub">
       {{ work_item.workcycle.title }}
     </div>
   </div>
-<a href="{% url 'admin_app:work-item-discussion' work_item.id %}"
-   class="btn btn-sm btn-outline-primary d-flex align-items-center gap-2">
-  <i class="fas fa-comment-dots"></i>
-  Discussion
-</a>
 
- <a href="{% url 'admin_app:done-workers-by-workcycle' work_item.workcycle.id %}"
-   class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 shadow-sm">
-  <i class="fas fa-arrow-left"></i>
-  Back to Done Workers
-</a>
+  <div class="d-flex gap-2">
+    <a href="{% url 'admin_app:work-item-discussion' work_item.id %}"
+       class="btn btn-sm btn-outline-primary">
+      <i class="fas fa-comment-dots me-1"></i> Discussion
+    </a>
 
- 
-
+    <a href="{% url 'admin_app:done-workers-by-workcycle' work_item.workcycle.id %}"
+       class="btn btn-sm btn-outline-secondary">
+      <i class="fas fa-arrow-left me-1"></i> Back
+    </a>
+  </div>
 </div>
 
-<!-- REVIEW CARD -->
-<div class="card mb-3">
-  <div class="card-header d-flex justify-content-between align-items-center">
+<div class="review-layout">
 
-    <!-- WORKER -->
-    <div class="d-flex align-items-center gap-2">
-      <i class="far fa-user text-muted"></i>
-      <span class="fw-semibold">
-        {{ work_item.owner.get_full_name|default:work_item.owner.username }}
-      </span>
-    </div>
+  <!-- LEFT : DETAILS -->
+  <div class="review-main">
 
-    <!-- REVIEW STATUS BADGE -->
-    <span class="badge
-      {% if work_item.review_decision == 'approved' %}bg-success
-      {% elif work_item.review_decision == 'revision' %}bg-danger
-      {% else %}bg-warning text-dark{% endif %}">
-      {{ work_item.get_review_decision_display }}
-    </span>
-
-  </div>
-
-  <div class="card-body">
-
-    <!-- SUBMISSION TIME -->
-    <div class="mb-3 small text-muted d-flex align-items-center gap-2">
-      <i class="far fa-clock"></i>
-      <span>
-        Submitted: {{ work_item.submitted_at|date:"M d, Y · H:i" }}
-      </span>
+    <div class="review-info">
+      <div>
+        <i class="far fa-user me-1"></i>
+        <strong>{{ work_item.owner.get_full_name|default:work_item.owner.username }}</strong>
+      </div>
+      <div>
+        <i class="far fa-clock me-1"></i>
+        {{ work_item.submitted_at|date:"M d, Y · H:i" }}
+      </div>
+      <div class="review-pill {{ work_item.review_decision }}">
+        {{ work_item.get_review_decision_display }}
+      </div>
     </div>
 
     <!-- STATUS LABEL -->
-    <div class="mb-3">
-      <strong class="small text-uppercase text-muted">
-        Status Label
-      </strong>
-      <div class="small mt-1">
+    <div class="review-section">
+      <div class="review-section-title">Status Label</div>
+      <div class="small">
         {{ work_item.status_label|default:"—" }}
       </div>
     </div>
 
     <!-- MESSAGE -->
-    <div class="mb-3">
-      <div class="d-flex align-items-center gap-2 mb-1">
-        <i class="fas fa-comment-dots text-primary"></i>
-        <strong class="small text-uppercase text-muted">
-          Worker Message
-        </strong>
-      </div>
-
-      <div class="border rounded p-2 bg-light small">
+    <div class="review-section">
+      <div class="review-section-title">Worker Message</div>
+      <div class="review-message">
         {{ work_item.message|linebreaksbr|default:"No message provided." }}
       </div>
     </div>
 
-    <!-- REVIEW ACTIONS -->
-    <div class="border-top pt-3 mt-3">
+    <!-- ATTACHMENTS -->
+    <div class="review-section">
+      <div class="review-section-title">Attachments</div>
 
-      <form method="post" class="d-flex gap-2 flex-wrap">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="update_review">
-
-        <button type="submit"
-                name="review_decision"
-                value="pending"
-                class="btn btn-sm
-                {% if work_item.review_decision == 'pending' %}
-                  btn-warning
-                {% else %}
-                  btn-outline-warning
-                {% endif %}">
-          <i class="fas fa-hourglass-half me-1"></i>
-          Pending Review
-        </button>
-
-        <button type="submit"
-                name="review_decision"
-                value="approved"
-                class="btn btn-sm
-                {% if work_item.review_decision == 'approved' %}
-                  btn-success
-                {% else %}
-                  btn-outline-success
-                {% endif %}">
-          <i class="fas fa-check-circle me-1"></i>
-          Approve
-        </button>
-
-        <button type="submit"
-                name="review_decision"
-                value="revision"
-                class="btn btn-sm
-                {% if work_item.review_decision == 'revision' %}
-                  btn-danger
-                {% else %}
-                  btn-outline-danger
-                {% endif %}">
-          <i class="fas fa-undo me-1"></i>
-          Needs Revision
-        </button>
-      </form>
-
-      <!-- FUTURE CHAT BUTTON (STATIC) -->
-      
-
+      {% if work_item.attachments.all %}
+        <div class="review-attachments">
+          {% for f in work_item.attachments.all %}
+          <div class="review-attachment">
+            <a href="{{ f.file.url }}" target="_blank" class="text-decoration-none">
+              <i class="far fa-file me-1"></i>
+              {{ f.file.name|slice:"-40:" }}
+            </a>
+            <span class="text-muted">
+              {{ f.uploaded_at|date:"M d, Y · H:i" }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-muted small fst-italic">
+          No attachments submitted.
+        </div>
+      {% endif %}
     </div>
 
   </div>
-</div>
 
-<!-- ATTACHMENTS -->
-<div class="card">
-  <div class="card-header d-flex align-items-center gap-2">
-    <i class="fas fa-paperclip"></i>
-    Attachments
+  <!-- RIGHT : REVIEW ACTIONS -->
+  <div class="review-side">
+
+    <h6>Review Decision</h6>
+
+    <form method="post" class="review-actions">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="update_review">
+
+      <button name="review_decision" value="pending"
+              class="review-btn pending">
+        ⏳ Mark as Pending
+      </button>
+
+      <button name="review_decision" value="approved"
+              class="review-btn approved">
+        ✔ Approve Work
+      </button>
+
+      <button name="review_decision" value="revision"
+              class="review-btn revision">
+        🔁 Needs Revision
+      </button>
+    </form>
+
   </div>
 
-  <div class="card-body">
-    {% if work_item.attachments.all %}
-      <ul class="list-group list-group-flush">
-        {% for f in work_item.attachments.all %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          <a href="{{ f.file.url }}" target="_blank"
-             class="small text-decoration-none d-flex align-items-center gap-2">
-            <i class="far fa-file text-muted"></i>
-            {{ f.file.name|slice:"-40:" }}
-          </a>
-          <span class="small text-muted">
-            {{ f.uploaded_at|date:"M d, Y · H:i" }}
-          </span>
-        </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <div class="text-muted small fst-italic">
-        No attachments submitted.
-      </div>
-    {% endif %}
-  </div>
 </div>
 
 {% endblock %}

@@ -1,4 +1,5 @@
 from django.utils import timezone
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
@@ -177,6 +178,8 @@ class WorkAssignment(models.Model):
 # 4. EXECUTION (THE WORK)
 # ============================================================
 
+
+
 class WorkItem(models.Model):
     workcycle = models.ForeignKey(
         WorkCycle,
@@ -190,12 +193,44 @@ class WorkItem(models.Model):
         related_name="work_items"
     )
 
+    # ======================
+    # ACTIVITY / LIFECYCLE
+    # ======================
     is_active = models.BooleanField(
         default=True,
         db_index=True,
-        help_text="Inactive items are archived due to reassignment"
+        help_text="Inactive items are archived or closed for a specific reason"
     )
 
+    inactive_reason = models.CharField(
+        max_length=50,
+        blank=True,
+        db_index=True,
+        choices=[
+            ("reassigned", "Reassigned"),
+            ("duplicate", "Duplicate Submission"),
+            ("invalid", "Invalid / Not Required"),
+            ("superseded", "Superseded by New Submission"),
+            ("archived", "Archived After Completion"),
+        ],
+        help_text="Reason why this work item became inactive"
+    )
+
+    inactive_note = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Optional explanation or comment"
+    )
+
+    inactive_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when this item became inactive"
+    )
+
+    # ======================
+    # STATUS / SUBMISSION
+    # ======================
     status = models.CharField(
         max_length=30,
         choices=[
@@ -233,24 +268,37 @@ class WorkItem(models.Model):
             models.Index(fields=["status"]),
             models.Index(fields=["review_decision"]),
             models.Index(fields=["is_active"]),
+            models.Index(fields=["inactive_reason"]),
         ]
 
     def save(self, *args, **kwargs):
         """
-        Auto-manage submitted_at:
-        - Set when status becomes 'done'
+        Auto-manage timestamps:
+        - Set submitted_at when status becomes 'done'
         - Clear if status is reverted
+        - Set inactive_at when item becomes inactive
         """
+        # Handle submission timestamp
         if self.status == "done":
             if self.submitted_at is None:
                 self.submitted_at = timezone.now()
         else:
             self.submitted_at = None
 
+        # Handle inactive timestamp
+        if not self.is_active:
+            if self.inactive_at is None:
+                self.inactive_at = timezone.now()
+        else:
+            self.inactive_at = None
+            self.inactive_reason = ""
+            self.inactive_note = ""
+
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.workcycle} — {self.owner}"
+
 
 class WorkItemAttachment(models.Model):
     work_item = models.ForeignKey(
@@ -258,7 +306,7 @@ class WorkItemAttachment(models.Model):
         on_delete=models.CASCADE,
         related_name="attachments",
         help_text="Work item this file belongs to"
-    )
+    )   
 
     file = models.FileField(
         upload_to="work_items/",
@@ -321,10 +369,11 @@ class WorkItemMessage(models.Model):
 
     class Meta:
         ordering = ["created_at"]
-        indexes = [
+        indexes = [ 
             models.Index(fields=["sender_role"]),
             models.Index(fields=["created_at"]),
         ]
 
     def __str__(self):
         return f"{self.sender} → {self.work_item}"
+

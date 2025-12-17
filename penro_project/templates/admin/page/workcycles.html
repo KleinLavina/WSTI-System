@@ -451,13 +451,28 @@
               
               <li>
                 <a class="dropdown-item"
-                   href="#"
-                   data-bs-toggle="modal"
-                   data-bs-target="#reassignWorkcycleModal"
-                   data-id="{{ wc.id }}">
+                  href="#"
+                  data-bs-toggle="modal"
+                  data-bs-target="#reassignWorkcycleModal"
+                  data-id="{{ wc.id }}"
+                  data-title="{{ wc.title }}"
+
+                  data-users="{% for a in wc.assignments.all %}
+                    {% if a.assigned_user %}
+                      {{ a.assigned_user.username }}|
+                    {% endif %}
+                  {% endfor %}"
+
+                  data-teams="{% for a in wc.assignments.all %}
+                    {% if a.assigned_team %}
+                      {{ a.assigned_team.name }}|
+                    {% endif %}
+                  {% endfor %}">
                   <i class="fas fa-random me-2"></i>
                   Reassign
                 </a>
+
+
               </li>
               
               <li><hr class="dropdown-divider"></li>

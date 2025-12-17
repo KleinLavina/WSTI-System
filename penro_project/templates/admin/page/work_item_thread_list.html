@@ -11,53 +11,81 @@
   </h4>
 
   <p class="text-muted small mb-3">
-    Each thread represents a shared discussion between the assigned worker and administrators,
-    tied to a specific work item.
+    Discussions are grouped by work cycle. Each item represents a shared conversation
+    between the assigned worker and administrators.
   </p>
 
-  {% if work_items %}
-    <div class="list-group shadow-sm">
+  {% regroup work_items by workcycle as grouped_cycles %}
 
-      {% for item in work_items %}
-      <a href="{% url 'admin_app:work-item-discussion' item.id %}"
-         class="list-group-item list-group-item-action">
+  {% if grouped_cycles %}
+    <div class="accordion" id="discussionAccordion">
 
-        <div class="d-flex justify-content-between align-items-start gap-3">
+      {% for group in grouped_cycles %}
+      <div class="accordion-item mb-2 shadow-sm">
 
-          <!-- LEFT: CONTEXT -->
-          <div>
-            <div class="fw-semibold">
-              {{ item.workcycle.title }}
-            </div>
+        <!-- WORKCYCLE HEADER -->
+        <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+          <button class="accordion-button collapsed fw-semibold"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#cycle{{ forloop.counter }}">
+            <i class="fas fa-folder-open me-2 text-primary"></i>
+            {{ group.grouper.title }}
+            <span class="badge bg-secondary ms-2">
+              {{ group.list|length }}
+            </span>
+          </button>
+        </h2>
 
-            <div class="small text-muted">
-              Assigned to
-              {{ item.owner.get_full_name|default:item.owner.username }}
-              · Due {{ item.workcycle.due_at|date:"M d, Y" }}
-            </div>
-          </div>
+        <!-- WORK ITEMS UNDER THIS WORKCYCLE -->
+        <div id="cycle{{ forloop.counter }}"
+             class="accordion-collapse collapse"
+             data-bs-parent="#discussionAccordion">
 
-          <!-- RIGHT: ACTIVITY -->
-          <div class="text-end small text-muted">
-            {% if item.message_count %}
-              <div class="fw-semibold text-dark">
-                {{ item.message_count }} message{{ item.message_count|pluralize }}
+          <div class="list-group list-group-flush">
+
+            {% for item in group.list %}
+            <a href="{% url 'admin_app:work-item-discussion' item.id %}"
+               class="list-group-item list-group-item-action">
+
+              <div class="d-flex justify-content-between align-items-start">
+
+                <!-- LEFT -->
+                <div>
+                  <div class="fw-semibold">
+                    {{ item.owner.get_full_name|default:item.owner.username }}
+                  </div>
+                  <div class="small text-muted">
+                    Due {{ item.workcycle.due_at|date:"M d, Y" }}
+                    · Thread #{{ item.id }}
+                  </div>
+                </div>
+
+                <!-- RIGHT -->
+                <div class="text-end small text-muted">
+                  {% if item.message_count %}
+                    <div class="fw-semibold text-dark">
+                      {{ item.message_count }} message{{ item.message_count|pluralize }}
+                    </div>
+                  {% else %}
+                    <div>No messages</div>
+                  {% endif %}
+
+                  {% if item.last_message_at %}
+                    <div>
+                      {{ item.last_message_at|date:"M d · H:i" }}
+                    </div>
+                  {% endif %}
+                </div>
+
               </div>
-            {% else %}
-              <div>No messages yet</div>
-            {% endif %}
+            </a>
+            {% endfor %}
 
-            {% if item.last_message_at %}
-              <div>
-                Last activity:
-                {{ item.last_message_at|date:"M d · H:i" }}
-              </div>
-            {% endif %}
           </div>
-
         </div>
 
-      </a>
+      </div>
       {% endfor %}
 
     </div>

@@ -3,215 +3,487 @@
 
 {% block content %}
 
-<!-- PAGE HEADER -->
-<div class="mb-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
+<!-- ================= IMPROVED HEADER ================= -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+      <div class="flex-grow-1">
 
-  <div>
-    <h3 class="mb-1 fw-bold d-flex align-items-center gap-2">
-      <i class="fas fa-tasks text-primary"></i>
-      {{ workcycle.title }}
-    </h3>
+        <div class="alignment-between">
 
-    <div class="text-muted small d-flex align-items-center gap-3 mt-1">
-      <span>
-        <i class="far fa-calendar-alt me-1"></i>
-        Due {{ workcycle.due_at|date:"M d, Y · H:i" }}
-      </span>
-    </div>
-
-    {% if workcycle.description %}
-    <div class="mt-2 text-muted">
-      <i class="fas fa-align-left me-1"></i>
-      {{ workcycle.description }}
-    </div>
-    {% endif %}
-  </div>
-
-  <div>
-    <a href="javascript:history.back()"
-       class="btn btn-outline-secondary shadow-sm d-flex align-items-center gap-1">
-      <i class="fas fa-arrow-left"></i>
-      Back
-    </a>
-  </div>
-
-</div>
-
-<!-- DONE WORKERS -->
-<div class="card ui-card mb-4">
-  <div class="card-header ui-card-header d-flex align-items-center gap-2">
-    <i class="fas fa-check-circle text-success"></i>
-    <strong>Workers Marked as Done</strong>
-    <span class="text-muted small ms-2">
-      (Requires review)
-    </span>
-  </div>
-
-  <div class="card-body p-0">
-    {% if done_items %}
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>Worker</th>
-          <th>Status</th>
-          <th>Review Status</th>
-          <th>Submitted</th>
-          <th class="text-end">Review Action</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {% for item in done_items %}
-        <tr class="review-row">
-
-          <!-- WORKER -->
-          <td>
-            <i class="far fa-user me-1 text-muted"></i>
-            {{ item.owner.get_full_name|default:item.owner.username }}
-          </td>
-
-          <!-- SUBMISSION STATUS -->
-          <td>
-            <span class="badge ui-badge status text-success">
-              <i class="fas fa-check me-1"></i>
-              Done
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <h1 class="h3 fw-bold mb-0 text-dark">
+              <i class="fas fa-tasks text-primary me-2"></i>
+              {{ workcycle.title }}
+            </h1>
+            <span class="badge bg-light text-dark border fs-6 py-2 px-3">
+              <i class="far fa-calendar-alt me-1"></i>
+              {{ workcycle.due_at|date:"M d, Y" }}
             </span>
-          </td>
+          </div>
 
-          <!-- REVIEW DECISION STATUS -->
-          <td>
-            {% if item.review_decision == "approved" %}
-              <span class="badge bg-success">
-                <i class="fas fa-check-circle me-1"></i>
-                Approved
-              </span>
-            {% elif item.review_decision == "revision" %}
-              <span class="badge bg-danger">
-                <i class="fas fa-undo me-1"></i>
-                Needs Revision
-              </span>
-            {% else %}
-              <span class="badge bg-warning text-dark">
-                <i class="fas fa-hourglass-half me-1"></i>
-                Pending Review
-              </span>
-            {% endif %}
-          </td>
-
-          <!-- SUBMITTED TIME -->
-          <td>
-            {% if item.submitted_at %}
-              <div class="d-flex flex-column">
-                <span>
-                  <i class="far fa-clock me-1 text-muted"></i>
-                  {{ item.submitted_at|date:"M d, Y · H:i" }}
-                </span>
-
-                {% if item.submitted_at > workcycle.due_at %}
-                  <span class="badge bg-danger mt-1 align-self-start">
-                    <i class="fas fa-exclamation-triangle me-1"></i>
-                    Late
-                  </span>
-                {% else %}
-                  <span class="badge bg-success mt-1 align-self-start">
-                    <i class="fas fa-check-circle me-1"></i>
-                    On time
-                  </span>
-                {% endif %}
-              </div>
-            {% else %}
-              —
-            {% endif %}
-          </td>
-
-          <!-- REVIEW ACTION -->
-          <td class="text-end">
-            <a href="{% url 'admin_app:work-item-review' item.id %}"
-              class="btn btn-sm
-              {% if item.review_decision == 'approved' %}
-                btn-outline-success
-              {% elif item.review_decision == 'revision' %}
-                btn-outline-danger
-              {% else %}
-                btn-primary
-              {% endif %}
-              d-inline-flex align-items-center gap-2 shadow-sm">
-              <i class="fas fa-eye"></i>
-              {% if item.review_decision == "approved" %}
-                View Review
-              {% elif item.review_decision == "revision" %}
-                Re-review
-              {% else %}
-                Review
-              {% endif %}
+          <div class="mb-3">
+            <a href="{% url 'admin_app:completed-work-summary' %}"
+              class="wc-back-btn">
+              <i class="fas fa-arrow-left"></i>
+              <span>Back to Summary</span>
             </a>
-          </td>
-
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+          </div>
 
 
-    {% else %}
-      <div class="p-3 text-muted fst-italic">
-        <i class="far fa-folder-open me-1"></i>
-        No workers marked as done
+        </div>
+
+        {% if workcycle.description %}
+        <div class="wc-description-container bg-light rounded p-3 mb-3 border-start border-3 border-primary">
+          <div class="d-flex align-items-center mb-1">
+            <i class="fas fa-align-left text-muted me-2 fs-6"></i>
+            <h6 class="fw-semibold mb-0 text-dark">Description</h6>
+          </div>
+          <p class="mb-0 text-dark wc-description">
+            {{ workcycle.description }}
+          </p>
+        </div>
+        {% endif %}
+
       </div>
-    {% endif %}
+    </div>
   </div>
 </div>
 
-<!-- ONGOING / NOT STARTED -->
-<div class="card ui-card border-warning">
-  <div class="card-header ui-card-header text-warning d-flex align-items-center gap-2">
-    <i class="fas fa-hourglass-half"></i>
-    Workers Still In Progress / Not Started
+<!-- ================= ACCORDION WRAPPER ================= -->
+<div class="accordion mb-4" id="statusAccordion">
+
+<!-- ================= APPROVED ================= -->
+<div class="accordion-item monday-board mb-3 border-0">
+  <h2 class="accordion-header">
+    <button class="accordion-button monday-group-title approved p-3 rounded collapsed"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#collapseApproved"
+            aria-expanded="true"
+            aria-controls="collapseApproved">
+      <span class="dot approved me-2"></span>
+      Approved <span class="group-count">{{ approved_count }}</span>
+      <i class="fas fa-chevron-down ms-auto accordion-icon"></i>
+    </button>
+  </h2>
+
+  <div id="collapseApproved"
+       class="accordion-collapse collapse show"
+       data-bs-parent="#statusAccordion">
+
+    <div class="accordion-body p-0">
+
+      <!-- 👇 CONTEXT LABEL ROW -->
+      <div class="monday-label-row">
+        <div></div>
+        <div class="label">Worker</div>
+        <div class="label">Review status</div>
+        <div class="label">Submitted at</div>
+        <div class="label text-end">Action</div>
+      </div>
+
+      {% for item in approved_items %}
+      <div class="monday-row">
+
+        <div class="status-bar approved"
+             title="Approved work item"></div>
+
+        <div class="cell worker"
+             title="Assigned worker">
+          {{ item.owner.get_full_name|default:item.owner.username }}
+        </div>
+
+        <div class="cell">
+          <span class="status-pill approved-blue"
+                title="This submission has been approved">
+            Approved
+          </span>
+        </div>
+
+        <div class="cell small text-muted"
+             title="Date and time the work was submitted">
+          {{ item.submitted_at|date:"M d, Y · H:i" }}
+        </div>
+
+        <div class="cell action">
+          <a href="{% url 'admin_app:work-item-review' item.id %}"
+             class="btn btn-sm btn-outline-primary"
+             title="View review details">
+            View
+          </a>
+        </div>
+
+      </div>
+      {% empty %}
+      <div class="empty-state">
+        No approved work yet
+      </div>
+      {% endfor %}
+    </div>
   </div>
+</div>
 
-  <div class="card-body p-0">
-    {% if ongoing_items %}
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>Worker</th>
-          <th>Status</th>
-        </tr>
-      </thead>
+ <!-- ================= SUBMITTED ================= -->
+<div class="accordion-item monday-board mb-3 border-0">
+  <h2 class="accordion-header">
+    <button class="accordion-button monday-group-title done p-3 rounded collapsed"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#collapseSubmitted"
+            aria-expanded="true"
+            aria-controls="collapseSubmitted">
+      <span class="dot done me-2"></span>
+      Submitted (Needs Review)
+      <span class="group-count">{{ submitted_count }}</span>
+      <i class="fas fa-chevron-down ms-auto accordion-icon"></i>
+    </button>
+  </h2>
 
-      <tbody>
-        {% for item in ongoing_items %}
-        <tr>
-          <td>
-            <i class="far fa-user me-1 text-muted"></i>
-            {{ item.owner.get_full_name|default:item.owner.username }}
-          </td>
+  <div id="collapseSubmitted"
+       class="accordion-collapse collapse show"
+       data-bs-parent="#statusAccordion">
 
-          <td>
-            {% if item.status == "working_on_it" %}
-              <span class="badge ui-badge status text-info">
-                <i class="fas fa-spinner me-1"></i>
-                Working on it
-              </span>
-            {% else %}
-              <span class="badge ui-badge status text-secondary">
-                <i class="far fa-circle me-1"></i>
-                Not started
-              </span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="accordion-body p-0">
 
-    {% else %}
-      <div class="p-3 text-muted fst-italic">
-        <i class="far fa-smile me-1"></i>
+      <!-- 👇 CONTEXT LABEL ROW -->
+      <div class="monday-label-row">
+        <div></div>
+        <div class="label">Worker</div>
+        <div class="label">Review status</div>
+        <div class="label">Submitted at</div>
+        <div class="label text-end">Action</div>
+      </div>
+
+      {% for item in submitted_items %}
+      <div class="monday-row">
+
+        <div class="status-bar done"
+             title="Submitted work item"></div>
+
+        <div class="cell worker"
+             title="Assigned worker">
+          {{ item.owner.get_full_name|default:item.owner.username }}
+        </div>
+
+        <div class="cell">
+          {% if item.review_decision == "revision" %}
+            <span class="status-pill revision"
+                  title="Reviewer requested changes">
+              Needs revision
+            </span>
+          {% else %}
+            <span class="status-pill pending"
+                  title="Waiting for review">
+              Pending review
+            </span>
+          {% endif %}
+        </div>
+
+        <div class="cell small text-muted"
+             title="Date and time the work was submitted">
+          {{ item.submitted_at|date:"M d, Y · H:i" }}
+          {% if item.submitted_at > workcycle.due_at %}
+            <span class="late"
+                  title="Submitted after deadline">
+              Late
+            </span>
+          {% endif %}
+        </div>
+
+        <div class="cell action">
+          <a href="{% url 'admin_app:work-item-review' item.id %}"
+             class="btn btn-sm btn-primary"
+             title="Review this submission">
+            Review
+          </a>
+        </div>
+
+      </div>
+      {% empty %}
+      <div class="empty-state">
+        No pending submissions
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+
+  <!-- ================= ONGOING ================= -->
+<div class="accordion-item monday-board mb-3 border-0">
+  <h2 class="accordion-header">
+    <button class="accordion-button monday-group-title warning p-3 rounded collapsed"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#collapseOngoing"
+            aria-expanded="true"
+            aria-controls="collapseOngoing">
+      <span class="dot warning me-2"></span>
+      In Progress / Not Started
+      <span class="group-count">{{ ongoing_count }}</span>
+      <i class="fas fa-chevron-down ms-auto accordion-icon"></i>
+    </button>
+  </h2>
+
+  <div id="collapseOngoing"
+       class="accordion-collapse collapse show"
+       data-bs-parent="#statusAccordion">
+
+    <div class="accordion-body p-0">
+
+      <!-- 👇 CONTEXT LABEL ROW -->
+      <div class="monday-label-row">
+        <div></div>
+        <div class="label">Worker</div>
+        <div class="label">Work status</div>
+        <div class="label">Submission</div>
+        <div class="label text-end">Action</div>
+      </div>
+
+      {% for item in ongoing_items %}
+      <div class="monday-row">
+
+        <div class="status-bar warning"
+             title="Work not yet submitted"></div>
+
+        <div class="cell worker"
+             title="Assigned worker">
+          {{ item.owner.get_full_name|default:item.owner.username }}
+        </div>
+
+        <div class="cell">
+          {% if item.status == "working_on_it" %}
+            <span class="status-pill working"
+                  title="Worker is currently working">
+              Working on it
+            </span>
+          {% else %}
+            <span class="status-pill not-started"
+                  title="Work has not started yet">
+              Not started
+            </span>
+          {% endif %}
+        </div>
+
+        <div class="cell muted"
+             title="No submission yet">
+          —
+        </div>
+
+        <div class="cell muted action"
+             title="No action available until submission">
+          —
+        </div>
+
+      </div>
+      {% empty %}
+      <div class="empty-state success">
         All workers are done 🎉
       </div>
-    {% endif %}
+      {% endfor %}
+    </div>
   </div>
 </div>
+
+</div>
+
+<!-- ================= STYLES ================= -->
+<style>
+  /* COLUMN CONTEXT LABELS (MONDAY STYLE) */
+.monday-label-row{
+  display:grid;
+  grid-template-columns:6px 1.6fr 1fr 1.2fr 1fr;
+  padding:6px 0;
+  font-size:.7rem;
+  font-weight:700;
+  color:#64748b;
+  background:#f1f5f9;
+  border-top:1px solid #e5e7eb;
+}
+
+.monday-label-row .label{
+  padding:0 12px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.monday-label-row .label.text-end{
+  text-align:right;
+}
+
+  .wc-back-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 12px;
+  font-size:.85rem;
+  font-weight:600;
+  color:#334155;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:999px;
+  text-decoration:none;
+  transition:all .15s ease;
+}
+
+.wc-back-btn i{
+  font-size:.75rem;
+}
+
+.wc-back-btn:hover{
+  background:#eef2ff;
+  border-color:#c7d2fe;
+  color:#1e3a8a;
+  text-decoration:none;
+}
+
+  .alignment-between{
+    display: flex;
+    justify-content: space-between;
+  }
+  /* Improved Header Styles */
+  .wc-description-container {
+    max-width: 100%;
+  }
+  
+  .wc-description {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #374151;
+  }
+  
+  /* Stats Badges */
+  .badge.bg-approved {
+    background-color: #2563eb !important;
+  }
+  
+  .badge.bg-submitted {
+    background-color: #10b981 !important;
+  }
+  
+  .badge.bg-ongoing {
+    background-color: #f59e0b !important;
+  }
+  
+  /* Accordion Specific Styles */
+  .accordion-button:not(.collapsed) .accordion-icon {
+    transform: rotate(180deg);
+  }
+  .accordion-button {
+    transition: all 0.2s ease;
+  }
+  .accordion-button:focus {
+    box-shadow: none;
+    border-color: #c7d2fe;
+  }
+
+  /* Original styles updated for integration */
+  .group-count{
+    margin-left: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 700;
+    background: #e5e7eb;
+    color: #374151;
+  }
+  .monday-group-title.approved .group-count{
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  .monday-group-title.done .group-count{
+    background: #d1fae5;
+    color: #065f46;
+  }
+  .monday-group-title.warning .group-count{
+    background: #fde68a;
+    color: #92400e;
+  }
+
+  /* BOARD */
+  .monday-board{
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  /* GROUP TITLE (Now an accordion button) */
+  .accordion-button.monday-group-title {
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: .85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+  }
+  .monday-group-title.done{ background: #ecfdf5; }
+  .monday-group-title.approved{ background: #eff6ff; }
+  .monday-group-title.warning{ background: #fff7ed; }
+  .accordion-button.monday-group-title::after {
+    display: none; /* Hide Bootstrap's default icon */
+  }
+
+  /* ROW */
+  .monday-row{
+    display: grid;
+    grid-template-columns: 6px 1.6fr 1fr 1.2fr 1fr;
+    align-items: center;
+    min-height: 48px;
+    border-top: 1px solid #e5e7eb;
+  }
+  .monday-row:hover{ background: #f9fafb; }
+
+  /* STATUS BAR */
+  .status-bar{ height: 100%; }
+  .status-bar.done{ background: #10b981; }
+  .status-bar.approved{ background: #2563eb; }
+  .status-bar.warning{ background: #f59e0b; }
+
+  /* CELLS */
+  .cell{ padding: 8px 12px; font-size: .85rem; }
+  .cell.worker{ font-weight: 600; }
+  .cell.action{ text-align: right; }
+  .cell.muted{ color: #9ca3af; }
+
+  /* PILLS */
+  .status-pill{
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+  .status-pill.approved-blue{ background: #dbeafe; color: #1e40af; }
+  .status-pill.pending{ background: #fde68a; color: #92400e; }
+  .status-pill.revision{ background: #fecaca; color: #991b1b; }
+  .status-pill.working{ background: #e0f2fe; color: #075985; }
+  .status-pill.not-started{ background: #e5e7eb; color: #374151; }
+
+  /* DOT */
+  .dot{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .dot.done{ background: #10b981; }
+  .dot.approved{ background: #2563eb; }
+  .dot.warning{ background: #f59e0b; }
+
+  /* MISC */
+  .late{
+    margin-left: 6px;
+    font-size: .7rem;
+    font-weight: 600;
+    color: #dc2626;
+  }
+  .empty-state{
+    padding: 14px;
+    font-size: .85rem;
+    color: #6b7280;
+  }
+  .empty-state.success{ color: #15803d; }
+</style>
 
 {% endblock %}

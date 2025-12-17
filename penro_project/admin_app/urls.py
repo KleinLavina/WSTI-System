@@ -2,7 +2,7 @@ from django.urls import path
 from admin_app.views import (
     dashboard,
     workcycle_list, create_workcycle, edit_workcycle, reassign_workcycle, workcycle_assignments,  
-    teams,
+    team_views,
     users, create_user, update_user, delete_user,
     completed_work_summary, done_workers_by_workcycle,
     review_work_item, admin_work_item_discussion, admin_work_item_threads,
@@ -51,7 +51,7 @@ urlpatterns = [
  
 
 
-    path("teams/", teams, name="teams"),
+    path("teams/", team_views, name="teams"),
 
     path("users/<int:user_id>/update/", update_user, name="user-update"),
     path("users/<int:user_id>/delete/", delete_user, name="user-delete"),

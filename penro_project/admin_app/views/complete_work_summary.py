@@ -2,7 +2,6 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Count, Q, F, ExpressionWrapper, FloatField
 from django.db.models.functions import NullIf
 from django.shortcuts import render
-
 from accounts.models import WorkItem
 
 
@@ -11,43 +10,61 @@ def completed_work_summary(request):
 
     summary = (
         WorkItem.objects
-        .filter(workcycle__is_active=True, is_active=True)
+        .filter(
+            workcycle__is_active=True,
+            is_active=True,
+        )
         .values(
             "workcycle_id",
             "workcycle__title",
             "workcycle__due_at",
         )
         .annotate(
-            # TOTAL workers assigned
+            # TOTAL
             total_workers=Count("id"),
 
-            # DONE / SUBMITTED
+            # DONE
             done_count=Count(
                 "id",
                 filter=Q(status="done")
             ),
 
-            # REVIEW STATES (ONLY from DONE)
-            pending_review_count=Count(
+            # NOT FINISHED = not_started + working_on_it
+            not_finished_count=Count(
                 "id",
-                filter=Q(status="done", review_decision="pending")
+                filter=Q(status__in=["not_started", "working_on_it"])
             ),
 
-            revision_count=Count(
-                "id",
-                filter=Q(status="done", review_decision="revision")
-            ),
-
+            # REVIEW COUNTS
             approved_count=Count(
                 "id",
                 filter=Q(status="done", review_decision="approved")
             ),
+            revision_count=Count(
+                "id",
+                filter=Q(status="done", review_decision="revision")
+            ),
+            pending_review_count=Count(
+                "id",
+                filter=Q(status="done", review_decision="pending")
+            ),
         )
         .annotate(
-            approval_pct=ExpressionWrapper(
-                100.0 * F("approved_count") / NullIf(F("total_workers"), 0),
+            # STATUS PROGRESS %
+            done_pct=ExpressionWrapper(
+                100.0 * F("done_count") / NullIf(F("total_workers"), 0),
                 output_field=FloatField()
-            )
+            ),
+            not_finished_pct=ExpressionWrapper(
+                100.0 * F("not_finished_count") / NullIf(F("total_workers"), 0),
+                output_field=FloatField()
+            ),
+
+            # APPROVAL %
+            approval_pct=ExpressionWrapper(
+                100.0 * F("approved_count") / NullIf(F("done_count"), 0),
+                output_field=FloatField()
+            ),
         )
         .order_by("workcycle__due_at")
     )

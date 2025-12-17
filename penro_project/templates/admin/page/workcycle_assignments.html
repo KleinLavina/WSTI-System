@@ -3,16 +3,172 @@
 
 {% block content %}
 
-<!-- PAGE HEADER -->
-<div class="mb-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
+<style>
+/* ===============================
+   MONDAY-STYLE WORKCYCLE VIEW
+================================ */
+.wc-layout{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:20px;
+}
 
-  <div>
-    <h3 class="mb-1 fw-bold d-flex align-items-center gap-2">
-      <i class="fas fa-tasks text-primary"></i>
+/* HEADER */
+.wc-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+}
+
+.wc-title h3{
+  margin:0;
+  font-weight:800;
+}
+
+.wc-meta{
+  margin-top:4px;
+  font-size:.8rem;
+  color:#6b7280;
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+}
+
+.wc-desc{
+  margin-top:8px;
+  font-size:.85rem;
+  color:#475569;
+}
+
+/* BASE CARD */
+.wc-card{
+  background:#fff;
+  border-radius:16px;
+  border:1px solid #e5e7eb;
+  box-shadow:0 10px 28px rgba(15,23,42,.08);
+}
+
+/* CARD HEADER */
+.wc-card-header{
+  padding:14px 18px;
+  border-bottom:1px solid #e5e7eb;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* ASSIGNEES */
+.wc-assignees{
+  padding:16px 18px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.wc-pill{
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:.75rem;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+
+.wc-pill.user{
+  background:#eff6ff;
+  color:#2563eb;
+  border:1px solid #bfdbfe;
+}
+
+.wc-pill.team{
+  background:#ecfdf5;
+  color:#065f46;
+  border:1px solid #6ee7b7;
+}
+
+/* WORK LIST */
+.wc-list{
+  display:flex;
+  flex-direction:column;
+}
+
+.wc-row{
+  display:grid;
+  grid-template-columns:1.5fr .8fr .8fr 1fr;
+  gap:12px;
+  padding:14px 18px;
+  align-items:center;
+  border-top:1px solid #f1f5f9;
+  transition:.2s ease;
+}
+
+.wc-row:hover{
+  background:#f9fafb;
+}
+
+.wc-head{
+  background:#f8fafc;
+  font-size:.7rem;
+  font-weight:800;
+  text-transform:uppercase;
+  color:#6b7280;
+  border-top:none;
+}
+
+/* BADGES */
+.wc-badge{
+  padding:6px 10px;
+  font-size:.7rem;
+  font-weight:700;
+  border-radius:999px;
+  display:inline-block;
+}
+
+.wc-badge.status{
+  background:#e5e7eb;
+  color:#374151;
+}
+
+.wc-badge.review.approved{
+  background:#d1fae5;
+  color:#065f46;
+}
+
+.wc-badge.review.pending{
+  background:#fef3c7;
+  color:#92400e;
+}
+
+.wc-badge.review.revision{
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+/* ARCHIVED */
+.wc-archived .wc-row{
+  color:#9ca3af;
+}
+
+.wc-empty{
+  padding:16px 18px;
+  font-size:.8rem;
+  color:#9ca3af;
+  font-style:italic;
+}
+</style>
+
+<!-- HEADER -->
+<div class="wc-header mb-3">
+  <div class="wc-title">
+    <h3>
+      <i class="fas fa-tasks text-primary me-1"></i>
       {{ workcycle.title }}
     </h3>
 
-    <div class="text-muted small d-flex align-items-center gap-3 mt-1">
+    <div class="wc-meta">
       <span>
         <i class="far fa-calendar-alt me-1"></i>
         Due {{ workcycle.due_at|date:"M d, Y · H:i" }}
@@ -20,216 +176,154 @@
     </div>
 
     {% if workcycle.description %}
-    <div class="mt-2 text-muted">
-      <i class="fas fa-align-left me-1"></i>
+    <div class="wc-desc">
       {{ workcycle.description }}
     </div>
     {% endif %}
   </div>
 
-  <div>
-    <a href="{% url 'admin_app:workcycles' %}"
-       class="btn btn-outline-secondary shadow-sm">
-      <i class="fas fa-arrow-left me-1"></i>
-      Back to Work Cycles
-    </a>
-  </div>
-
+  <a href="{% url 'admin_app:workcycles' %}"
+     class="btn btn-sm btn-outline-secondary">
+    <i class="fas fa-arrow-left me-1"></i> Back
+  </a>
 </div>
 
-<!-- ASSIGNMENT -->
-<div class="card ui-card mb-4">
-  <div class="card-header ui-card-header">
-    <i class="fas fa-user-check text-success"></i>
-    Assigned To
-  </div>
+<div class="wc-layout">
 
-  <div class="card-body">
-    {% if assignments %}
-      <div class="d-flex flex-wrap gap-2">
+  <!-- ASSIGNED TO -->
+  <div class="wc-card">
+    <div class="wc-card-header">
+      <i class="fas fa-user-check text-success"></i>
+      Assigned To
+    </div>
+
+    <div class="wc-assignees">
+      {% if assignments %}
         {% for a in assignments %}
           {% if a.assigned_user %}
-            <span class="badge ui-pill user-pill">
-              <i class="far fa-user me-1"></i>
+            <span class="wc-pill user">
+              <i class="far fa-user"></i>
               {{ a.assigned_user.get_full_name|default:a.assigned_user.username }}
             </span>
           {% elif a.assigned_team %}
-            <span class="badge ui-pill team-pill">
-              <i class="fas fa-users me-1"></i>
+            <span class="wc-pill team">
+              <i class="fas fa-users"></i>
               {{ a.assigned_team.name }}
             </span>
           {% endif %}
         {% endfor %}
+      {% else %}
+        <span class="wc-empty">No assignments</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ACTIVE WORK -->
+  <div class="wc-card">
+    <div class="wc-card-header d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <i class="fas fa-play-circle text-primary"></i>
+        <span>Active Work Items</span>
       </div>
-    {% else %}
-      <span class="text-muted fst-italic">
-        <i class="far fa-circle me-1"></i> No assignments
-      </span>
-    {% endif %}
-  </div>
-</div>
 
-<!-- ACTIVE WORK -->
-<div class="card ui-card mb-4">
-  <div class="card-header ui-card-header">
-    <i class="fas fa-play-circle text-primary"></i>
-    Active Work Items
-  </div>
+      <!-- CHECK REVIEW LINK -->
+      <a href="{% url 'admin_app:completed-work-summary' %}"
+        class="wc-review-link">
+        <i class="fas fa-clipboard-check"></i>
+        <span>Review</span>
+      </a>
+    </div>
 
-  <div class="card-body p-0">
+
     {% if active_items %}
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>User</th>
-          <th>Status</th>
-          <th>Review</th>
-          <th>Submitted</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in active_items %}
-        <tr>
-          <td>
-            <i class="far fa-user me-1 text-muted"></i>
-            {{ item.owner.get_full_name|default:item.owner.username }}
-          </td>
-
-          <td>
-            <span class="badge ui-badge status">
-              {{ item.get_status_display }}
-            </span>
-          </td>
-
-          <td>
-            <span class="badge ui-badge review">
-              {{ item.get_review_decision_display }}
-            </span>
-          </td>
-
-          <td>
-            {% if item.submitted_at %}
-              <i class="far fa-clock me-1 text-muted"></i>
-              {{ item.submitted_at|date:"M d, Y · H:i" }}
-            {% else %}
-              —
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-      <div class="p-3 text-muted fst-italic">
-        <i class="far fa-folder-open me-1"></i>
-        No active work
+    <div class="wc-list">
+      <div class="wc-row wc-head">
+        <div>User</div>
+        <div>Status</div>
+        <div>Review</div>
+        <div>Submitted</div>
       </div>
+
+      {% for item in active_items %}
+      <div class="wc-row">
+        <div>
+          <i class="far fa-user me-1 text-muted"></i>
+          {{ item.owner.get_full_name|default:item.owner.username }}
+        </div>
+
+        <div>
+          <span class="wc-badge status">
+            {{ item.get_status_display }}
+          </span>
+        </div>
+
+        <div>
+          <span class="wc-badge review {{ item.review_decision }}">
+            {{ item.get_review_decision_display }}
+          </span>
+        </div>
+
+        <div>
+          {% if item.submitted_at %}
+            {{ item.submitted_at|date:"M d, Y · H:i" }}
+          {% else %}—{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="wc-empty">No active work</div>
     {% endif %}
   </div>
-</div>
 
-<!-- ARCHIVED -->
-<div class="card ui-card border-secondary">
-  <div class="card-header ui-card-header text-secondary">
-    <i class="fas fa-archive"></i>
-    Archived (Reassigned)
-  </div>
+  <!-- ARCHIVED -->
+  <div class="wc-card wc-archived">
+    <div class="wc-card-header text-secondary">
+      <i class="fas fa-archive"></i>
+      Archived (Reassigned)
+    </div>
 
-  <div class="card-body p-0">
     {% if archived_items %}
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>User</th>
-          <th>Last Status</th>
-        </tr>
-      </thead>
-      <tbody>
+      <div class="wc-list">
         {% for item in archived_items %}
-        <tr class="text-muted">
-          <td>
+        <div class="wc-row">
+          <div>
             <i class="far fa-user me-1"></i>
             {{ item.owner.get_full_name|default:item.owner.username }}
-          </td>
-          <td>{{ item.get_status_display }}</td>
-        </tr>
+          </div>
+          <div>{{ item.get_status_display }}</div>
+          <div></div>
+          <div></div>
+        </div>
         {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-      <div class="p-3 text-muted fst-italic">
-        <i class="fas fa-box-open me-1"></i>
-        No archived work
       </div>
+    {% else %}
+      <div class="wc-empty">No archived work</div>
     {% endif %}
   </div>
+
 </div>
-
 <style>
-
-/* ===== Base Card ===== */
-.ui-card {
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,.05);
-  box-shadow:
-    0 6px 18px rgba(0,0,0,.06),
-    0 2px 6px rgba(0,0,0,.04);
+  .wc-review-link{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:.75rem;
+  font-weight:700;
+  text-decoration:none;
+  color:#2563eb;
+  background:#eff6ff;
+  border:1px solid #bfdbfe;
+  transition:.2s ease;
 }
 
-/* Header */
-.ui-card-header {
-  background: transparent;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid rgba(0,0,0,.06);
-}
-
-/* Pills */
-.ui-pill {
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: .75rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-}
-
-.user-pill {
-  background: rgba(13,110,253,.12);
-  color: #0d6efd;
-}
-
-.team-pill {
-  background: rgba(25,135,84,.14);
-  color: #198754;
-}
-
-/* Badges */
-.ui-badge {
-  padding: 6px 10px;
-  font-size: .7rem;
-  font-weight: 600;
-  border-radius: 999px;
-}
-
-.ui-badge.status {
-  background: rgba(108,117,125,.15);
-  color: #495057;
-}
-
-.ui-badge.review {
-  background: rgba(13,202,240,.18);
-  color: #0dcaf0;
-}
-
-/* Tables */
-.table td, .table th {
-  vertical-align: middle;
+.wc-review-link:hover{
+  background:#2563eb;
+  color:#fff;
+  border-color:#2563eb;
 }
 
 </style>
-
 {% endblock %}

@@ -1,136 +1,93 @@
-<header class="ah">
-  <div class="logo">
-    <span class="ico"><i class="fas fa-landmark"></i></span>
-    <div class="logo-text">
-      <b>Admin</b>
-      <small>PENRO Work Submission Tracker</small>
-    </div>
-  </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Header</title>
 
-  <nav class="nav">
-    <a href="{% url 'admin_app:dashboard' %}">
-      <i class="fas fa-tachometer-alt"></i>
-      <span>Dashboard</span>
-    </a>
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      referrerpolicy="no-referrer" />
 
-    <a href="{% url 'admin_app:workcycles' %}">
-      <i class="fas fa-calendar-alt"></i>
-      <span>Work Cycles</span>
-    </a>
-
-    <a href="{% url 'admin_app:completed-work-summary' %}">
-      <i class="fas fa-clipboard-check"></i>
-      <span>Review</span>
-    </a>
-
-    <a href="{% url 'admin_app:users' %}">
-      <i class="fas fa-user-cog"></i>
-      <span>Workforces</span>
-    </a>
-
-    <a class="disabled">
-      <i class="fas fa-chart-line"></i>
-      <span>Reports</span><em>Soon</em>
-    </a>
-
-     <a href="{% url 'admin_app:discussion-list' %}">
-      <i class="fas fa-comments"></i> 
-      <span>Messages</span><em>Soon</em>
-    </a>
-
-    <a class="disabled">
-      <i class="fas fa-bell"></i>
-      <span>Notifications</span><em>Soon</em>
-    </a>
-  </nav>
-
-  <div class="user" data-user-menu>
-    <button class="ubox" type="button">
-      <i class="fas fa-user-circle"></i>
-      <span>{{ request.user.username|truncatechars:12 }}</span>
-      <i class="fas fa-chevron-down"></i>
-    </button>
-
-    <div class="udrop">
-      <a href="#"><i class="fas fa-id-card"></i>Profile</a>
-      <a href="#"><i class="fas fa-cog"></i>Settings</a>
-      <a href="{% url 'logout' %}" class="out">
-        <i class="fas fa-sign-out-alt"></i>Logout
-      </a>
-    </div>
-  </div>
-</header>
 <style>
-/* HEADER */
+/* ================= HEADER ================= */
 .ah{
   position:sticky;
   top:0;
   z-index:1050;
   display:flex;
   align-items:center;
-  gap:1rem;
   padding:.6rem 1.1rem;
   background:linear-gradient(90deg,#1e293b,#334155);
   color:#fff;
   box-shadow:0 2px 10px rgba(0,0,0,.15);
 }
 
+/* LEFT */
+.left-section{
+  display:flex;
+  align-items:center;
+}
+
 /* LOGO */
-.logo{display:flex;align-items:center;gap:.6rem}
+.logo{
+  display:flex;
+  align-items:center;
+  gap:.6rem;
+}
 .ico{
-  width:34px;height:34px;
-  display:grid;place-items:center;
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
   background:linear-gradient(135deg,#3b82f6,#1d4ed8);
-  border-radius:8px
+  border-radius:8px;
 }
 .logo-text b{font-size:.9rem}
 .logo-text small{font-size:.6rem;opacity:.7}
 
-/* NAV */
-.nav{
-  flex:1;
+/* RIGHT GROUP */
+.right-section{
+  margin-left:auto; /* THIS IS THE KEY FIX */
   display:flex;
-  justify-content:center;
-  gap:.35rem;
+  align-items:center;
+  gap:.5rem;
 }
 
-/* ICON-ONLY LINKS */
+/* DESKTOP NAV (RIGHT SIDE) */
+.nav{
+  display:flex;
+  gap:.35rem;
+}
 .nav a{
   position:relative;
+  width:42px;
+  height:38px;
   display:flex;
   align-items:center;
   justify-content:center;
-  width:42px;
-  height:38px;
   color:#e5e7eb;
   border-radius:10px;
   text-decoration:none;
-  transition:.15s;
 }
+.nav a:hover{background:rgba(255,255,255,.14)}
+.nav a.active{background:rgba(59,130,246,.4)}
+.nav a.disabled{opacity:.45;pointer-events:none}
 
-/* ICON */
-.nav a i{
-  font-size:1rem;
-}
-
-/* LABEL (HIDDEN) */
-.nav a span{
+/* TOOLTIP */
+.nav span{
   position:absolute;
-  left:50%;
-  bottom:-30px;
-  transform:translateX(-50%);
+  bottom:-28px;
   background:#111827;
-  color:#fff;
   font-size:.7rem;
   padding:.2rem .45rem;
   border-radius:6px;
-  white-space:nowrap;
   opacity:0;
-  pointer-events:none;
   transition:.15s;
+  white-space:nowrap;
 }
+.nav a:hover span{opacity:1}
 
-/* SOON BADGE */
+/* SOON */
 .nav em{
   position:absolute;
   top:-4px;
@@ -141,26 +98,23 @@
   background:rgba(255,255,255,.25);
 }
 
-/* HOVER */
-.nav a:hover{
-  background:rgba(255,255,255,.14);
-  color:#fff;
-}
-.nav a:hover span{
-  opacity:1;
-  bottom:-26px;
+/* ACTIONS */
+.actions{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
 }
 
-/* ACTIVE */
-.nav a.active{
-  background:rgba(59,130,246,.4);
+/* MOBILE BUTTON */
+.menu-btn{
+  display:none;
+  width:38px;
+  height:36px;
+  border-radius:8px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);
   color:#fff;
-}
-
-/* DISABLED */
-.nav a.disabled{
-  opacity:.45;
-  pointer-events:none;
+  cursor:pointer;
 }
 
 /* USER */
@@ -174,26 +128,22 @@
   background:rgba(255,255,255,.12);
   border:1px solid rgba(255,255,255,.2);
   color:#fff;
-  cursor:pointer
+  cursor:pointer;
 }
-.ubox i:last-child{
-  font-size:.7rem;
-  transition:.2s
-}
-.ubox.active i:last-child{transform:rotate(180deg)}
+.ubox i:last-child{font-size:.7rem}
 
-/* DROPDOWN */
+/* USER DROPDOWN */
 .udrop{
   position:absolute;
   right:0;
   top:calc(100% + 8px);
-  z-index:1100;
   width:160px;
   background:#fff;
   border-radius:8px;
   border:1px solid #e5e7eb;
-  box-shadow:0 10px 25px rgba(0,0,0,.2);
-  display:none
+  box-shadow:0 15px 30px rgba(0,0,0,.25);
+  display:none;
+  z-index:2000;
 }
 .udrop a{
   display:flex;
@@ -201,30 +151,148 @@
   padding:.55rem .7rem;
   font-size:.85rem;
   color:#334155;
-  text-decoration:none
+  text-decoration:none;
 }
 .udrop a:hover{background:#f8fafc}
 .udrop .out{color:#dc2626}
 .udrop.show{display:block}
+
+/* ================= MOBILE ================= */
+@media (max-width:768px){
+
+  /* HIDE DESKTOP NAV */
+  .nav{
+    position:absolute;
+    top:100%;
+    right:1rem;
+    width:220px;
+    background:#0f172a;
+    border-radius:14px;
+    padding:.4rem;
+    display:none;
+    flex-direction:column;
+    box-shadow:0 20px 40px rgba(0,0,0,.45);
+    z-index:1500;
+  }
+  .nav.show{display:flex}
+
+  .nav a{
+    width:100%;
+    justify-content:flex-start;
+    gap:.6rem;
+    padding:.6rem .7rem;
+  }
+
+  .nav span{
+    position:static;
+    opacity:1;
+    background:none;
+    font-size:.85rem;
+  }
+
+  .menu-btn{
+    display:grid;
+    place-items:center;
+  }
+}
 </style>
+</head>
+
+<body>
+
+<header class="ah">
+
+  <!-- LEFT -->
+  <div class="left-section">
+    <div class="logo">
+      <span class="ico"><i class="fas fa-landmark"></i></span>
+      <div class="logo-text">
+        <b>Admin</b>
+        <small>PENRO Work Submission Tracker</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right-section">
+
+    <nav class="nav" data-nav>
+      <a href="{% url 'admin_app:dashboard' %}">
+        <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+      </a>
+      <a href="{% url 'admin_app:workcycles' %}">
+        <i class="fas fa-calendar-alt"></i><span>Work Cycles</span>
+      </a>
+      <a href="{% url 'admin_app:completed-work-summary' %}">
+        <i class="fas fa-clipboard-check"></i><span>Review</span>
+      </a>
+      <a href="{% url 'admin_app:users' %}">
+        <i class="fas fa-user-cog"></i><span>Workforces</span>
+      </a>
+      <a class="disabled">
+        <i class="fas fa-chart-line"></i><span>Reports</span><em>Soon</em>
+      </a>
+      <a href="{% url 'admin_app:discussion-list' %}">
+        <i class="fas fa-comments"></i><span>Messages</span><em>Soon</em>
+      </a>
+      <a class="disabled">
+        <i class="fas fa-bell"></i><span>Notifications</span><em>Soon</em>
+      </a>
+    </nav>
+
+    <div class="actions">
+      <button class="menu-btn" data-menu-toggle>
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <div class="user" data-user-menu>
+        <button class="ubox">
+          <i class="fas fa-user-circle"></i>
+          <span>{{ request.user.username|truncatechars:12 }}</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+
+        <div class="udrop">
+          <a href="#"><i class="fas fa-id-card"></i>Profile</a>
+          <a href="#"><i class="fas fa-cog"></i>Settings</a>
+          <a href="{% url 'logout' %}" class="out">
+            <i class="fas fa-sign-out-alt"></i>Logout
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</header>
+
 <script>
+/* USER DROPDOWN */
 document.addEventListener("click",e=>{
   document.querySelectorAll("[data-user-menu]").forEach(w=>{
     const b=w.querySelector(".ubox"),
           d=w.querySelector(".udrop");
     if(b.contains(e.target)){
       d.classList.toggle("show");
-      b.classList.toggle("active");
     }else{
       d.classList.remove("show");
-      b.classList.remove("active");
     }
   });
 });
 
+/* MOBILE NAV */
+document.querySelector("[data-menu-toggle]").addEventListener("click",e=>{
+  e.stopPropagation();
+  document.querySelector("[data-nav]").classList.toggle("show");
+});
+
+/* ACTIVE LINK */
 const currentPath = location.pathname.replace(/\/$/, "");
 document.querySelectorAll(".nav a[href]").forEach(link=>{
-  const linkPath = new URL(link.href).pathname.replace(/\/$/, "");
-  if(currentPath === linkPath) link.classList.add("active");
+  if(new URL(link.href).pathname.replace(/\/$/,"")===currentPath){
+    link.classList.add("active");
+  }
 });
 </script>
+
+</body>
+</html>

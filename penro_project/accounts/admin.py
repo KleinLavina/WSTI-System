@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-
 from .models import (
     User,
     Team,
@@ -9,6 +8,7 @@ from .models import (
     WorkAssignment,
     WorkItem,
     WorkItemAttachment,
+    WorkItemMessage,
 )
 
 # ============================================================
@@ -19,6 +19,7 @@ from .models import (
 class UserAdmin(BaseUserAdmin):
     list_display = (
         "username",
+        "email",
         "first_name",
         "last_name",
         "position_title",
@@ -35,75 +36,58 @@ class UserAdmin(BaseUserAdmin):
 
     search_fields = (
         "username",
+        "email",
         "first_name",
         "last_name",
-        "email",
     )
 
-    ordering = ("username",)
-
     fieldsets = BaseUserAdmin.fieldsets + (
-        (
-            "PENRO Details",
-            {
-                "fields": (
-                    "position_title",
-                    "login_role",
-                )
-            },
-        ),
+        ("Work Info", {
+            "fields": ("position_title", "login_role"),
+        }),
     )
 
 
 # ============================================================
-# TEAMS
+# TEAM & MEMBERSHIP
 # ============================================================
 
 class TeamMembershipInline(admin.TabularInline):
     model = TeamMembership
-    extra = 0
+    extra = 1
     autocomplete_fields = ("user",)
 
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = (
-        "name",
-        "created_at",
-    )
-
+    list_display = ("name", "created_at")
     search_fields = ("name",)
-    ordering = ("name",)
-    inlines = [TeamMembershipInline]
+    inlines = (TeamMembershipInline,)
 
 
 @admin.register(TeamMembership)
 class TeamMembershipAdmin(admin.ModelAdmin):
-    list_display = (
-        "team",
-        "user",
-        "role",
-        "joined_at",
-    )
-
-    list_filter = (
-        "role",
-        "team",
-    )
-
+    list_display = ("team", "user", "role", "joined_at")
+    list_filter = ("team", "role")
     search_fields = (
         "team__name",
         "user__username",
         "user__first_name",
         "user__last_name",
     )
-
-    ordering = ("team__name",)
+    autocomplete_fields = ("team", "user")
 
 
 # ============================================================
-# WORK CYCLES
+# WORK CYCLE
 # ============================================================
+
+class WorkAssignmentInline(admin.TabularInline):
+    model = WorkAssignment
+    extra = 0
+    autocomplete_fields = ("assigned_user", "assigned_team")
+    readonly_fields = ("assigned_at",)
+
 
 @admin.register(WorkCycle)
 class WorkCycleAdmin(admin.ModelAdmin):
@@ -120,15 +104,21 @@ class WorkCycleAdmin(admin.ModelAdmin):
         "due_at",
     )
 
-    search_fields = ("title",)
+    search_fields = (
+        "title",
+        "description",
+        "created_by__username",
+    )
 
-    ordering = ("-due_at",)
+    autocomplete_fields = ("created_by",)
 
-    readonly_fields = ("created_at",)
+    inlines = (WorkAssignmentInline,)
+
+    date_hierarchy = "due_at"
 
 
 # ============================================================
-# WORK ASSIGNMENTS
+# WORK ASSIGNMENT
 # ============================================================
 
 @admin.register(WorkAssignment)
@@ -142,7 +132,7 @@ class WorkAssignmentAdmin(admin.ModelAdmin):
 
     list_filter = (
         "assigned_team",
-        "assigned_user",
+        "assigned_at",
     )
 
     search_fields = (
@@ -151,17 +141,28 @@ class WorkAssignmentAdmin(admin.ModelAdmin):
         "assigned_team__name",
     )
 
-    ordering = ("-assigned_at",)
+    autocomplete_fields = (
+        "workcycle",
+        "assigned_user",
+        "assigned_team",
+    )
 
 
 # ============================================================
-# WORK ITEMS
+# WORK ITEM
 # ============================================================
 
 class WorkItemAttachmentInline(admin.TabularInline):
     model = WorkItemAttachment
     extra = 0
     readonly_fields = ("uploaded_at",)
+
+
+class WorkItemMessageInline(admin.TabularInline):
+    model = WorkItemMessage
+    extra = 0
+    readonly_fields = ("sender", "sender_role", "created_at")
+    can_delete = False
 
 
 @admin.register(WorkItem)
@@ -180,7 +181,7 @@ class WorkItemAdmin(admin.ModelAdmin):
         "status",
         "review_decision",
         "is_active",
-        "workcycle",
+        "inactive_reason",
     )
 
     search_fields = (
@@ -190,18 +191,27 @@ class WorkItemAdmin(admin.ModelAdmin):
         "owner__last_name",
     )
 
+    autocomplete_fields = (
+        "workcycle",
+        "owner",
+    )
+
     readonly_fields = (
-        "created_at",
         "submitted_at",
+        "inactive_at",
+        "created_at",
+    )
+
+    inlines = (
+        WorkItemAttachmentInline,
+        WorkItemMessageInline,
     )
 
     ordering = ("-created_at",)
 
-    inlines = [WorkItemAttachmentInline]
-
 
 # ============================================================
-# ATTACHMENTS
+# WORK ITEM ATTACHMENT
 # ============================================================
 
 @admin.register(WorkItemAttachment)
@@ -212,9 +222,44 @@ class WorkItemAttachmentAdmin(admin.ModelAdmin):
         "uploaded_at",
     )
 
-    readonly_fields = ("uploaded_at",)
-
     search_fields = (
         "work_item__workcycle__title",
         "uploaded_by__username",
     )
+
+    autocomplete_fields = (
+        "work_item",
+        "uploaded_by",
+    )
+
+
+# ============================================================
+# WORK ITEM MESSAGE
+# ============================================================
+
+@admin.register(WorkItemMessage)
+class WorkItemMessageAdmin(admin.ModelAdmin):
+    list_display = (
+        "work_item",
+        "sender",
+        "sender_role",
+        "created_at",
+    )
+
+    list_filter = (
+        "sender_role",
+        "created_at",
+    )
+
+    search_fields = (
+        "work_item__workcycle__title",
+        "sender__username",
+        "message",
+    )
+
+    autocomplete_fields = (
+        "work_item",
+        "sender",
+    )
+
+    readonly_fields = ("created_at",)

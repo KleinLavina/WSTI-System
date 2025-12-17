@@ -34,10 +34,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_crontab',
 
-    'accounts',
+    'accounts.apps.AccountsConfig',                         # ✅ main accounts app
+  
+
     'admin_app',
     'user_app',
 ]
+
 
 AUTH_USER_MODEL = 'accounts.User'
 LOGIN_URL = "/auth/login/"

@@ -1,20 +1,38 @@
-from email import message_from_string
+from django.db.models import Count
 from django.contrib import messages
-from django.shortcuts import render, redirect
-from accounts.models import User, Team, WorkCycle
-from admin_app.services.workcycle_service import create_workcycle_with_assignments
-from django.shortcuts import get_object_or_404
-from admin_app.services.workcycle_reassign_service import (
-    reassign_workcycle as reassign_workcycle_service
-)
-from accounts.models import WorkCycle, WorkAssignment, WorkItem, TeamMembership
+from django.shortcuts import render, redirect, get_object_or_404
 
+from accounts.models import (
+    User,
+    Team,
+    WorkCycle,
+    WorkAssignment,
+    WorkItem,
+)
+
+from admin_app.services.workcycle_service import (
+    create_workcycle_with_assignments,
+)
+
+from admin_app.services.workcycle_reassign_service import (
+    reassign_workcycle as reassign_workcycle_service,
+)
+
+
+# ============================================================
+# WORK CYCLE LIST
+# ============================================================
 
 def workcycle_list(request):
     workcycles = (
         WorkCycle.objects
-        .all()
-        .prefetch_related("assignments__assigned_team")
+        .annotate(
+            assignment_count=Count("assignments__id", distinct=True)
+        )
+        .prefetch_related(
+            "assignments__assigned_user",
+            "assignments__assigned_team",
+        )
         .order_by("-created_at")
     )
 
@@ -32,6 +50,9 @@ def workcycle_list(request):
             "teams": Team.objects.all(),
         },
     )
+# ============================================================
+# CREATE WORK CYCLE
+# ============================================================
 
 def create_workcycle(request):
     if request.method == "POST":
@@ -39,7 +60,7 @@ def create_workcycle(request):
         description = request.POST.get("description", "")
         due_at = request.POST.get("due_at")
 
-        # USERS (from users[])
+        # USERS
         raw_user_ids = request.POST.getlist("users[]")
         user_ids = [uid for uid in raw_user_ids if uid.isdigit()]
         users = User.objects.filter(id__in=user_ids)
@@ -57,31 +78,41 @@ def create_workcycle(request):
             team=team,
         )
 
+        messages.success(request, "Work cycle created successfully.")
         return redirect("admin_app:workcycles")
 
-    # fallback (not usually used because modal lives in li  st page)
+    # Fallback (rarely used)
     return render(
         request,
         "admin/page/workcycle_create.html",
         {
             "users": User.objects.filter(is_active=True),
             "teams": Team.objects.all(),
-        }
+        },
     )
+
+
+# ============================================================
+# EDIT WORK CYCLE
+# ============================================================
 
 def edit_workcycle(request):
     if request.method == "POST":
         wc_id = request.POST.get("workcycle_id")
-        wc = get_object_or_404(WorkCycle, id=wc_id)
+        workcycle = get_object_or_404(WorkCycle, id=wc_id)
 
-        wc.title = request.POST.get("title")
-        wc.description = request.POST.get("description", "")
-        wc.due_at = request.POST.get("due_at")
+        workcycle.title = request.POST.get("title")
+        workcycle.description = request.POST.get("description", "")
+        workcycle.due_at = request.POST.get("due_at")
+        workcycle.save()
 
-        wc.save()
-
+        messages.success(request, "Work cycle updated successfully.")
         return redirect("admin_app:workcycles")
-    
+
+
+# ============================================================
+# REASSIGN WORK CYCLE
+# ============================================================
 
 def reassign_workcycle(request):
     if request.method != "POST":
@@ -99,28 +130,52 @@ def reassign_workcycle(request):
     team_id = request.POST.get("team")
     team = Team.objects.filter(id=team_id).first() if team_id else None
 
-    # Safety check
+    # OPTIONAL NOTE
+    inactive_note = request.POST.get("inactive_note", "").strip()
+
+    # SAFETY CHECK
     if not users.exists() and not team:
-        messages.error(request, "You must assign at least one user or a team.")
+        messages.error(
+            request,
+            "You must assign at least one user or a team."
+        )
         return redirect("admin_app:workcycles")
 
-    # Perform reassignment
+    # BUSINESS LOGIC (SERVICE)
     reassign_workcycle_service(
         workcycle=workcycle,
         users=users,
         team=team,
+        inactive_note=inactive_note,
         performed_by=request.user,
     )
 
     messages.success(request, "Work cycle reassigned successfully.")
     return redirect("admin_app:workcycles")
 
+
+# ============================================================
+# WORK CYCLE ASSIGNMENT DETAILS
+# ============================================================
+
 def workcycle_assignments(request, pk):
     workcycle = get_object_or_404(WorkCycle, pk=pk)
 
-    assignments = WorkAssignment.objects.filter(workcycle=workcycle)
-    active_items = WorkItem.objects.filter(workcycle=workcycle, is_active=True)
-    archived_items = WorkItem.objects.filter(workcycle=workcycle, is_active=False)
+    assignments = (
+        WorkAssignment.objects
+        .filter(workcycle=workcycle)
+        .select_related("assigned_user", "assigned_team")
+    )
+
+    active_items = WorkItem.objects.filter(
+        workcycle=workcycle,
+        is_active=True,
+    )
+
+    archived_items = WorkItem.objects.filter(
+        workcycle=workcycle,
+        is_active=False,
+    )
 
     return render(
         request,

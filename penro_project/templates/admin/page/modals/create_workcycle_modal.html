@@ -20,19 +20,26 @@
           <div class="p-4 overflow-y-auto" style="max-height:70vh;">
 
             <!-- TITLE -->
-            <div class="mb-3">
+            <!-- TITLE -->
+            <div class="mb-3 position-relative">
               <label class="form-label">Title</label>
               <div class="input-group">
                 <span class="input-group-text">
                   <i class="fas fa-tasks"></i>
                 </span>
                 <input type="text"
-                       name="title"
-                       class="form-control"
-                       placeholder="e.g. January Accomplishment Report"
-                       required>
+                      name="title"
+                      id="workcycleTitle"
+                      class="form-control"
+                      placeholder="e.g. September Accomplishment Report 2025"
+                      autocomplete="off"
+                      required>
               </div>
+
+              <!-- SUGGESTIONS -->
+              <div class="title-suggestions d-none" id="titleSuggestions"></div>
             </div>
+
 
             <!-- DESCRIPTION -->
             <div class="mb-3">
@@ -150,6 +157,42 @@
 .input-group-text i {
   color: #6c757d;
 }
+.title-suggestions{
+  position:absolute;
+  top:100%;
+  left:0;
+  width:100%;
+  margin-top:6px;
+  background:#ffffff;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  padding:8px;
+  z-index:1070;
+}
+
+.title-suggestions button{
+  display:block;
+  width:100%;
+  text-align:left;
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  padding:8px 10px;
+  font-size:.85rem;
+  margin-bottom:6px;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.title-suggestions button:hover{
+  background:#eef2ff;
+  border-color:#6366f1;
+}
+
+.title-suggestions button:last-child{
+  margin-bottom:0;
+}
 </style>
 
 <!-- JS -->
@@ -219,5 +262,60 @@ document.addEventListener("DOMContentLoaded", () => {
     minuteIncrement: 5,
     defaultHour: 17
   });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  const input = document.getElementById("workcycleTitle");
+  const box = document.getElementById("titleSuggestions");
+
+  if (!input || !box) return;
+
+  const now = new Date();
+  const month = now.toLocaleString("default", { month: "long" });
+  const year = now.getFullYear();
+
+  // Naming patterns
+  const patterns = [
+    "Accomplishment Report",
+    "Work Cycle",
+    "Performance Board",
+    "Compliance Monitoring",
+    "Operations Board",
+    "Monthly Activity Report"
+  ];
+
+  function renderSuggestions() {
+    box.innerHTML = "";
+    patterns.forEach(p => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = `${month} ${p} ${year}`;
+      btn.addEventListener("click", () => {
+        input.value = btn.textContent;
+        box.classList.add("d-none");
+      });
+      box.appendChild(btn);
+    });
+    box.classList.remove("d-none");
+  }
+
+  // Show suggestions when input is focused and empty
+  input.addEventListener("focus", () => {
+    if (!input.value) renderSuggestions();
+  });
+
+  // Hide when typing
+  input.addEventListener("input", () => {
+    box.classList.add("d-none");
+  });
+
+  // Hide when clicking outside
+  document.addEventListener("click", e => {
+    if (!box.contains(e.target) && e.target !== input) {
+      box.classList.add("d-none");
+    }
+  });
+
 });
 </script>
