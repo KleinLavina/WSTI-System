@@ -1,3 +1,4 @@
+# notifications/models.py
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -5,15 +6,6 @@ from accounts.models import WorkItem
 
 
 class Notification(models.Model):
-    """
-    Generic notification model for:
-    - chat messages
-    - review decisions
-    - work status updates
-    - deadline reminders / overdue alerts
-    - system-generated events
-    """
-
     TYPE_CHOICES = [
         ("chat", "Chat Message"),
         ("review", "Review Decision"),
@@ -37,7 +29,7 @@ class Notification(models.Model):
     title = models.CharField(max_length=200)
     message = models.TextField()
 
-    # Optional context link
+    # Context
     work_item = models.ForeignKey(
         WorkItem,
         on_delete=models.CASCADE,
