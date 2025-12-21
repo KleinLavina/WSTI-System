@@ -1,10 +1,20 @@
 ## 📎 File Submission & Centralized Admin Upload Process
 
-The **Work Submission Tracker & Indicator System** implements a **centralized file submission workflow** where **only the designated Admin** performs the final document uploading.
+The **Work Submission Tracker & Indicator System** is a **web-based application** built using **Django, JavaScript, HTML, CSS, and PostgreSQL**.  
+It implements a **centralized file submission workflow** where **only the designated Admin** performs the final document uploading.
 
 All documents prepared by **focal persons and sub-sections** are first collected under their respective sections and are **officially uploaded in bulk by the Section/Admin user**.
 
 This approach ensures document integrity, consistency, and accountability.
+
+---
+
+## 🛠️ Technologies Used
+
+- **Backend:** Django (Python)
+- **Frontend:** HTML, CSS, JavaScript
+- **Database:** PostgreSQL
+- **Architecture:** Server-side rendered web system with role-based access control
 
 ---
 
@@ -28,6 +38,9 @@ The upload destination is determined by:
 
 All files uploaded by Admin are stored under the **section-specific folder** for that work cycle.
 
+---
+
+### 🧑‍💼 Role Responsibilities
 
 | Role | Responsibility |
 |------|---------------|
