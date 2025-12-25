@@ -1,0 +1,280 @@
+{% extends "admin/layout/base.html" %}
+{% block title %}Setup Complete{% endblock %}
+{% block content %}
+
+<div class="completion-container">
+  <div class="completion-content">
+    <!-- Success Icon -->
+    <div class="success-icon">
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+        <circle cx="40" cy="40" r="40" fill="#10B981" fill-opacity="0.1"/>
+        <circle cx="40" cy="40" r="32" fill="#10B981"/>
+        <path d="M28 40L36 48L52 32" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <!-- Title -->
+    <h1 class="completion-title">Setup Complete! 🎉</h1>
+    <p class="completion-subtitle">
+      Welcome to the team, {{ user.get_full_name|default:user.username }}!
+    </p>
+
+    <!-- Organization Summary -->
+    <div class="org-summary">
+      <h3 class="summary-title">Your Organization</h3>
+      
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-label">Division</div>
+          <div class="summary-value">
+            <span class="summary-icon">🏢</span>
+            {{ org_assignment.division.name }}
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <div class="summary-label">Section</div>
+          <div class="summary-value">
+            <span class="summary-icon">📋</span>
+            {{ org_assignment.section.name }}
+          </div>
+        </div>
+
+        {% if org_assignment.service %}
+        <div class="summary-item">
+          <div class="summary-label">Service</div>
+          <div class="summary-value">
+            <span class="summary-icon">⚙️</span>
+            {{ org_assignment.service.name }}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if org_assignment.unit %}
+        <div class="summary-item">
+          <div class="summary-label">Unit</div>
+          <div class="summary-value">
+            <span class="summary-icon">👥</span>
+            {{ org_assignment.unit.name }}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="completion-actions">
+      <a href="{% url 'admin_app:users' %}" class="btn-primary">
+        Go to Users Dashboard
+        <span class="arrow">→</span>
+      </a>
+      
+      <a href="{% url 'admin_app:user-create' %}" class="btn-secondary">
+        Create Another User
+      </a>
+    </div>
+
+    <!-- Help Text -->
+    <p class="help-text">
+      The user account has been created and assigned to the organization.
+      You can now manage users from the dashboard.
+    </p>
+  </div>
+</div>
+
+<style>
+.completion-container {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.completion-content {
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Success Icon */
+.success-icon {
+  margin-bottom: 2rem;
+  animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Title */
+.completion-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.completion-subtitle {
+  font-size: 1.1rem;
+  color: #6b7280;
+  margin-bottom: 2.5rem;
+  animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Organization Summary */
+.org-summary {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  text-align: left;
+  animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.summary-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.summary-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summary-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-value {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1rem;
+  color: #111827;
+  font-weight: 500;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.summary-icon {
+  font-size: 1.5rem;
+}
+
+/* Actions */
+.completion-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  animation: fadeInUp 0.6s ease-out 0.5s both;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.btn-secondary {
+  background: white;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.arrow {
+  font-size: 1.2rem;
+}
+
+/* Help Text */
+.help-text {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  animation: fadeInUp 0.6s ease-out 0.6s both;
+}
+
+@media (max-width: 640px) {
+  .completion-title {
+    font-size: 1.5rem;
+  }
+
+  .completion-subtitle {
+    font-size: 1rem;
+  }
+
+  .org-summary {
+    padding: 1.5rem;
+  }
+
+  .summary-value {
+    font-size: 0.9rem;
+  }
+}
+</style>
+
+{% endblock %}

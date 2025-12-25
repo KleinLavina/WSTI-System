@@ -1,36 +1,19 @@
-from django.core.exceptions import PermissionDenied
-from accounts.models import TeamMembership
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import transaction
+
 from structure.models import DocumentFolder
+from accounts.models import OrgAssignment
 
 
 # ============================================================
-# TEAM HIERARCHY RESOLUTION
-# ============================================================
-
-def get_team_chain(team):
-    """
-    Walks up the Team hierarchy and returns the chain
-    from Division → ... → Unit.
-    """
-    chain = []
-    current = team
-
-    while current:
-        chain.append(current)
-        current = current.parent
-
-    return list(reversed(chain))
-
-
-# ============================================================
-# PERMISSION CHECKS
+# PERMISSION CHECK
 # ============================================================
 
 def assert_can_upload(*, work_item, actor):
     """
-    Enforces who is allowed to upload attachments.
+    Admins can upload anything.
+    Users can only upload to their own work items.
     """
-
     if actor.login_role == "admin":
         return
 
@@ -41,7 +24,7 @@ def assert_can_upload(*, work_item, actor):
 
 
 # ============================================================
-# FOLDER GET-OR-CREATE HELPERS
+# SAFE FOLDER CREATION
 # ============================================================
 
 def get_or_create_folder(
@@ -61,96 +44,130 @@ def get_or_create_folder(
             "workcycle": workcycle,
             "created_by": created_by,
             "is_system_generated": system,
-        }
+        },
     )
     return folder
 
 
 # ============================================================
-# MAIN RESOLUTION SERVICE (OPTION A)
+# MAIN RESOLUTION SERVICE (ORGASSIGNMENT ONLY)
 # ============================================================
 
+@transaction.atomic
 def resolve_attachment_folder(*, work_item, attachment_type, actor):
     """
-    Resolves the DEFAULT attachment folder for uploads.
-
-    NOTE:
-    - This does NOT lock files to a single location
-    - Drag & drop may move files later
+    Resolves the default attachment folder using OrgAssignment
+    as the single source of truth.
     """
 
-    # ---------------------------
-    # 1. Permission check
-    # ---------------------------
+    # -------------------------------------------------
+    # 1️⃣ Permission
+    # -------------------------------------------------
     assert_can_upload(work_item=work_item, actor=actor)
 
-    # ---------------------------
-    # 2. Resolve actor team (optional context)
-    # ---------------------------
-    team_chain = []
+    # -------------------------------------------------
+    # 2️⃣ OrgAssignment (REQUIRED)
+    # -------------------------------------------------
     try:
-        membership = TeamMembership.objects.select_related("team").get(
-            user=actor
+        org = actor.org_assignments.select_related(
+            "division",
+            "section",
+            "service",
+            "unit",
+        ).get()
+    except OrgAssignment.DoesNotExist:
+        raise ValidationError(
+            f"User '{actor}' has no organizational assignment."
         )
-        team_chain = get_team_chain(membership.team)
-    except TeamMembership.DoesNotExist:
-        pass  # uploads still allowed for admins / system
 
-    # ---------------------------
-    # 3. ROOT folder
-    # ---------------------------
+    # -------------------------------------------------
+    # 3️⃣ ROOT
+    # -------------------------------------------------
     root = get_or_create_folder(
         name="ROOT",
         folder_type=DocumentFolder.FolderType.ROOT,
         parent=None,
     )
 
-    # ---------------------------
-    # 4. YEAR folder
-    # ---------------------------
+    # -------------------------------------------------
+    # 4️⃣ YEAR
+    # -------------------------------------------------
     year_folder = get_or_create_folder(
         name=str(work_item.workcycle.due_at.year),
         folder_type=DocumentFolder.FolderType.YEAR,
         parent=root,
     )
 
-    # ---------------------------
-    # 5. CATEGORY folder
-    # ---------------------------
+    # -------------------------------------------------
+    # 5️⃣ CATEGORY (attachment bucket)
+    # -------------------------------------------------
     category_folder = get_or_create_folder(
-        name=attachment_type.upper(),
+        name="Workcycles",
         folder_type=DocumentFolder.FolderType.CATEGORY,
         parent=year_folder,
     )
 
-    # ---------------------------
-    # 6. WORKCYCLE folder
-    # ---------------------------
-    wc_folder = get_or_create_folder(
+    # -------------------------------------------------
+    # 6️⃣ WORKCYCLE
+    # -------------------------------------------------
+    workcycle_folder = get_or_create_folder(
         name=work_item.workcycle.title,
         folder_type=DocumentFolder.FolderType.WORKCYCLE,
         parent=category_folder,
         workcycle=work_item.workcycle,
     )
 
-    # ---------------------------
-    # 7. OPTIONAL ORG STRUCTURE (system-only)
-    # ---------------------------
-    parent_folder = wc_folder
-    for team in team_chain:
-        parent_folder = get_or_create_folder(
-            name=team.name,
-            folder_type=team.team_type,
-            parent=parent_folder,
-        )
+    # -------------------------------------------------
+    # 7️⃣ DIVISION
+    # -------------------------------------------------
+    division_folder = get_or_create_folder(
+        name=org.division.name,
+        folder_type=DocumentFolder.FolderType.DIVISION,
+        parent=workcycle_folder,
+    )
 
-    # ---------------------------
-    # 8. DEFAULT ATTACHMENT FOLDER
-    # ---------------------------
+    # -------------------------------------------------
+    # 8️⃣ SECTION
+    # -------------------------------------------------
+    section_folder = get_or_create_folder(
+        name=org.section.name,
+        folder_type=DocumentFolder.FolderType.SECTION,
+        parent=division_folder,
+    )
+
+    # -------------------------------------------------
+    # 9️⃣ SERVICE (optional)
+    # -------------------------------------------------
+    parent_for_unit = section_folder
+
+    if org.service:
+        service_folder = get_or_create_folder(
+            name=org.service.name,
+            folder_type=DocumentFolder.FolderType.SERVICE,
+            parent=section_folder,
+        )
+        parent_for_unit = service_folder
+
+    # -------------------------------------------------
+    # 🔟 UNIT (optional)
+    # -------------------------------------------------
+    parent_for_attachment = parent_for_unit
+
+    if org.unit:
+        unit_folder = get_or_create_folder(
+            name=org.unit.name,
+            folder_type=DocumentFolder.FolderType.UNIT,
+            parent=parent_for_unit,
+        )
+        parent_for_attachment = unit_folder
+
+    # -------------------------------------------------
+    # 1️⃣1️⃣ ATTACHMENT TYPE (FINAL)
+    # -------------------------------------------------
     attachment_folder = get_or_create_folder(
-        name="Attachments",
+        name=attachment_type.upper(),
         folder_type=DocumentFolder.FolderType.ATTACHMENT,
-        parent=parent_folder,
+        parent=parent_for_attachment,
     )
 
     return attachment_folder

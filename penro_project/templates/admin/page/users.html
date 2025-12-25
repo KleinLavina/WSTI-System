@@ -2,78 +2,259 @@
 {% block title %}Users{% endblock %}
 {% block content %}
 
-<h3 class="mb-3">Users by Organization</h3>
+<!-- =========================
+     HEADER
+========================= -->
+<div class="users-header">
+  <div>
+    <h3 class="fw-bold mb-0">
+      Users
+      <span class="user-count">{{ total_users }}</span>
+    </h3>
+    <div class="text-muted small">
+      TIWI Reference · User Directory
+    </div>
+  </div>
 
-<div class="mb-3">
-    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createUserModal">
-        <i class="fas fa-user-plus me-1"></i> Create User
-    </button>
+  <a href="#"
+    class="btn-add-user"
+    data-bs-toggle="modal"
+    data-bs-target="#createUserModal">
+    + Add User
+  </a>
 
-    <a href="{% url 'admin_app:teams' %}" class="btn btn-primary ms-2">
-        <i class="fas fa-sitemap me-1"></i> Manage Structure
-    </a>
 </div>
 
-<div class="accordion-item border-0 ms-{{ level|add:1 }}">
+<div class="user-filters">
 
-  <!-- HEADER -->
-  <h2 class="accordion-header" id="heading{{ node.id }}">
-    <button class="accordion-button {% if level > 0 %}collapsed{% endif %}"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#collapse{{ node.id }}">
+  <!-- SEARCH -->
+  <input
+    type="text"
+    class="filter-input"
+    placeholder="Search user (name, username, email)"
+    disabled
+  >
 
-      <!-- Visual hierarchy marker -->
-      <span class="me-2 text-muted">└─</span>
+  <!-- ORG FILTERS (STATIC) -->
+  <select class="filter-select" disabled>
+    <option>All Divisions</option>
+  </select>
 
-      <strong>{{ node.name }}</strong>
+  <select class="filter-select" disabled>
+    <option>All Sections</option>
+  </select>
 
-      <span class="badge bg-light text-dark ms-2">
-        {{ node.get_team_type_display }}
-      </span>
-    </button>
-  </h2>
+  <select class="filter-select" disabled>
+    <option>All Services</option>
+  </select>
 
-  <!-- BODY -->
-  <div id="collapse{{ node.id }}"
-       class="accordion-collapse collapse {% if level == 0 %}show{% endif %}"
-       data-bs-parent="#orgAccordion">
+  <select class="filter-select" disabled>
+    <option>All Units</option>
+  </select>
 
-    <div class="accordion-body py-2 ps-4">
+</div>
 
-      <!-- USERS (UNIT ONLY) -->
-      {% if node.team_type == "unit" %}
-        <div class="mb-3">
-          <h6 class="text-muted small mb-2">
-            <i class="fas fa-users me-1"></i> Unit Members
-          </h6>
+<hr class="my-3">
 
-          <ul class="list-group list-group-sm">
-            {% for m in node.memberships.all %}
-              <li class="list-group-item d-flex justify-content-between">
-                {{ m.user.get_full_name|default:m.user.username }}
-                <span class="badge bg-secondary">
-                  {{ m.get_role_display }}
-                </span>
-              </li>
-            {% empty %}
-              <li class="list-group-item text-muted small">
-                No members assigned
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
+<!-- =========================
+     USER GRID
+========================= -->
+<div class="user-grid">
+
+{% for user in users %}
+
+<div class="user-card">
+
+  <!-- TOP LEFT: DIVISION -->
+  <span class="badge badge-division">
+    {{ user.division.name|default:"No Division" }}
+  </span>
+
+  <!-- TOP RIGHT: ROLE -->
+  <span class="badge badge-role {% if user.login_role == 'admin' %}admin{% else %}user{% endif %}">
+    {{ user.get_login_role_display }}
+  </span>
+
+  <!-- CENTER CONTENT -->
+  <div class="user-center">
+    <img
+      class="avatar"
+      src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username }}&background=2563eb&color=fff"
+      alt="Avatar"
+    >
+
+    <div class="user-name">
+      {{ user.get_full_name|default:user.username }}
+    </div>
+
+    <div class="user-position">
+      {{ user.position_title|default:"No position title" }}
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ORG STRUCTURE -->
+  <div class="user-org">
+    <div><strong>Section:</strong> {{ user.section.name|default:"—" }}</div>
+    <div><strong>Service:</strong> {{ user.service.name|default:"—" }}</div>
+    <div><strong>Unit:</strong> {{ user.unit.name|default:"—" }}</div>
+  </div>
+
+  <hr>
+
+  <!-- PERSONAL DETAILS -->
+  <div class="user-details">
+    <div><strong>Username:</strong> {{ user.username }}</div>
+    <div><strong>Email:</strong> {{ user.email|default:"—" }}</div>
+
+    <div>
+      <strong>Status:</strong>
+      {% if user.is_active %}
+        <span class="status active">Active</span>
+      {% else %}
+        <span class="status inactive">Inactive</span>
       {% endif %}
+    </div>
 
-
+    <div><strong>Joined:</strong> {{ user.date_joined|date:"M d, Y" }}</div>
+    <div><strong>Last Login:</strong>
+      {{ user.last_login|date:"M d, Y · H:i"|default:"Never" }}
     </div>
   </div>
 
 </div>
 
+{% endfor %}
 
+
+</div>
 {% include "admin/page/modals/create_user_modal.html" %}
-{% include "admin/page/modals/edit_user_modal.html" %}
+<!-- =========================
+     STYLES
+========================= -->
+<style>
+
+/* HEADER */
+.users-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:.75rem;
+}
+
+.user-count{
+  background:#eef2ff;
+  color:#4338ca;
+  font-size:.75rem;
+  padding:.15rem .5rem;
+  border-radius:999px;
+  margin-left:.35rem;
+  vertical-align:middle;
+}
+
+.btn-add-user{
+  background:#2563eb;
+  color:#fff;
+  padding:.45rem .85rem;
+  border-radius:6px;
+  font-size:.85rem;
+  text-decoration:none;
+}
+
+.btn-add-user:hover{
+  background:#1e40af;
+}
+
+
+/* FILTER BAR */
+.user-filters{
+  display:flex;
+  gap:.5rem;
+  flex-wrap:wrap;
+  margin-top:.75rem;
+}
+
+.filter-input,
+.filter-select{
+  padding:.45rem .6rem;
+  border:1px solid #e5e7eb;
+  border-radius:6px;
+  font-size:.85rem;
+  background:#f9fafb;
+  color:#6b7280;
+}
+
+/* GRID */
+.user-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:1.25rem;
+}
+
+/* CARD */
+.user-card{
+  position:relative;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  padding:1.25rem;
+}
+
+/* BADGES */
+.badge{
+  position:absolute;
+  font-size:.7rem;
+  padding:.25rem .6rem;
+  border-radius:999px;
+}
+
+.badge-division{
+  top:.6rem;
+  left:.6rem;
+  background:#f3f4f6;
+}
+
+.badge-role{
+  top:.6rem;
+  right:.6rem;
+  color:#fff;
+}
+
+.badge-role.admin{ background:#dc2626; }
+.badge-role.user{ background:#2563eb; }
+
+/* CENTER */
+.user-center{
+  text-align:center;
+  margin-top:1rem;
+}
+
+.avatar{
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  margin-bottom:.5rem;
+}
+
+.user-name{
+  font-weight:600;
+}
+
+.user-position{
+  font-size:.85rem;
+  color:#6b7280;
+}
+
+/* META */
+.user-org,
+.user-details{
+  font-size:.8rem;
+  color:#374151;
+}
+
+.status.active{ color:#16a34a; }
+.status.inactive{ color:#dc2626; }
+</style>
 
 {% endblock %}
-    

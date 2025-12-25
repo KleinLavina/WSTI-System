@@ -1,9 +1,12 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.db.models import Q
+from accounts.forms import OrgAssignmentForm
+    
 from .models import (
     User,
     Team,
-    TeamMembership,
+    OrgAssignment,
     WorkCycle,
     WorkAssignment,
     WorkItem,
@@ -12,11 +15,13 @@ from .models import (
 )
 
 # ============================================================
-# USER
+# USER ADMIN
 # ============================================================
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
+    ordering = ("username",)
+
     list_display = (
         "username",
         "email",
@@ -42,52 +47,92 @@ class UserAdmin(BaseUserAdmin):
     )
 
     fieldsets = BaseUserAdmin.fieldsets + (
-        ("Work Info", {
-            "fields": ("position_title", "login_role"),
+        ("Work Information", {
+            "fields": (
+                "position_title",
+                "login_role",
+            )
         }),
     )
 
 
 # ============================================================
-# TEAM & MEMBERSHIP
+# ORGANIZATIONAL STRUCTURE
 # ============================================================
 
-class TeamMembershipInline(admin.TabularInline):
-    model = TeamMembership
-    extra = 1
-    autocomplete_fields = ("user",)
+class OrgAssignmentInline(admin.StackedInline):
+    """
+    One resolved organizational path per user.
+    """
+    model = OrgAssignment
+    extra = 0
+    max_num = 1
+    autocomplete_fields = ("division", "section", "service", "unit")
 
 
-@admin.register(Team)
-class TeamAdmin(admin.ModelAdmin):
-    list_display = ("name", "created_at")
-    search_fields = ("name",)
-    inlines = (TeamMembershipInline,)
+@admin.register(OrgAssignment)
+class OrgAssignmentAdmin(admin.ModelAdmin):
+    form = OrgAssignmentForm
+    list_display = (
+        "user",
+        "division",
+        "section",
+        "service",
+        "unit",
+    )
 
+    list_filter = (
+        "division",
+        "section",
+        "service",
+        "unit",
+    )
 
-@admin.register(TeamMembership)
-class TeamMembershipAdmin(admin.ModelAdmin):
-    list_display = ("team", "user", "role", "joined_at")
-    list_filter = ("team", "role")
     search_fields = (
-        "team__name",
         "user__username",
         "user__first_name",
         "user__last_name",
     )
-    autocomplete_fields = ("team", "user")
+
+    autocomplete_fields = (
+        "user",
+        "division",
+        "section",
+        "service",
+        "unit",
+    )
+
+
+@admin.register(Team)
+class TeamAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "team_type",
+        "parent",
+        "created_at",
+    )
+
+    list_filter = (
+        "team_type",
+    )
+
+    search_fields = (
+        "name",
+    )
+
+    autocomplete_fields = (
+        "parent",
+    )
+
+    ordering = (
+        "team_type",
+        "name",
+    )
 
 
 # ============================================================
-# WORK CYCLE
+# PLANNING (WHAT & WHEN)
 # ============================================================
-
-class WorkAssignmentInline(admin.TabularInline):
-    model = WorkAssignment
-    extra = 0
-    autocomplete_fields = ("assigned_user", "assigned_team")
-    readonly_fields = ("assigned_at",)
-
 
 @admin.register(WorkCycle)
 class WorkCycleAdmin(admin.ModelAdmin):
@@ -101,25 +146,18 @@ class WorkCycleAdmin(admin.ModelAdmin):
 
     list_filter = (
         "is_active",
-        "due_at",
     )
 
     search_fields = (
         "title",
-        "description",
-        "created_by__username",
     )
 
-    autocomplete_fields = ("created_by",)
-
-    inlines = (WorkAssignmentInline,)
+    autocomplete_fields = (
+        "created_by",
+    )
 
     date_hierarchy = "due_at"
 
-
-# ============================================================
-# WORK ASSIGNMENT
-# ============================================================
 
 @admin.register(WorkAssignment)
 class WorkAssignmentAdmin(admin.ModelAdmin):
@@ -131,14 +169,7 @@ class WorkAssignmentAdmin(admin.ModelAdmin):
     )
 
     list_filter = (
-        "assigned_team",
         "assigned_at",
-    )
-
-    search_fields = (
-        "workcycle__title",
-        "assigned_user__username",
-        "assigned_team__name",
     )
 
     autocomplete_fields = (
@@ -149,20 +180,21 @@ class WorkAssignmentAdmin(admin.ModelAdmin):
 
 
 # ============================================================
-# WORK ITEM
+# EXECUTION (WORK ITEMS)
 # ============================================================
 
 class WorkItemAttachmentInline(admin.TabularInline):
     model = WorkItemAttachment
     extra = 0
     readonly_fields = ("uploaded_at",)
+    autocomplete_fields = ("folder", "uploaded_by")
 
 
 class WorkItemMessageInline(admin.TabularInline):
     model = WorkItemMessage
     extra = 0
-    readonly_fields = ("sender", "sender_role", "created_at")
-    can_delete = False
+    readonly_fields = ("created_at",)
+    autocomplete_fields = ("sender",)
 
 
 @admin.register(WorkItem)
@@ -173,7 +205,6 @@ class WorkItemAdmin(admin.ModelAdmin):
         "status",
         "review_decision",
         "is_active",
-        "submitted_at",
         "created_at",
     )
 
@@ -181,7 +212,6 @@ class WorkItemAdmin(admin.ModelAdmin):
         "status",
         "review_decision",
         "is_active",
-        "inactive_reason",
     )
 
     search_fields = (
@@ -196,46 +226,31 @@ class WorkItemAdmin(admin.ModelAdmin):
         "owner",
     )
 
-    readonly_fields = (
-        "submitted_at",
-        "inactive_at",
-        "created_at",
-    )
-
     inlines = (
         WorkItemAttachmentInline,
         WorkItemMessageInline,
     )
 
-    ordering = ("-created_at",)
-
-
-# ============================================================
-# WORK ITEM ATTACHMENT
-# ============================================================
 
 @admin.register(WorkItemAttachment)
 class WorkItemAttachmentAdmin(admin.ModelAdmin):
     list_display = (
         "work_item",
+        "attachment_type",
         "uploaded_by",
         "uploaded_at",
     )
 
-    search_fields = (
-        "work_item__workcycle__title",
-        "uploaded_by__username",
+    list_filter = (
+        "attachment_type",
     )
 
     autocomplete_fields = (
         "work_item",
+        "folder",
         "uploaded_by",
     )
 
-
-# ============================================================
-# WORK ITEM MESSAGE
-# ============================================================
 
 @admin.register(WorkItemMessage)
 class WorkItemMessageAdmin(admin.ModelAdmin):
@@ -248,18 +263,9 @@ class WorkItemMessageAdmin(admin.ModelAdmin):
 
     list_filter = (
         "sender_role",
-        "created_at",
-    )
-
-    search_fields = (
-        "work_item__workcycle__title",
-        "sender__username",
-        "message",
     )
 
     autocomplete_fields = (
         "work_item",
         "sender",
     )
-
-    readonly_fields = ("created_at",)

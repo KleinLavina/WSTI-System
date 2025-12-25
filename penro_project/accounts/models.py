@@ -7,7 +7,14 @@ from django.conf import settings
 from structure.models import DocumentFolder
 from django.core.exceptions import ValidationError, PermissionDenied
 
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+
+
 class User(AbstractUser):
+    # =====================================================
+    # BASIC USER INFO
+    # =====================================================
     position_title = models.CharField(
         max_length=150,
         blank=True,
@@ -22,15 +29,42 @@ class User(AbstractUser):
         ],
         default="user",
         db_index=True,
-        help_text="Defines access level inside the system"
     )
+
+    # =====================================================
+    # ORG ACCESSORS (SAFE & FAST)
+    # =====================================================
+
+    @property
+    def primary_org(self):
+        """
+        Single source of truth.
+        Returns OrgAssignment or None.
+        """
+        return getattr(self, "org_assignment", None)
+
+    @property
+    def division(self):
+        return self.primary_org.division if self.primary_org else None
+
+    @property
+    def section(self):
+        return self.primary_org.section if self.primary_org else None
+
+    @property
+    def service(self):
+        return self.primary_org.service if self.primary_org else None
+
+    @property
+    def unit(self):
+        return self.primary_org.unit if self.primary_org else None
 
     class Meta:
         ordering = ["username"]
 
     def __str__(self):
         full_name = self.get_full_name()
-        return f"{full_name} ({self.username})" if full_name else self.username
+        return full_name or self.username
 
 
 class Team(models.Model):
@@ -40,10 +74,7 @@ class Team(models.Model):
         SERVICE = "service", "Service"
         UNIT = "unit", "Unit"
 
-    name = models.CharField(
-        max_length=150,
-        help_text="Official organizational unit name"
-    )
+    name = models.CharField(max_length=150)
 
     team_type = models.CharField(
         max_length=20,
@@ -56,23 +87,14 @@ class Team(models.Model):
         null=True,
         blank=True,
         on_delete=models.PROTECT,
-        related_name="children",
-        help_text="Parent organizational unit"
+        related_name="children"
     )
 
-    description = models.TextField(
-        blank=True,
-        help_text="Optional description or mandate"
-    )
-
+    description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["team_type", "name"]
-        indexes = [
-            models.Index(fields=["team_type"]),
-            models.Index(fields=["parent"]),
-        ]
         constraints = [
             models.UniqueConstraint(
                 fields=["parent", "name"],
@@ -80,7 +102,6 @@ class Team(models.Model):
             )
         ]
 
-    # ✅ HIERARCHY RULES (THE IMPORTANT PART)
     def clean(self):
         allowed_parents = {
             self.TeamType.DIVISION: [None],
@@ -89,28 +110,19 @@ class Team(models.Model):
             self.TeamType.UNIT: [self.TeamType.SECTION, self.TeamType.SERVICE],
         }
 
-        valid_parent_types = allowed_parents[self.team_type]
-
         # Division must be root
         if self.team_type == self.TeamType.DIVISION:
             if self.parent is not None:
-                raise ValidationError("Division cannot have a parent")
+                raise ValidationError("Division cannot have a parent.")
             return
 
         # All others must have a parent
         if not self.parent:
-            raise ValidationError(
-                f"{self.get_team_type_display()} must have a parent"
-            )
+            raise ValidationError("This team must have a parent.")
 
-        # Validate parent type
-        if self.parent.team_type not in valid_parent_types:
-            allowed = ", ".join(
-                dict(self.TeamType.choices)[t]
-                for t in valid_parent_types
-            )
+        if self.parent.team_type not in allowed_parents[self.team_type]:
             raise ValidationError(
-                f"{self.get_team_type_display()} must belong to: {allowed}"
+                f"{self.get_team_type_display()} must belong to a valid parent."
             )
 
     def save(self, *args, **kwargs):
@@ -120,38 +132,83 @@ class Team(models.Model):
     def __str__(self):
         return f"{self.name} ({self.get_team_type_display()})"
 
-class TeamMembership(models.Model):
-    team = models.ForeignKey(
-        Team,
-        on_delete=models.CASCADE,
-        related_name="memberships"
-    )
 
-    user = models.ForeignKey(
+class OrgAssignment(models.Model):
+    user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name="team_memberships"
+        related_name="org_assignment"
     )
 
-    role = models.CharField(
-        max_length=30,
-        choices=[
-            ("lead", "Team Lead"),
-            ("member", "Member"),
-        ],
-        default="member",
-        help_text="Role of the user within the team"
+    division = models.ForeignKey(
+        Team,
+        on_delete=models.PROTECT,
+        related_name="division_assignments",
+        limit_choices_to={"team_type": "division"}
     )
 
-    joined_at = models.DateTimeField(auto_now_add=True)
+    section = models.ForeignKey(
+        Team,
+        on_delete=models.PROTECT,
+        related_name="section_assignments",
+        limit_choices_to={"team_type": "section"}
+    )
+
+    service = models.ForeignKey(
+        Team,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="service_assignments",
+        limit_choices_to={"team_type": "service"}
+    )
+
+    unit = models.ForeignKey(
+        Team,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="unit_assignments",
+        limit_choices_to={"team_type": "unit"}
+    )
+
+    def clean(self):
+        # Section must belong to Division
+        if self.section.parent_id != self.division_id:
+            raise ValidationError("Section must belong to Division.")
+
+        # Service (optional) must belong to Section
+        if self.service and self.service.parent_id != self.section_id:
+            raise ValidationError("Service must belong to Section.")
+
+        # Unit must belong to Section OR Service
+        if self.unit:
+            valid_parents = {self.section_id}
+            if self.service:
+                valid_parents.add(self.service_id)
+
+            if self.unit.parent_id not in valid_parents:
+                raise ValidationError(
+                    "Unit must belong to Section or Service."
+                )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     class Meta:
-        unique_together = ("team", "user")
-        ordering = ["team__name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user"],
+                name="one_org_assignment_per_user"
+            )
+        ]
 
     def __str__(self):
-        return f"{self.user} → {self.team} ({self.role})"
-
+        return (
+            f"{self.user} → "
+            f"{self.division} / {self.section}"
+        )
 
 # ============================================================
 # 3. PLANNING (WHAT & WHEN)
@@ -544,4 +601,5 @@ class WorkItemMessage(models.Model):
 
     def __str__(self):
         return f"{self.sender} → {self.work_item}"
+
 

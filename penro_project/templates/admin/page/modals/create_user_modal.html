@@ -1,6 +1,7 @@
 <div class="modal fade" id="createUserModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
+      <a href="{% url 'admin_app:users' %}" class="btn-secondary">X</a>
 
       <form method="post" action="{% url 'admin_app:user-create' %}">
         {% csrf_token %}
@@ -23,9 +24,6 @@
             </div>
           {% endfor %}
 
-          <div class="alert alert-info small mb-0">
-            This user will be created without a password.
-          </div>
 
         </div>
 

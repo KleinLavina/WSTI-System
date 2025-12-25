@@ -1,0 +1,204 @@
+{% extends "admin/layout/base.html" %}
+{% block title %}Assign Organization{% endblock %}
+{% block content %}
+
+<h3 class="fw-bold mb-2">Assign Organization</h3>
+
+<p class="text-muted mb-3">
+  User:
+  <strong>{{ user.get_full_name|default:user.username }}</strong>
+</p>
+
+<form method="post" class="org-form">
+  {% csrf_token %}
+
+  <!-- DIVISION -->
+  <div class="form-group">
+    <label for="id_division">Division</label>
+    {{ form.division }}
+  </div>
+
+  <!-- SECTION -->
+  <div class="form-group">
+    <label for="id_section">Section</label>
+    {{ form.section }}
+  </div>
+
+  <!-- SERVICE (OPTIONAL) -->
+  <div class="form-group">
+    <label for="id_service">Service (optional)</label>
+    {{ form.service }}
+  </div>
+
+  <!-- UNIT (OPTIONAL) -->
+  <div class="form-group">
+    <label for="id_unit">Unit (optional)</label>
+    {{ form.unit }}
+  </div>
+
+  <div class="form-actions">
+  <button type="submit" class="btn-primary">
+    Save & Finish
+  </button>
+
+  <!-- BACK (keeps form state via session) -->
+  <a
+    href="{% url 'admin_app:user-create' %}?restore=1&user={{ user.id }}"
+    class="btn-secondary"
+  >
+    Back to Create User
+  </a>
+
+  <a href="{% url 'admin_app:users' %}" class="btn-secondary">
+    Skip (not recommended)
+  </a>
+</div>
+
+</form>
+
+<!-- =========================
+     CASCADING LOGIC
+========================= -->
+<script>
+const division = document.getElementById("id_division");
+const section  = document.getElementById("id_section");
+const service  = document.getElementById("id_service");
+const unit     = document.getElementById("id_unit");
+
+function resetSelect(select, disabled=true) {
+  select.innerHTML = '<option value="">---------</option>';
+  select.disabled = disabled;
+}
+
+// Initial state
+resetSelect(section);
+resetSelect(service);
+resetSelect(unit);
+
+// ----------------------------
+// DIVISION → SECTION
+// ----------------------------
+division.addEventListener("change", () => {
+  resetSelect(section);
+  resetSelect(service);
+  resetSelect(unit);
+
+  if (!division.value) return;
+
+  fetch(`/admin/api/sections/${division.value}/`)
+    .then(res => res.json())
+    .then(data => {
+      section.disabled = false;
+      data.forEach(item => {
+        section.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+      });
+    });
+});
+
+// ----------------------------
+// SECTION → SERVICE
+// ----------------------------
+section.addEventListener("change", () => {
+  resetSelect(service);
+  resetSelect(unit);
+
+  if (!section.value) return;
+
+  fetch(`/admin/api/services/${section.value}/`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.length > 0) {
+        service.disabled = false;
+        data.forEach(item => {
+          service.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+        });
+      }
+    });
+
+  // Units directly under section
+  fetch(`/admin/api/units/?section=${section.value}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.length > 0) {
+        unit.disabled = false;
+        data.forEach(item => {
+          unit.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+        });
+      }
+    });
+});
+
+// ----------------------------
+// SERVICE → UNIT
+// ----------------------------
+service.addEventListener("change", () => {
+  resetSelect(unit);
+
+  if (!service.value) return;
+
+  fetch(`/admin/api/units/?service=${service.value}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.length > 0) {
+        unit.disabled = false;
+        data.forEach(item => {
+          unit.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+        });
+      }
+    });
+});
+</script>
+
+<!-- =========================
+     STYLES
+========================= -->
+<style>
+.org-form{
+  max-width:520px;
+}
+
+.form-group{
+  margin-bottom:.75rem;
+}
+
+.form-group label{
+  display:block;
+  font-weight:500;
+  margin-bottom:.25rem;
+}
+
+.form-group select{
+  width:100%;
+  padding:.45rem .6rem;
+  border:1px solid #e5e7eb;
+  border-radius:6px;
+  font-size:.85rem;
+}
+
+.form-actions{
+  display:flex;
+  gap:.5rem;
+  margin-top:1rem;
+}
+
+.btn-primary{
+  background:#2563eb;
+  color:#fff;
+  padding:.45rem 1rem;
+  border:none;
+  border-radius:6px;
+}
+
+.btn-primary:hover{
+  background:#1e40af;
+}
+
+.btn-secondary{
+  border:1px solid #e5e7eb;
+  padding:.45rem 1rem;
+  border-radius:6px;
+  text-decoration:none;
+}
+</style>
+
+{% endblock %}
