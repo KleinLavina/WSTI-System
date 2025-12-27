@@ -1,8 +1,12 @@
 from django.utils import timezone
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 
 from accounts.models import WorkItemAttachment
 
+
+# ============================================================
+# STATUS UPDATES
+# ============================================================
 
 def update_work_item_status(work_item, new_status):
     """
@@ -18,6 +22,10 @@ def update_work_item_status(work_item, new_status):
     work_item.save(update_fields=["status"])
 
 
+# ============================================================
+# SUBMISSION
+# ============================================================
+
 def submit_work_item(work_item, files=None, message=None, user=None):
     """
     Submit completed work item.
@@ -26,7 +34,6 @@ def submit_work_item(work_item, files=None, message=None, user=None):
     if work_item.status == "done":
         raise ValidationError("This work item has already been submitted.")
 
-    # ✅ CHECK EXISTING ATTACHMENTS
     has_existing_attachments = WorkItemAttachment.objects.filter(
         work_item=work_item
     ).exists()
@@ -34,7 +41,6 @@ def submit_work_item(work_item, files=None, message=None, user=None):
     if (not files or len(files) == 0) and not has_existing_attachments:
         raise ValidationError("At least one attachment is required.")
 
-    # ✅ SAVE NEW FILES IF PROVIDED
     if files:
         for f in files:
             WorkItemAttachment.objects.create(
@@ -43,7 +49,6 @@ def submit_work_item(work_item, files=None, message=None, user=None):
                 uploaded_by=user
             )
 
-    # ✅ FINALIZE SUBMISSION
     work_item.status = "done"
     work_item.review_decision = "pending"
     work_item.submitted_at = timezone.now()
@@ -59,11 +64,27 @@ def submit_work_item(work_item, files=None, message=None, user=None):
     ])
 
 
+# ============================================================
+# ATTACHMENTS (🔥 FIXED)
+# ============================================================
+
 def add_attachment_to_work_item(*, work_item, files, attachment_type, user):
     """
     Allow adding attachments even after submission.
     Each attachment MUST have a type.
     """
+
+    if not user:
+        raise PermissionDenied("Uploader is required.")
+
+    # ✅ FIX: use canonical org accessor
+    org = user.primary_org
+    if not org:
+        raise PermissionDenied(
+            "You are not assigned to any organization. "
+            "Please contact an administrator."
+        )
+
     if not attachment_type:
         raise ValidationError("Attachment type is required.")
 
@@ -78,6 +99,10 @@ def add_attachment_to_work_item(*, work_item, files, attachment_type, user):
             uploaded_by=user
         )
 
+
+# ============================================================
+# CONTEXT UPDATES
+# ============================================================
 
 def update_work_item_context(work_item, label=None, message=None):
     """

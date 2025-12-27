@@ -154,7 +154,7 @@ class UserUpdateForm(forms.ModelForm):
 class OrgAssignmentForm(forms.ModelForm):
     class Meta:
         model = OrgAssignment
-        fields = ["division", "section", "service", "unit"]
+        fields = ["user", "division", "section", "service", "unit"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

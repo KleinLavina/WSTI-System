@@ -63,13 +63,7 @@
         <p>Secure access</p>
     </div>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-danger py-2 text-center">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
+
 
     <form method="post">
         {% csrf_token %}

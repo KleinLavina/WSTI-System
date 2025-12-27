@@ -215,6 +215,24 @@ class OrgAssignment(models.Model):
 # ============================================================
 
 class WorkCycle(models.Model):
+    """
+    Represents a planning window for work items.
+    Lifecycle is derived from deadline + admin intent.
+    """
+
+    # ============================
+    # LIFECYCLE STATES (DERIVED)
+    # ============================
+    class LifecycleState(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        ONGOING = "ongoing", "Ongoing"
+        DUE_SOON = "due_soon", "Due Soon"
+        LAPSED = "lapsed", "Lapsed"
+        ARCHIVED = "archived", "Archived"
+
+    # ============================
+    # CORE FIELDS
+    # ============================
     title = models.CharField(
         max_length=200,
         help_text="Title of the task, report, or work cycle"
@@ -226,17 +244,18 @@ class WorkCycle(models.Model):
     )
 
     due_at = models.DateTimeField(
-        help_text="Deadline for this work cycle"    
+        help_text="Deadline for this work cycle"
     )
 
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name="created_workcycles",
         help_text="User who created this work cycle"
     )
 
+    # Admin / system control
     is_active = models.BooleanField(
         default=True,
         help_text="Inactive work cycles are archived"
@@ -244,6 +263,70 @@ class WorkCycle(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # ============================
+    # DERIVED LIFECYCLE (SOURCE OF TRUTH)
+    # ============================
+    @property
+    def lifecycle_state(self):
+        """
+        Determines lifecycle based on:
+        - Admin intent (is_active)
+        - Deadline proximity
+        """
+
+        # Admin override always wins
+        if not self.is_active:
+            return self.LifecycleState.ARCHIVED
+
+        now = timezone.now()
+
+        # Deadline reached or passed → Lapsed
+        if now >= self.due_at:
+            return self.LifecycleState.LAPSED
+
+        # Remaining time
+        remaining_seconds = (self.due_at - now).total_seconds()
+
+        # Due soon = 3 days (72 hours) or less
+        if remaining_seconds <= 3 * 24 * 60 * 60:
+            return self.LifecycleState.DUE_SOON
+
+        return self.LifecycleState.ONGOING
+
+    # ============================
+    # HUMAN-READABLE TIME REMAINING
+    # ============================
+    @property
+    def time_remaining(self):
+        """
+        Returns remaining time in a compact human format.
+        Example: '2d 4h 15m'
+        """
+
+        now = timezone.now()
+        total_seconds = int((self.due_at - now).total_seconds())
+
+        if total_seconds <= 0:
+            return "Expired"
+
+        days = total_seconds // 86400
+        hours = (total_seconds % 86400) // 3600
+        minutes = (total_seconds % 3600) // 60
+
+        parts = []
+
+        if days > 0:
+            parts.append(f"{days}d")
+        if hours > 0 or days > 0:
+            parts.append(f"{hours}h")
+        if minutes > 0 or hours > 0 or days > 0:
+            parts.append(f"{minutes}m")
+
+        return " ".join(parts)
+
+    # ============================
+    # DJANGO META
+    # ============================
     class Meta:
         ordering = ["-due_at"]
         indexes = [
@@ -253,7 +336,7 @@ class WorkCycle(models.Model):
 
     def __str__(self):
         return self.title
-
+    
 class WorkAssignment(models.Model):
     workcycle = models.ForeignKey(
         WorkCycle,

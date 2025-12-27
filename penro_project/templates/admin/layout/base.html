@@ -12,23 +12,131 @@
         crossorigin="anonymous"
         referrerpolicy="no-referrer">
 
-  <!-- JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
-
   <style>
-    html,body{margin:0;height:100%}
-    body{background:#f8fafc}
+    /* Base styles */
+    html, body {
+      margin: 0;
+      height: 100%;
+    }
+    
+    body {
+      background: #f8fafc;
+    }
 
-    /* main content wrapper */
-    .page-content{
-      padding:20px;
-      min-height:calc(100vh - 64px); /* header height safe */
+    .page-content {
+      padding: 20px;
+      min-height: calc(100vh - 64px); /* header height safe */
+    }
+
+    /* Notification styles */
+    .notifications {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 2000;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .notification {
+      padding: 15px 20px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      animation: slideIn 0.3s ease-out forwards;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .notification i {
+      margin-right: 12px;
+      font-size: 1.2em;
+    }
+
+    .notification-close {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      margin-left: 15px;
+      padding: 0 5px;
+      font-size: 1.1em;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+
+    .notification-close:hover {
+      opacity: 1;
+    }
+
+    /* Message type colors */
+    .notification-error {
+      background: #ef4444;
+      border-left: 4px solid #dc2626;
+    }
+
+    .notification-success {
+      background: #10b981;
+      border-left: 4px solid #059669;
+    }
+
+    .notification-warning {
+      background: #f59e0b;
+      border-left: 4px solid #d97706;
+    }
+
+    .notification-info {
+      background: #3b82f6;
+      border-left: 4px solid #2563eb;
+    }
+
+    /* Animations */
+    @keyframes slideIn {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+    }
+
+    .fade-out {
+      animation: fadeOut 0.3s ease-out forwards;
     }
   </style>
 </head>
 
 <body>
+  <!-- Notifications Container -->
+  <div class="notifications" id="notifications">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="notification notification-{{ message.tags|default:'info' }}" data-timeout="5000">
+          <div style="display: flex; align-items: center;">
+            <i class="fas 
+              {% if 'error' in message.tags %}fa-exclamation-circle
+              {% elif 'success' in message.tags %}fa-check-circle
+              {% elif 'warning' in message.tags %}fa-exclamation-triangle
+              {% else %}fa-info-circle{% endif %}">
+            </i>
+            <span>{{ message }}</span>
+          </div>
+          <button class="notification-close" aria-label="Close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
 
   <!-- TOP HEADER -->
   {% include "admin/layout/header.html" %}
@@ -39,6 +147,49 @@
       {% block content %}{% endblock %}
     </main>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const notifications = document.querySelectorAll('.notification');
+      
+      notifications.forEach(notification => {
+        const closeButton = notification.querySelector('.notification-close');
+        const timeout = parseInt(notification.getAttribute('data-timeout')) || 5000;
+        
+        // Auto-remove after timeout
+        const timeoutId = setTimeout(() => {
+          removeNotification(notification);
+        }, timeout);
+        
+        // Close button click
+        closeButton.addEventListener('click', () => {
+          clearTimeout(timeoutId);
+          removeNotification(notification);
+        });
+        
+        // Pause on hover
+        notification.addEventListener('mouseenter', () => {
+          clearTimeout(timeoutId);
+        });
+        
+        // Resume on mouse leave
+        notification.addEventListener('mouseleave', () => {
+          clearTimeout(timeoutId);
+          setTimeout(() => {
+            removeNotification(notification);
+          }, 1000);
+        });
+      });
+      
+      function removeNotification(element) {
+        element.classList.add('fade-out');
+        element.addEventListener('animationend', () => {
+          element.remove();
+        }, { once: true });
+      }
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>

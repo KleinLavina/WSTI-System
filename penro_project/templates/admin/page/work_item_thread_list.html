@@ -2,7 +2,7 @@
 {% block title %}Work Item Discussions{% endblock %}
 
 {% block content %}
-
+{% include "admin/page/modals/message_ui_modal.html" %}
 <div class="container-fluid">
 
   <h4 class="fw-bold mb-3 d-flex align-items-center gap-2">
@@ -105,6 +105,6 @@
   {% endif %}
 
 </div>
-{% include "admin/page/modals/message_ui_modal.html" %}
+
 
 {% endblock %}

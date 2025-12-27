@@ -1,7 +1,7 @@
 from django.db.models import Count
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
-
+from django.utils import timezone
 from accounts.models import (
     User,
     Team,
@@ -24,7 +24,18 @@ from admin_app.services.workcycle_reassign_service import (
 # ============================================================
 
 def workcycle_list(request):
-    workcycles = (
+    """
+    Admin list view for Work Cycles with:
+    - lifecycle filtering
+    - year/month filtering
+    - admin state stats
+    - lifecycle stats
+    """
+
+    # =========================================================
+    # BASE QUERYSET
+    # =========================================================
+    workcycles_qs = (
         WorkCycle.objects
         .annotate(
             assignment_count=Count("assignments__id", distinct=True)
@@ -36,18 +47,115 @@ def workcycle_list(request):
         .order_by("-created_at")
     )
 
+    # Convert to list ONCE (we will do python-level filtering)
+    workcycles = list(workcycles_qs)
+
+    # =========================================================
+    # FILTER PARAMS
+    # =========================================================
+    lifecycle_filter = request.GET.get("lifecycle")  # ongoing / due_soon / lapsed
+    year_filter = request.GET.get("year")
+    month_filter = request.GET.get("month")
+
+    # =========================================================
+    # APPLY FILTERS (SAFE ORDER)
+    # =========================================================
+    if lifecycle_filter:
+        workcycles = [
+            wc for wc in workcycles
+            if wc.lifecycle_state == lifecycle_filter
+        ]
+
+    if year_filter:
+        try:
+            year_filter = int(year_filter)
+            workcycles = [
+                wc for wc in workcycles
+                if wc.due_at.year == year_filter
+            ]
+        except ValueError:
+            pass
+
+    if month_filter:
+        try:
+            month_filter = int(month_filter)
+            workcycles = [
+                wc for wc in workcycles
+                if wc.due_at.month == month_filter
+            ]
+        except ValueError:
+            pass
+
+    # =========================================================
+    # ADMIN STATE COUNTS
+    # =========================================================
+    active_count = sum(1 for wc in workcycles if wc.is_active)
+    inactive_count = sum(1 for wc in workcycles if not wc.is_active)
+
+    # =========================================================
+    # LIFECYCLE COUNTS
+    # =========================================================
+    lifecycle_counts = {
+        "ongoing": 0,
+        "due_soon": 0,
+        "lapsed": 0,
+    }
+
+    for wc in workcycles:
+        lifecycle = wc.lifecycle_state
+        if lifecycle in lifecycle_counts:
+            lifecycle_counts[lifecycle] += 1
+
+    # =========================================================
+    # HELPER FLAGS (OPTIONAL UI HELPERS)
+    # =========================================================
     for wc in workcycles:
         wc.has_team_assignment = wc.assignments.filter(
             assigned_team__isnull=False
         ).exists()
 
+    # =========================================================
+    # FILTER OPTIONS (YEAR / MONTH DROPDOWNS)
+    # =========================================================
+    years = sorted({wc.due_at.year for wc in workcycles})
+
+    months = [
+        {"value": 1, "label": "January"},
+        {"value": 2, "label": "February"},
+        {"value": 3, "label": "March"},
+        {"value": 4, "label": "April"},
+        {"value": 5, "label": "May"},
+        {"value": 6, "label": "June"},
+        {"value": 7, "label": "July"},
+        {"value": 8, "label": "August"},
+        {"value": 9, "label": "September"},
+        {"value": 10, "label": "October"},
+        {"value": 11, "label": "November"},
+        {"value": 12, "label": "December"},
+    ]
+
+    # =========================================================
+    # RENDER
+    # =========================================================
     return render(
         request,
         "admin/page/workcycles.html",
         {
             "workcycles": workcycles,
+
+            # Stats
+            "active_count": active_count,
+            "inactive_count": inactive_count,
+            "lifecycle_counts": lifecycle_counts,
+
+            # Filter options
+            "years": years,
+            "months": months,
+
+            # Common context
             "users": User.objects.filter(is_active=True),
             "teams": Team.objects.all(),
+            "now": timezone.now(),
         },
     )
 # ============================================================

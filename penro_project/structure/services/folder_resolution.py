@@ -69,13 +69,8 @@ def resolve_attachment_folder(*, work_item, attachment_type, actor):
     # 2️⃣ OrgAssignment (REQUIRED)
     # -------------------------------------------------
     try:
-        org = actor.org_assignments.select_related(
-            "division",
-            "section",
-            "service",
-            "unit",
-        ).get()
-    except OrgAssignment.DoesNotExist:
+        org = actor.org_assignment
+    except (OrgAssignment.DoesNotExist, AttributeError):
         raise ValidationError(
             f"User '{actor}' has no organizational assignment."
         )

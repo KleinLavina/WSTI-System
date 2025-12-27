@@ -1,11 +1,18 @@
 {% extends "user/layout/base.html" %}
 
 {% block title %}
-Work Item Details
+Work Item Details boy
 {% endblock %}
 
 {% block content %}
+{% include "admin/page/modals/message_ui_modal.html" %}
 <style>
+
+/* HARD HIDE MODAL WHEN CLOSED */
+.qxdlg-modal-overlay[data-qxdlg-state="closed"] {
+  display: none;
+}
+
 :root {
   --navy-900: #0a1628;
   --navy-800: #0f2744;
@@ -838,5 +845,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
-{% include "admin/page/modals/message_ui_modal.html" %}
+
 {% endblock %}

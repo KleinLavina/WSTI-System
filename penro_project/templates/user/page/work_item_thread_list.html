@@ -1,7 +1,7 @@
 {% extends "user/layout/base.html" %}
 {% block title %}Discussions{% endblock %}
 {% block content %}
-
+{% include "user/page/modals/message_ui_modal.html" %}
 <div class="work-wrapper">
 
   <h5 class="fw-semibold mb-3">
@@ -53,5 +53,5 @@
   {% endif %}
 
 </div>
-{% include "user/page/modals/message_ui_modal.html" %}
+
 {% endblock %}

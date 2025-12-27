@@ -6,6 +6,87 @@
 
 {% block content %}
 
+{% if messages %}
+<div class="error-container" style="position: fixed; top: 80px; right: 20px; z-index: 2000; max-width: 400px; width: 90%;">
+  {% for message in messages %}
+    {% if message.tags == 'error' %}
+    <div class="error-alert" style="background-color: #ef4444; color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; animation: slideIn 0.3s ease-out; position: relative;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+        <i class="fas fa-exclamation-circle" style="font-size: 1.25rem; flex-shrink: 0;"></i>
+        <span style="word-break: break-word;">{{ message }}</span>
+      </div>
+      <button onclick="this.closest('.error-alert').remove()" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.1rem; padding: 0 0.5rem; flex-shrink: 0; margin-left: 0.5rem;">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="progress-bar" style="position: absolute; bottom: 0; left: 0; height: 3px; background: rgba(255, 255, 255, 0.5); width: 100%; border-radius: 0 0 8px 8px; overflow: hidden;">
+        <div class="progress" style="height: 100%; background: white; width: 100%; animation: progress 5s linear forwards;"></div>
+      </div>
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-dismiss after 5 seconds
+  const alerts = document.querySelectorAll('.error-alert');
+  alerts.forEach(alert => {
+    setTimeout(() => {
+      alert.style.animation = 'fadeOut 0.3s ease-out forwards';
+      setTimeout(() => alert.remove(), 300);
+    }, 5000);
+    
+    // Pause on hover
+    alert.addEventListener('mouseenter', function() {
+      const progress = this.querySelector('.progress');
+      if (progress) {
+        progress.style.animationPlayState = 'paused';
+      }
+    });
+    
+    // Resume on mouse leave
+    alert.addEventListener('mouseleave', function() {
+      const progress = this.querySelector('.progress');
+      if (progress) {
+        progress.style.animationPlayState = 'running';
+      }
+    });
+  });
+});
+</script>
+{% endif %}
+
+<style>
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.error-alert {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+</style>
+
 <style>
 /* NAVY BLUE PALETTE - BRIGHTER VERSION */
 :root {
