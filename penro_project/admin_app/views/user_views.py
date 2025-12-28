@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.urls import reverse
+from django.db import IntegrityError
 
 from accounts.models import User, Team, OrgAssignment
 from accounts.forms import UserCreateForm
@@ -35,7 +36,7 @@ def users(request):
 def create_user(request):
     """
     AJAX-only user creation endpoint.
-    Always returns JSON.
+    Always returns JSON with detailed error messages.
     """
 
     # ❌ Block GET requests
@@ -43,40 +44,103 @@ def create_user(request):
         return JsonResponse(
             {
                 "success": False,
-                "error": "Invalid request method"
+                "error": "Invalid request method. Please use POST."
             },
             status=405
         )
 
     form = UserCreateForm(request.POST)
 
-    # ❌ Invalid form → return errors
+    # ❌ Invalid form → return field-specific errors
     if not form.is_valid():
+        # Format errors for better display
+        formatted_errors = {}
+        for field, errors in form.errors.items():
+            if field == '__all__':
+                # Non-field errors
+                formatted_errors['general'] = [str(e) for e in errors]
+            else:
+                # Get field label for better error messages
+                field_label = str(form.fields[field].label or field.replace('_', ' ').title())
+                formatted_errors[field] = [
+                    f"{field_label}: {str(error)}" if not str(error).startswith(field_label) else str(error)
+                    for error in errors
+                ]
+        
         return JsonResponse(
             {
                 "success": False,
-                "errors": form.errors
+                "errors": formatted_errors,
+                "error": "Please correct the errors below."
             },
             status=400
         )
 
-    # ✅ Create user
-    user = form.save()
+    try:
+        # ✅ Create user
+        user = form.save()
 
-    # (Optional) Store raw form data for onboarding if you still need it
-    request.session[f"user_form_{user.id}"] = request.POST
+        # (Optional) Store raw form data for onboarding if you still need it
+        request.session[f"user_form_{user.id}"] = dict(request.POST)
 
-    # ✅ SUCCESS (always JSON)
-    return JsonResponse(
-        {
-            "success": True,
-            "onboard_url": reverse(
-                "admin_app:onboard-division",
-                args=[user.id]
+        # ✅ SUCCESS (always JSON)
+        return JsonResponse(
+            {
+                "success": True,
+                "message": f"User '{user.username}' created successfully!",
+                "user_id": user.id,
+                "onboard_url": reverse(
+                    "admin_app:onboard-division",
+                    args=[user.id]
+                )
+            },
+            status=201
+        )
+    
+    except IntegrityError as e:
+        # Handle database integrity errors (e.g., duplicate username/email)
+        error_message = str(e)
+        
+        if 'username' in error_message.lower():
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": "This username is already taken. Please choose another one.",
+                    "errors": {
+                        "username": ["This username is already taken."]
+                    }
+                },
+                status=400
             )
-        },
-        status=201
-    )
+        elif 'email' in error_message.lower():
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": "This email address is already registered.",
+                    "errors": {
+                        "email": ["This email address is already registered."]
+                    }
+                },
+                status=400
+            )
+        else:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": "A database error occurred. The user may already exist."
+                },
+                status=400
+            )
+    
+    except Exception as e:
+        # Catch any other unexpected errors
+        return JsonResponse(
+            {
+                "success": False,
+                "error": f"An unexpected error occurred: {str(e)}"
+            },
+            status=500
+        )
 
 # ============================================
 # ONBOARDING FLOW
@@ -90,24 +154,44 @@ def onboard_division(request, user_id):
     if request.method == "POST":
         division_id = request.POST.get("division")
 
-        if division_id:
-            # Save selection to session
-            request.session[f"onboard_{user.id}_division"] = division_id
-
-            # If AJAX → return next step URL
+        if not division_id:
             if request.headers.get("x-requested-with") == "XMLHttpRequest":
                 return JsonResponse({
-                    "next": reverse(
-                        "admin_app:onboard-section",
-                        args=[user.id]
-                    )
-                })
-
+                    "success": False,
+                    "error": "Please select a division."
+                }, status=400)
+            
             # Fallback for non-AJAX
-            return redirect(
-                "admin_app:onboard-section",
-                user_id=user.id
+            return render(
+                request,
+                "admin/page/modals/onboard_division.html",
+                {
+                    "user": user,
+                    "divisions": Team.objects.filter(team_type=Team.TeamType.DIVISION).order_by("name"),
+                    "error": "Please select a division.",
+                    "step": 1,
+                    "total_steps": 4,
+                },
             )
+
+        # Save selection to session
+        request.session[f"onboard_{user.id}_division"] = division_id
+
+        # If AJAX → return next step URL
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({
+                "success": True,
+                "next": reverse(
+                    "admin_app:onboard-section",
+                    args=[user.id]
+                )
+            })
+
+        # Fallback for non-AJAX
+        return redirect(
+            "admin_app:onboard-section",
+            user_id=user.id
+        )
 
     divisions = Team.objects.filter(
         team_type=Team.TeamType.DIVISION
@@ -135,11 +219,19 @@ def onboard_section(request, user_id):
     if request.method == "POST":
         section_id = request.POST.get("section")
 
+        if not section_id:
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({
+                    "success": False,
+                    "error": "Please select a section."
+                }, status=400)
+
         if section_id:
             request.session[f"onboard_{user.id}_section"] = section_id
 
             if request.headers.get("x-requested-with") == "XMLHttpRequest":
                 return JsonResponse({
+                    "success": True,
                     "next": reverse(
                         "admin_app:onboard-service",
                         args=[user.id]
@@ -186,6 +278,7 @@ def onboard_service(request, user_id):
 
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse({
+                "success": True,
                 "next": reverse(
                     "admin_app:onboard-unit",
                     args=[user.id]
@@ -233,6 +326,7 @@ def onboard_unit(request, user_id):
 
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse({
+                "success": True,
                 "next": reverse(
                     "admin_app:onboard-complete",
                     args=[user.id]
@@ -289,33 +383,46 @@ def onboard_complete(request, user_id):
     if not division_id or not section_id:
         return redirect("admin_app:onboard-division", user_id=user.id)
 
-    # Create or update organization assignment
-    org_assignment, _ = OrgAssignment.objects.update_or_create(
-        user=user,
-        defaults={
-            "division_id": division_id,
-            "section_id": section_id,
-            "service_id": service_id or None,
-            "unit_id": unit_id or None,
-        }
-    )
+    try:
+        # Create or update organization assignment
+        org_assignment, _ = OrgAssignment.objects.update_or_create(
+            user=user,
+            defaults={
+                "division_id": division_id,
+                "section_id": section_id,
+                "service_id": service_id or None,
+                "unit_id": unit_id or None,
+            }
+        )
 
-    # Clear onboarding session data
-    for key in (
-        f"onboard_{user.id}_division",
-        f"onboard_{user.id}_section",
-        f"onboard_{user.id}_service",
-        f"onboard_{user.id}_unit",
-        f"user_form_{user.id}",
-    ):
-        request.session.pop(key, None)
+        # Clear onboarding session data
+        for key in (
+            f"onboard_{user.id}_division",
+            f"onboard_{user.id}_section",
+            f"onboard_{user.id}_service",
+            f"onboard_{user.id}_unit",
+            f"user_form_{user.id}",
+        ):
+            request.session.pop(key, None)
 
-    # ✅ ALWAYS return HTML (no JSON here)
-    return render(
-        request,
-        "admin/page/modals/onboard_complete.html",
-        {
-            "user": user,
-            "org_assignment": org_assignment,
-        },
-    )
+        # ✅ ALWAYS return HTML (no JSON here)
+        return render(
+            request,
+            "admin/page/modals/onboard_complete.html",
+            {
+                "user": user,
+                "org_assignment": org_assignment,
+                "success": True,
+            },
+        )
+    
+    except Exception as e:
+        return render(
+            request,
+            "admin/page/modals/onboard_complete.html",
+            {
+                "user": user,
+                "error": f"Failed to complete onboarding: {str(e)}",
+                "success": False,
+            },
+        )   
