@@ -1,7 +1,7 @@
 from django.urls import path
 from admin_app.views import (
-    dashboard,
-    workcycle_list, create_workcycle, edit_workcycle, reassign_workcycle, workcycle_assignments, 
+    dashboard, inactive_workcycle_list,
+    workcycle_list,  create_workcycle, edit_workcycle, reassign_workcycle, workcycle_assignments, 
     create_user, users,
     completed_work_summary, done_workers_by_workcycle,
     review_work_item, admin_work_item_discussion, admin_work_item_threads, services_by_section, sections_by_division, units_by_parent,
@@ -24,6 +24,7 @@ urlpatterns = [
 
     # Workcycles
     path("workcycles/", workcycle_list, name="workcycles"),
+    path("workcycles/inactive/", inactive_workcycle_list, name="inactive-workcycles"),
     path("workcycles/create/", create_workcycle, name="workcycle-create"),
     path("workcycles/edit/", edit_workcycle, name="workcycle-edit"),
     path("workcycles/reassign/", reassign_workcycle, name="workcycle-reassign"),

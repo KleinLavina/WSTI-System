@@ -25,18 +25,16 @@ from admin_app.services.workcycle_reassign_service import (
 
 def workcycle_list(request):
     """
-    Admin list view for Work Cycles with:
-    - lifecycle filtering
-    - year/month filtering
-    - admin state stats
-    - lifecycle stats
+    Admin list view for ACTIVE Work Cycles
+    Stat-driven filtering via ?state=
     """
 
     # =========================================================
-    # BASE QUERYSET
+    # BASE QUERYSET (ACTIVE ONLY)
     # =========================================================
-    workcycles_qs = (
+    qs = (
         WorkCycle.objects
+        .filter(is_active=True)
         .annotate(
             assignment_count=Count("assignments__id", distinct=True)
         )
@@ -47,24 +45,102 @@ def workcycle_list(request):
         .order_by("-created_at")
     )
 
-    # Convert to list ONCE (we will do python-level filtering)
+    workcycles = list(qs)
+
+    # =========================================================
+    # STAT FILTER (FROM CLICKABLE BADGES)
+    # =========================================================
+    state = request.GET.get("state")  # ongoing | due_soon | lapsed
+
+    if state:
+        workcycles = [
+            wc for wc in workcycles
+            if wc.lifecycle_state == state
+        ]
+
+    # =========================================================
+    # SEARCH (OPTIONAL, KEEPS UX FLEXIBLE)
+    # =========================================================
+    search_query = request.GET.get("q", "").strip()
+    if search_query:
+        q = search_query.lower()
+        workcycles = [
+            wc for wc in workcycles
+            if q in wc.title.lower()
+        ]
+
+    # =========================================================
+    # STATS (ALWAYS BASED ON *ALL* ACTIVE)
+    # =========================================================
+    all_active = list(qs)
+
+    lifecycle_counts = {
+        "ongoing": 0,
+        "due_soon": 0,
+        "lapsed": 0,
+    }
+
+    for wc in all_active:
+        if wc.lifecycle_state in lifecycle_counts:
+            lifecycle_counts[wc.lifecycle_state] += 1
+
+    # =========================================================
+    # UI HELPERS
+    # =========================================================
+    for wc in workcycles:
+        wc.has_team_assignment = wc.assignments.filter(
+            assigned_team__isnull=False
+        ).exists()
+
+    return render(
+        request,
+        "admin/page/workcycles.html",
+        {
+            "workcycles": workcycles,
+            "active_count": len(all_active),
+            "lifecycle_counts": lifecycle_counts,
+            "current_state": state,   # 👈 for active badge styling
+            "search_query": search_query,
+            "users": User.objects.filter(is_active=True),
+            "teams": Team.objects.all(),
+            "now": timezone.now(),
+        },
+    )
+
+
+def inactive_workcycle_list(request):
+    """
+    Admin list view for INACTIVE (ARCHIVED) Work Cycles
+    """
+
+    # =========================================================
+    # BASE QUERYSET (INACTIVE ONLY)
+    # =========================================================
+    workcycles_qs = (
+        WorkCycle.objects
+        .filter(is_active=False)   # ✅ INACTIVE ONLY
+        .annotate(
+            assignment_count=Count("assignments__id", distinct=True)
+        )
+        .prefetch_related(
+            "assignments__assigned_user",
+            "assignments__assigned_team",
+        )
+        .order_by("-created_at")
+    )
+
     workcycles = list(workcycles_qs)
 
     # =========================================================
     # FILTER PARAMS
     # =========================================================
-    lifecycle_filter = request.GET.get("lifecycle")  # ongoing / due_soon / lapsed
     year_filter = request.GET.get("year")
     month_filter = request.GET.get("month")
+    search_query = request.GET.get("q", "").strip()
 
     # =========================================================
-    # APPLY FILTERS (SAFE ORDER)
+    # APPLY FILTERS
     # =========================================================
-    if lifecycle_filter:
-        workcycles = [
-            wc for wc in workcycles
-            if wc.lifecycle_state == lifecycle_filter
-        ]
 
     if year_filter:
         try:
@@ -86,36 +162,21 @@ def workcycle_list(request):
         except ValueError:
             pass
 
-    # =========================================================
-    # ADMIN STATE COUNTS
-    # =========================================================
-    active_count = sum(1 for wc in workcycles if wc.is_active)
-    inactive_count = sum(1 for wc in workcycles if not wc.is_active)
+    if search_query:
+        q = search_query.lower()
+        workcycles = [
+            wc for wc in workcycles
+            if q in wc.title.lower()
+        ]
 
     # =========================================================
-    # LIFECYCLE COUNTS
+    # STATS (INACTIVE PAGE)
     # =========================================================
-    lifecycle_counts = {
-        "ongoing": 0,
-        "due_soon": 0,
-        "lapsed": 0,
-    }
+    inactive_count = len(workcycles)
 
-    for wc in workcycles:
-        lifecycle = wc.lifecycle_state
-        if lifecycle in lifecycle_counts:
-            lifecycle_counts[lifecycle] += 1
 
     # =========================================================
-    # HELPER FLAGS (OPTIONAL UI HELPERS)
-    # =========================================================
-    for wc in workcycles:
-        wc.has_team_assignment = wc.assignments.filter(
-            assigned_team__isnull=False
-        ).exists()
-
-    # =========================================================
-    # FILTER OPTIONS (YEAR / MONTH DROPDOWNS)
+    # FILTER OPTIONS
     # =========================================================
     years = sorted({wc.due_at.year for wc in workcycles})
 
@@ -134,30 +195,19 @@ def workcycle_list(request):
         {"value": 12, "label": "December"},
     ]
 
-    # =========================================================
-    # RENDER
-    # =========================================================
     return render(
         request,
-        "admin/page/workcycles.html",
+        "admin/page/inactive_workcycles.html",
         {
             "workcycles": workcycles,
-
-            # Stats
-            "active_count": active_count,
             "inactive_count": inactive_count,
-            "lifecycle_counts": lifecycle_counts,
-
-            # Filter options
             "years": years,
             "months": months,
-
-            # Common context
-            "users": User.objects.filter(is_active=True),
-            "teams": Team.objects.all(),
             "now": timezone.now(),
         },
     )
+
+
 # ============================================================
 # CREATE WORK CYCLE
 # ============================================================

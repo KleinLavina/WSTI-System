@@ -1,798 +1,357 @@
 {% extends "admin/layout/base.html" %}
+{% load static %}
+
 {% block title %}Work Cycles{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/workcycles.css' %}">
+
+{% endblock %}
 
 {% block content %}
 
-<style>
-/* ===== Dark Blue Design System ===== */
-:root {
-  --primary-dark: #1e3a5f;
-  --primary: #2d4a7c;
-  --primary-light: #e8f0fe;
-  --primary-accent: #4a90d9;
-  --secondary: #64748b;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --surface: #ffffff;
-  --surface-alt: #f8fafc;
-  --border: #e2e8f0;
-  --border-light: #f1f5f9;
-  --text-dark: #1e293b;
-  --text-muted: #64748b;
-  --shadow-sm: 0 2px 8px rgba(30, 58, 95, 0.08);
-  --shadow-md: 0 6px 20px rgba(30, 58, 95, 0.12);
-  --shadow-lg: 0 12px 32px rgba(30, 58, 95, 0.18);
-}
+<main class="wc-page" role="main">
 
-/* ===== Page Header ===== */
-.page-header {
-  background: var(--surface);
-  border-radius: 12px;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 0.5rem;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-}
+  <!-- =====================================================
+       PAGE HEADER
+  ====================================================== -->
+  <header class="wc-admin-header" role="banner">
 
-.page-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-dark);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.page-title i {
-  color: var(--primary);
-}
-
-.page-subtitle {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  margin: 0.25rem 0 0 0;
-}
-
-/* ===== Buttons ===== */
-.btn-primary-dark {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-weight: 600;
-  font-size: 0.8125rem;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(30, 58, 95, 0.25);
-  transition: all 0.2s;
-}
-
-.btn-primary-dark:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.35);
-  color: #fff;
-}
-
-.btn-success-custom {
-  background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-weight: 600;
-  font-size: 0.8125rem;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
-  transition: all 0.2s;
-}
-
-.btn-success-custom:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
-  color: #fff;
-}
-
-/* ===== Stats Badges ===== */
-.stats-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.875rem;
-}
-
-.stat-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.stat-badge.primary {
-  background: var(--primary-light);
-  color: var(--primary-dark);
-  border: 1px solid rgba(45, 74, 124, 0.15);
-}
-
-.stat-badge.success {
-  background: rgba(16, 185, 129, 0.1);
-  color: #047857;
-  border: 1px solid rgba(16, 185, 129, 0.15);
-}
-
-.stat-badge.secondary {
-  background: rgba(100, 116, 139, 0.1);
-  color: #475569;
-  border: 1px solid rgba(100, 116, 139, 0.15);
-}
-
-.stat-badge.warning {
-  background: rgba(245, 158, 11, 0.1);
-  color: #92400e;
-  border: 1px solid rgba(245, 158, 11, 0.15);
-}
-
-.stat-badge.danger {
-  background: rgba(239, 68, 68, 0.1);
-  color: #991b1b;
-  border: 1px solid rgba(239, 68, 68, 0.15);
-}
-
-/* ===== Filter Panel ===== */
-.filter-panel {
-  background: var(--surface);
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.25rem;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-}
-
-.filter-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-bottom: 0.375rem;
-}
-
-.filter-panel .form-select {
-  border: 1.5px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.8125rem;
-  padding: 0.4rem 0.625rem;
-  transition: all 0.2s;
-}
-
-.filter-panel .form-select:focus {
-  border-color: var(--primary-accent);
-  box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.1);
-}
-
-/* ===== Card Grid ===== */
-.grid-layout {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.25rem;
-}
-
-/* ===== Work Cycle Card ===== */
-.workcycle-card {
-  background: var(--surface);
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.workcycle-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-  border-color: rgba(45, 74, 124, 0.25);
-}
-
-/* Card Header */
-.card-header-compact {
-  background: linear-gradient(135deg, var(--primary-light) 0%, var(--surface) 100%);
-  padding: 1rem 1rem 0.75rem;
-  border-bottom: 1px solid var(--border-light);
-  position: relative;
-}
-
-.section-title {
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--primary);
-  margin-bottom: 0.375rem;
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.section-title i {
-  font-size: 0.7rem;
-}
-
-.card-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--primary-dark);
-  line-height: 1.3;
-  margin: 0 0 0.625rem 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Status Chip */
-.status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 20px;
-  font-size: 0.675rem;
-  font-weight: 600;
-}
-
-.status-chip.active {
-  background: rgba(16, 185, 129, 0.12);
-  color: #047857;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-.status-chip.inactive {
-  background: rgba(100, 116, 139, 0.1);
-  color: #475569;
-  border: 1px solid rgba(100, 116, 139, 0.15);
-}
-
-/* Action Menu */
-.card-actions-absolute {
-  position: absolute;
-  top: 0.625rem;
-  right: 0.625rem;
-  z-index: 10;
-}
-
-.action-menu-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  transition: all 0.2s;
-  font-size: 0.8rem;
-  box-shadow: var(--shadow-sm);
-}
-
-.action-menu-btn:hover {
-  background: var(--primary-dark);
-  border-color: var(--primary-dark);
-  color: #fff;
-  transform: rotate(90deg);
-}
-
-/* Card Body */
-.card-body-compact {
-  padding: 0.875rem 1rem 1rem;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Due Date */
-.due-date-compact {
-  background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
-  border-radius: 8px;
-  padding: 0.625rem 0.75rem;
-  margin-bottom: 0.75rem;
-  border: 1px solid rgba(251, 191, 36, 0.2);
-  position: relative;
-  overflow: hidden;
-}
-
-.due-date-compact::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 3px;
-  height: 100%;
-  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
-}
-
-.due-date-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.375rem;
-}
-
-.due-date-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: #92400e;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.due-date-full {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-dark);
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.due-date-full i {
-  color: #f59e0b;
-  font-size: 0.8rem;
-}
-
-.time-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.15rem 0.4rem;
-  background: rgba(245, 158, 11, 0.1);
-  color: #92400e;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  margin-top: 0.25rem;
-}
-
-.overdue-badge {
-  font-size: 0.65rem;
-  padding: 0.2rem 0.5rem;
-  background: rgba(239, 68, 68, 0.1);
-  color: #991b1b;
-  border-radius: 4px;
-  font-weight: 600;
-}
-
-/* Description */
-.description-container {
-  background: var(--surface-alt);
-  border-radius: 8px;
-  padding: 0.625rem 0.75rem;
-  margin-bottom: 0.75rem;
-  border: 1px solid var(--border-light);
-}
-
-.description-text {
-  font-size: 0.75rem;
-  line-height: 1.5;
-  color: var(--text-muted);
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Time Remaining */
-.time-remaining {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--primary-light);
-  border-radius: 6px;
-  margin-bottom: 0.75rem;
-  border: 1px solid rgba(45, 74, 124, 0.1);
-}
-
-.time-remaining-label {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--primary);
-  text-transform: uppercase;
-}
-
-.time-remaining-value {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--primary-dark);
-  margin-left: auto;
-}
-
-/* Meta Grid */
-.meta-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.625rem;
-  margin-top: auto;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border-light);
-}
-
-.meta-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.meta-label {
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.meta-value {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-dark);
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.meta-value i {
-  color: var(--primary);
-  width: 12px;
-  font-size: 0.7rem;
-}
-
-/* Empty State */
-.empty-state-card {
-  background: var(--surface);
-  border: 2px dashed var(--border);
-  border-radius: 12px;
-  padding: 3rem 1.5rem;
-  text-align: center;
-}
-
-.empty-state-icon {
-  font-size: 2.5rem;
-  color: var(--primary);
-  opacity: 0.4;
-  margin-bottom: 1rem;
-}
-
-.empty-state-title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--primary-dark);
-  margin-bottom: 0.375rem;
-}
-
-.empty-state-subtitle {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  margin-bottom: 1.25rem;
-}
-
-/* Dropdown Menu */
-.dropdown-menu {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: var(--shadow-md);
-  padding: 0.375rem;
-  font-size: 0.8125rem;
-}
-
-.dropdown-item {
-  border-radius: 5px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.8125rem;
-  transition: all 0.15s;
-}
-
-.dropdown-item:hover {
-  background: var(--primary-light);
-  color: var(--primary-dark);
-}
-
-.dropdown-item i {
-  width: 16px;
-  color: var(--text-muted);
-}
-
-.dropdown-item:hover i {
-  color: var(--primary);
-}
-
-.dropdown-item.text-danger:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #991b1b;
-}
-
-.dropdown-item.text-danger:hover i {
-  color: #991b1b;
-}
-</style>
-
-<!-- Page Header -->
-<div class="page-header">
-  <div class="d-flex justify-content-between align-items-center">
-    <div>
-      <h1 class="page-title">
-        <i class="fas fa-layer-group"></i>
+    <section class="wc-header-title-block">
+      <h1>
+        <i class="fas fa-layer-group" aria-hidden="true"></i>
         Work Cycles
+        <span class="wc-header-count-badge">
+          {{ workcycles|length }}
+        </span>
       </h1>
-      <p class="page-subtitle mb-1">
-        Define tasks, set deadlines, and collect submissions across the organization.
+
+      <p class="wc-header-subtitle">
+        TIWI Reference · Task Management & Deadline Tracking
       </p>
-      <button class="btn btn-link p-0 small" style="color: var(--primary);"
-              data-bs-toggle="modal"
-              data-bs-target="#workcyclePurposeModal">
-        <i class="fas fa-info-circle me-1"></i>
+    </section>
+
+    <nav class="wc-header-actions" aria-label="Header actions">
+      <button
+        type="button"
+        class="btn-wc-link"
+        data-bs-toggle="modal"
+        data-bs-target="#workcyclePurposeModal">
+        <i class="fas fa-info-circle"></i>
         What is a Work Cycle?
       </button>
-    </div>
-    <button class="btn-success-custom"
-            data-bs-toggle="modal"
-            data-bs-target="#createWorkcycleModal">
-      <i class="fas fa-plus me-1"></i>
-      New Cycle
-    </button>
-  </div>
 
-  <!-- Quick Stats -->
-  <div class="stats-container">
-    <span class="stat-badge primary">
-      <i class="fas fa-layer-group"></i>
-      {{ workcycles|length }} Total
-    </span>
-    <span class="stat-badge success">
-      <i class="fas fa-play-circle"></i>
-      {{ active_count }} Active
-    </span>
-    <span class="stat-badge secondary">
-      <i class="fas fa-pause-circle"></i>
-      {{ inactive_count }} Inactive
-    </span>
-    <span class="stat-badge success">
-      <i class="fas fa-sync-alt"></i>
-      {{ lifecycle_counts.ongoing }} Ongoing
-    </span>
-    <span class="stat-badge warning">
-      <i class="fas fa-hourglass-half"></i>
-      {{ lifecycle_counts.due_soon }} Due Soon
-    </span>
-    <span class="stat-badge danger">
-      <i class="fas fa-exclamation-triangle"></i>
-      {{ lifecycle_counts.lapsed }} Lapsed
-    </span>
-  </div>
-</div>
+<a
+  href="{% url 'admin_app:inactive-workcycles' %}"
+  class="btn-wc-secondary"
+  aria-label="View archived work cycles">
+  <i class="fas fa-archive" aria-hidden="true"></i>
+  Archived Work Cycles
+</a>
 
-<!-- Filter Panel -->
-<div class="filter-panel">
-  <form method="get" class="row g-2 align-items-end">
-    <div class="col-md-3">
-      <label class="filter-label">
-        <i class="fas fa-heartbeat me-1"></i>Lifecycle State
-      </label>
-      <select name="lifecycle" class="form-select form-select-sm">
-        <option value="">All States</option>
-        <option value="ongoing" {% if request.GET.lifecycle == "ongoing" %}selected{% endif %}>Ongoing</option>
-        <option value="due_soon" {% if request.GET.lifecycle == "due_soon" %}selected{% endif %}>Due Soon</option>
-        <option value="lapsed" {% if request.GET.lifecycle == "lapsed" %}selected{% endif %}>Lapsed</option>
-      </select>
-    </div>
-    <div class="col-md-2">
-      <label class="filter-label">
-        <i class="fas fa-calendar-alt me-1"></i>Year
-      </label>
-      <select name="year" class="form-select form-select-sm">
-        <option value="">All Years</option>
-        {% for y in years %}
-          <option value="{{ y }}" {% if request.GET.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-2">
-      <label class="filter-label">
-        <i class="fas fa-calendar-day me-1"></i>Month
-      </label>
-      <select name="month" class="form-select form-select-sm">
-        <option value="">All Months</option>
-        {% for m in months %}
-          <option value="{{ m.value }}" {% if request.GET.month == m.value|stringformat:"s" %}selected{% endif %}>{{ m.label }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-5 d-flex gap-2">
-      <button type="submit" class="btn-primary-dark">
-        <i class="fas fa-filter me-1"></i> Apply
+      <button
+        type="button"
+        class="btn-wc-success"
+        data-bs-toggle="modal"
+        data-bs-target="#createWorkcycleModal">
+        <span class="btn-icon">+</span>
+        New Cycle
       </button>
-      <a href="{% url 'admin_app:workcycles' %}" class="btn btn-outline-secondary btn-sm">
-        <i class="fas fa-undo me-1"></i> Reset
-      </a>
-    </div>
-  </form>
-</div>
+    </nav>
 
-{% if workcycles %}
-<div class="grid-layout">
-  {% for wc in workcycles %}
-  <div class="workcycle-card">
-    <div class="card-header-compact">
-      <div class="d-flex justify-content-between align-items-start">
-        <div style="flex: 1; padding-right: 2rem;">
-          <span class="section-title">
-            <i class="fas fa-clipboard-list"></i>
-            {{ wc.lifecycle_state|title }}
-          </span>
-          <h3 class="card-title" title="{{ wc.title }}">{{ wc.title }}</h3>
-          {% with lifecycle=wc.lifecycle_state %}
-          <span class="status-chip {% if wc.is_active %}active{% else %}inactive{% endif %}">
-            <i class="fas {% if wc.is_active %}fa-check-circle{% else %}fa-pause-circle{% endif %}"></i>
-            {% if wc.is_active %}Active{% else %}Inactive{% endif %}
-            <span class="ms-1 opacity-75">· {{ lifecycle|cut:"_"|title }}</span>
-          </span>
-          {% endwith %}
+  </header>
+
+  <hr class="wc-header-divider">
+
+  <!-- =====================================================
+       STATS + FILTERS
+  ====================================================== -->
+  <section class="wc-stats-filter-row">
+
+    <!-- ================= STATS SECTION ================= -->
+    <div class="wc-stats-section">
+      <aside class="wc-stats-container" aria-label="Work cycle statistics">
+        <h1>
+          <i class="fas fa-filter"></i> Filter By:
+        </h1>
+        <div class="wc-stats-badges">
+          <!-- RESET -->
+          <a href="{% url 'admin_app:workcycles' %}"
+             class="wc-badge wc-badge-active {% if not current_state %}is-selected{% endif %}">
+            <i class="fas fa-check-circle"></i>
+            Total Active: {{ active_count }}
+          </a>
+
+          <a href="?state=ongoing"
+             class="wc-badge wc-badge-ongoing {% if current_state == 'ongoing' %}is-selected{% endif %}">
+            <i class="fas fa-sync-alt"></i>
+            {{ lifecycle_counts.ongoing }} Ongoing
+          </a>
+
+          <a href="?state=due_soon"
+             class="wc-badge wc-badge-due-soon {% if current_state == 'due_soon' %}is-selected{% endif %}">
+            <i class="fas fa-hourglass-half"></i>
+            {{ lifecycle_counts.due_soon }} Due Soon
+          </a>
+
+          <a href="?state=lapsed"
+             class="wc-badge wc-badge-lapsed {% if current_state == 'lapsed' %}is-selected{% endif %}">
+            <i class="fas fa-exclamation-triangle"></i>
+            {{ lifecycle_counts.lapsed }} Lapsed
+          </a>
         </div>
-        <div class="card-actions-absolute">
-          <div class="dropdown">
-            <button class="action-menu-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="fas fa-ellipsis-v"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li>
-                <a class="dropdown-item" href="{% url 'admin_app:workcycle-assignments' wc.id %}">
-                  <i class="fas fa-eye me-2"></i>View Details
-                </a>
-              </li>
-              <li>
-                <button type="button" class="dropdown-item"
-                        data-bs-toggle="modal"
-                        data-bs-target="#editWorkcycleModal"
-                        data-id="{{ wc.id }}"
-                        data-title="{{ wc.title|escapejs }}"
-                        data-description="{{ wc.description|default:''|escapejs }}"
-                        data-due="{{ wc.due_at|date:'Y-m-d H:i' }}">
-                  <i class="fas fa-edit me-2"></i>Edit
-                </button>
-              </li>
-              <li>
-                <a class="dropdown-item" href="#"
-                   data-bs-toggle="modal"
-                   data-bs-target="#reassignWorkcycleModal"
-                   data-id="{{ wc.id }}"
-                   data-title="{{ wc.title }}"
-                   data-users="{% for a in wc.assignments.all %}{% if a.assigned_user %}{{ a.assigned_user.username }}|{% endif %}{% endfor %}"
-                   data-teams="{% for a in wc.assignments.all %}{% if a.assigned_team %}{{ a.assigned_team.name }}|{% endif %}{% endfor %}">
-                  <i class="fas fa-random me-2"></i>Reassign
-                </a>
-              </li>
-              <li><hr class="dropdown-divider"></li>
-              <li>
-                <a class="dropdown-item text-danger" href="#"
-                   onclick="return confirm('Are you sure you want to delete this work cycle?')">
-                  <i class="fas fa-trash-alt me-2"></i>Delete
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      </aside>
     </div>
 
-    <div class="card-body-compact">
-      <div class="due-date-compact">
-        <div class="due-date-header">
-          <span class="due-date-label">
-            <i class="fas fa-clock"></i> Deadline
-          </span>
-          {% if wc.due_at < now %}
-          <span class="overdue-badge">
-            <i class="fas fa-exclamation-circle me-1"></i>Overdue
-          </span>
+    <!-- ================= SEARCH SECTION ================= -->
+    <div class="wc-search-section">
+      <form
+        method="get"
+        action="{% url 'admin_app:workcycles' %}"
+        class="wc-filter-form"
+        role="search">
+
+        <!-- ---------- SEARCH ---------- -->
+        <aside class="wc-search-panel">
+
+          <article class="wc-filter-card wc-search-card">
+            <label class="wc-filter-label">
+              <i class="fas fa-search"></i> Search
+            </label>
+
+            <div class="wc-search-input-wrapper">
+              <input
+                type="search"
+                name="q"
+                value="{{ search_query }}"
+                class="wc-filter-input"
+                placeholder="Search…">
+              <button type="submit" class="btn-wc-primary">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </article>
+
+        </aside>
+
+      </form>
+    </div>
+
+  </section>
+
+  <!-- =====================================================
+       WORK CYCLE GRID
+  ====================================================== -->
+  <section class="wc-content-area">
+
+    {% if workcycles %}
+    <section class="wc-grid" aria-label="Work cycle list">
+
+      {% for wc in workcycles %}
+      <article class="wc-card" tabindex="0">
+
+        <!-- ================= CARD HEADER ================= -->
+        <header class="wc-card-header">
+
+          <section class="wc-card-header-main">
+
+            <span class="wc-card-section-title lifecycle-{{ wc.lifecycle_state }}">
+              {{ wc.lifecycle_state|upper }}
+            </span>
+
+            <h2 class="wc-card-title">
+              {{ wc.title }}
+            </h2>
+
+            <span class="wc-badge {% if wc.is_active %}wc-badge-active{% else %}wc-badge-inactive{% endif %}">
+              {% if wc.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+
+          </section>
+
+          <aside class="wc-card-actions">
+            <div class="dropdown">
+              <button class="wc-action-menu-btn"
+                      data-bs-toggle="dropdown">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+
+              <ul class="dropdown-menu wc-dropdown-menu">
+                <li>
+                  <a class="wc-dropdown-item"
+                     href="{% url 'admin_app:workcycle-assignments' wc.id %}">
+                    <i class="fas fa-eye"></i> View
+                  </a>
+                </li>
+                <li>
+                  <button
+  type="button"
+  class="wc-dropdown-item"
+  data-bs-toggle="modal"
+  data-bs-target="#editWorkcycleModal"
+  data-id="{{ wc.id }}"
+  data-title="{{ wc.title|escapejs }}"
+  data-description="{{ wc.description|default:''|escapejs }}"
+  data-due="{{ wc.due_at|date:'Y-m-d\\TH:i' }}">
+  <i class="fas fa-edit"></i> Edit
+</button>
+
+                </li>
+                <li>
+                  <button class="wc-dropdown-item wc-dropdown-item-danger">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </aside>
+
+        </header>
+
+        <!-- ================= CARD BODY ================= -->
+        <section class="wc-card-body">
+
+          <article class="wc-due-date lifecycle-{{ wc.lifecycle_state }}">
+            <header class="wc-due-date-header">
+              <span class="wc-due-date-label">
+                <i class="fas fa-clock"></i> Deadline
+              </span>
+            </header>
+
+            <time class="wc-due-date-value">
+              {{ wc.due_at|date:"M d, Y · H:i" }}
+            </time>
+          </article>
+
+          {% if wc.description %}
+          <article class="wc-description">
+            <header class="wc-card-section-title">
+              Description
+            </header>
+            <p class="wc-description-text">
+              {{ wc.description|truncatechars:120 }}
+            </p>
+          </article>
           {% endif %}
-        </div>
-        <div class="due-date-full">
-          <i class="fas fa-calendar-check"></i>
-          {{ wc.due_at|date:"l, M d, Y" }}
-        </div>
-        <span class="time-badge">
-          <i class="fas fa-clock"></i>
-          {{ wc.due_at|time:"g:i A" }}
-        </span>
-      </div>
 
-      {% if wc.description %}
-      <div class="description-container">
-        <span class="section-title">
-          <i class="fas fa-align-left"></i> Description
-        </span>
-        <p class="description-text">{{ wc.description|truncatechars:120 }}</p>
-      </div>
-      {% endif %}
+          <article class="wc-time-remaining">
+            <span class="wc-time-remaining-label">Time Remaining</span>
+            <strong class="wc-time-remaining-value">
+              {{ wc.time_remaining }}
+            </strong>
+          </article>
 
-      <div class="time-remaining">
-        <i class="fas fa-hourglass-half" style="color: var(--primary);"></i>
-        <span class="time-remaining-label">Time Remaining</span>
-        <span class="time-remaining-value">{{ wc.time_remaining }}</span>
-      </div>
+          <footer class="wc-meta-grid">
 
-      <div class="meta-grid">
-        <div class="meta-item">
-          <span class="meta-label">Created By</span>
-          <span class="meta-value">
-            <i class="fas fa-user"></i>
-            {{ wc.created_by|default:"System" }}
-          </span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Created On</span>
-          <span class="meta-value">
-            <i class="fas fa-calendar"></i>
-            {{ wc.created_at|date:"M d, Y" }}
-          </span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Status</span>
-          <span class="meta-value">
-            <i class="fas {% if wc.is_active %}fa-circle text-success{% else %}fa-circle text-secondary{% endif %}" style="font-size: 0.5rem;"></i>
-            {% if wc.is_active %}Active{% else %}Archived{% endif %}
-          </span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Assignments</span>
-          <span class="meta-value">
-            <i class="fas fa-users"></i>
-            {{ wc.assignment_count|default:"0" }}
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endfor %}
-</div>
+            <section class="wc-meta-item">
+              <span class="wc-meta-label">Created By</span>
+              <span class="wc-meta-value">{{ wc.created_by|default:"System" }}</span>
+            </section>
 
-{% else %}
-<div class="empty-state-card">
-  <div class="empty-state-icon">
-    <i class="fas fa-folder-open"></i>
-  </div>
-  <h3 class="empty-state-title">No Work Cycles Yet</h3>
-  <p class="empty-state-subtitle">Create your first work cycle to get started</p>
-  <button class="btn-primary-dark"
-          data-bs-toggle="modal"
-          data-bs-target="#createWorkcycleModal">
-    <i class="fas fa-plus me-2"></i>
-    Create Work Cycle
-  </button>
-</div>
-{% endif %}
+            <section class="wc-meta-item">
+              <span class="wc-meta-label">Created On</span>
+              <time class="wc-meta-value">
+                {{ wc.created_at|date:"M d, Y" }}
+              </time>
+            </section>
 
+            <section class="wc-meta-item">
+              <span class="wc-meta-label">Assignments</span>
+              <span class="wc-meta-value">
+                {{ wc.assignment_count|default:"0" }}
+              </span>
+            </section>
+
+          </footer>
+
+        </section>
+
+      </article>
+      {% endfor %}
+
+    </section>
+
+    {% else %}
+    <section class="wc-empty-state">
+      <h2>No Work Cycles Found</h2>
+      <p>Create your first work cycle to get started.</p>
+    </section>
+    {% endif %}
+
+  </section>
+
+</main>
+
+<!-- =====================================================
+     MODALS
+====================================================== -->
 {% include "admin/page/modals/workcycle_purpose_modal.html" %}
 {% include "admin/page/modals/create_workcycle_modal.html" %}
 {% include "admin/page/modals/edit_workcycle_modal.html" %}
 {% include "admin/page/modals/reassign_workcycle_modal.html" %}
 
+{% endblock %}
+
+{% block extra_js %}
 <script>
-document.querySelectorAll('.workcycle-card').forEach(card => {
-  card.addEventListener('mouseenter', function() { this.style.zIndex = '10'; });
-  card.addEventListener('mouseleave', function() { this.style.zIndex = '1'; });
+document.addEventListener('DOMContentLoaded', function() {
+  // Card hover z-index management for proper layering
+  const cards = document.querySelectorAll('.wc-card');
+  
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', function() { 
+      this.style.zIndex = '10'; 
+    });
+    
+    card.addEventListener('mouseleave', function() { 
+      this.style.zIndex = '1'; 
+    });
+  });
+
+  // Keyboard navigation for cards
+  cards.forEach(card => {
+    card.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const link = this.querySelector('.wc-dropdown-item');
+        if (link) {
+          e.preventDefault();
+          link.click();
+        }
+      }
+    });
+  });
+
+  // Edit modal population
+  const editModal = document.getElementById('editWorkcycleModal');
+  if (editModal) {
+    editModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const id = button.getAttribute('data-id');
+      const title = button.getAttribute('data-title');
+      const description = button.getAttribute('data-description');
+      const due = button.getAttribute('data-due');
+
+      const modal = this;
+      modal.querySelector('#edit_workcycle_id').value = id;
+      modal.querySelector('#edit_title').value = title;
+      modal.querySelector('#edit_description').value = description;
+      modal.querySelector('#edit_due_at').value = due;
+    });
+  }
+
+  // Reassign modal population
+  const reassignModal = document.getElementById('reassignWorkcycleModal');
+  if (reassignModal) {
+    reassignModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const id = button.getAttribute('data-id');
+      const title = button.getAttribute('data-title');
+
+      const modal = this;
+      modal.querySelector('#reassign_workcycle_id').value = id;
+      modal.querySelector('#reassign_workcycle_title').textContent = title;
+    });
+  }
 });
 </script>
-
 {% endblock %}

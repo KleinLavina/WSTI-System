@@ -1,5 +1,5 @@
 from django.utils import timezone
-
+from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
@@ -217,14 +217,18 @@ class OrgAssignment(models.Model):
 class WorkCycle(models.Model):
     """
     Represents a planning window for work items.
-    Lifecycle is derived from deadline + admin intent.
+
+    Lifecycle is DERIVED from:
+    - Admin intent (is_active)
+    - Deadline proximity (due_at)
+
+    No lifecycle state is stored in the database.
     """
 
     # ============================
     # LIFECYCLE STATES (DERIVED)
     # ============================
     class LifecycleState(models.TextChoices):
-        DRAFT = "draft", "Draft"
         ONGOING = "ongoing", "Ongoing"
         DUE_SOON = "due_soon", "Due Soon"
         LAPSED = "lapsed", "Lapsed"
@@ -255,10 +259,10 @@ class WorkCycle(models.Model):
         help_text="User who created this work cycle"
     )
 
-    # Admin / system control
+    # Admin intent
     is_active = models.BooleanField(
         default=True,
-        help_text="Inactive work cycles are archived"
+        help_text="Inactive work cycles are hidden / archived manually"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -270,8 +274,8 @@ class WorkCycle(models.Model):
     def lifecycle_state(self):
         """
         Determines lifecycle based on:
-        - Admin intent (is_active)
-        - Deadline proximity
+        1. Admin intent (is_active)
+        2. Deadline proximity
         """
 
         # Admin override always wins
@@ -280,15 +284,12 @@ class WorkCycle(models.Model):
 
         now = timezone.now()
 
-        # Deadline reached or passed → Lapsed
+        # Deadline reached or passed
         if now >= self.due_at:
             return self.LifecycleState.LAPSED
 
-        # Remaining time
-        remaining_seconds = (self.due_at - now).total_seconds()
-
-        # Due soon = 3 days (72 hours) or less
-        if remaining_seconds <= 3 * 24 * 60 * 60:
+        # Due soon = within 3 days
+        if (self.due_at - now) <= timedelta(days=3):
             return self.LifecycleState.DUE_SOON
 
         return self.LifecycleState.ONGOING
@@ -314,12 +315,11 @@ class WorkCycle(models.Model):
         minutes = (total_seconds % 3600) // 60
 
         parts = []
-
-        if days > 0:
+        if days:
             parts.append(f"{days}d")
-        if hours > 0 or days > 0:
+        if hours or days:
             parts.append(f"{hours}h")
-        if minutes > 0 or hours > 0 or days > 0:
+        if minutes or hours or days:
             parts.append(f"{minutes}m")
 
         return " ".join(parts)
