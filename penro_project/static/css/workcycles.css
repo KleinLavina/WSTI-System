@@ -90,7 +90,6 @@
 
 /* Stats Section - Left Side */
 .wc-stats-section {
-  flex: 1;
   display: flex;
   align-items: center;
 }
@@ -100,7 +99,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  width: 100%;
+  width: fit-content;
   padding: 0.75rem;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -797,77 +796,7 @@
 }
 
 /* ===== Responsive Adjustments ===== */
-@media (max-width: 1200px) {
-  .wc-stats-filter-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .wc-stats-container {
-    margin-left: 0;
-    width: 100%;
-    justify-content: flex-start;
-  }
-}
 
-@media (max-width: 768px) {
-  .wc-admin-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    min-height: auto;
-  }
-  
-  .wc-header-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-  
-  .wc-header-actions .btn-wc-primary,
-  .wc-header-actions .btn-wc-success,
-  .wc-header-actions .btn-wc-link,
-  .wc-header-actions .btn-wc-secondary {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .wc-stats-filter-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-
-  .wc-stats-section {
-    flex: none;
-    width: 100%;
-  }
-
-  .wc-search-section {
-    flex: none;
-    width: 100%;
-  }
-
-  .wc-stats-container {
-    width: 100%;
-  }
-
-  .wc-filter-form {
-    justify-content: stretch;
-  }
-
-  .wc-search-panel {
-    justify-content: stretch;
-  }
-
-  .wc-search-card {
-    width: 100%;
-    min-width: auto;
-  }
-
-  .wc-stats-badges {
-    justify-content: flex-start;
-  }
-}
 
 @media (max-width: 640px) {
   .wc-grid {
