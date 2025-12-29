@@ -3,48 +3,105 @@
 
 {% block content %}
 
-<!-- ================= IMPROVED HEADER ================= -->
-<div class="card shadow-sm border-0 mb-4">
-  <div class="card-body p-4">
-    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-      <div class="flex-grow-1">
+<!-- ================= HEADER WITH YOUR PALETTE ================= -->
+<div class="wc-header mb-4">
+  <div class="wc-title">
+    <h3>
+      <i class="fas fa-tasks"></i>
+      {{ workcycle.title }}
+    </h3>
 
-        <div class="alignment-between">
+    <div class="wc-meta">
+      <span>
+        <i class="far fa-calendar-alt"></i>
+        Due {{ workcycle.due_at|date:"l, F j, Y · g:i A" }}
+      </span>
+      <span>
+        <i class="fas fa-users"></i>
+        {% with total=approved_count|add:submitted_count|add:ongoing_count %}{{ total }}{% endwith %} workers
+      </span>
+    </div>
 
-          <div class="d-flex align-items-center gap-3 mb-3">
-            <h1 class="h3 fw-bold mb-0 text-dark">
-              <i class="fas fa-tasks text-primary me-2"></i>
-              {{ workcycle.title }}
-            </h1>
-            <span class="badge bg-light text-dark border fs-6 py-2 px-3">
-              <i class="far fa-calendar-alt me-1"></i>
-              {{ workcycle.due_at|date:"M d, Y" }}
-            </span>
+    {% if workcycle.description %}
+    <div class="wc-desc">
+      <i class="fas fa-info-circle me-2"></i>
+      {{ workcycle.description }}
+    </div>
+    {% endif %}
+  </div>
+
+  <a href="{% url 'admin_app:completed-work-summary' %}" class="wc-back-btn">
+    <i class="fas fa-arrow-left"></i> Back to Summary
+  </a>
+</div>
+
+<!-- ================= STATUS SUMMARY CARDS ================= -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center">
+          <div class="flex-shrink-0">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                 style="background: linear-gradient(135deg, var(--primary-light), #dbeafe); width: 56px; height: 56px;">
+              <i class="fas fa-check-circle" style="color: var(--primary); font-size: 1.5rem;"></i>
+            </div>
           </div>
-
-          <div class="mb-3">
-            <a href="{% url 'admin_app:completed-work-summary' %}"
-              class="wc-back-btn">
-              <i class="fas fa-arrow-left"></i>
-              <span>Back to Summary</span>
-            </a>
+          <div class="flex-grow-1 ms-3">
+            <div class="text-muted small">Approved</div>
+            <div class="h3 fw-bold mb-0" style="color: var(--primary-dark);">{{ approved_count }}</div>
+            <div class="small mt-1" style="color: var(--primary);">
+              <i class="fas fa-check me-1"></i>
+              Ready for finalization
+            </div>
           </div>
-
-
         </div>
-
-        {% if workcycle.description %}
-        <div class="wc-description-container bg-light rounded p-3 mb-3 border-start border-3 border-primary">
-          <div class="d-flex align-items-center mb-1">
-            <i class="fas fa-align-left text-muted me-2 fs-6"></i>
-            <h6 class="fw-semibold mb-0 text-dark">Description</h6>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center">
+          <div class="flex-shrink-0">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                 style="background: linear-gradient(135deg, #fef3c7, #fde68a); width: 56px; height: 56px;">
+              <i class="fas fa-hourglass-half" style="color: #92400e; font-size: 1.5rem;"></i>
+            </div>
           </div>
-          <p class="mb-0 text-dark wc-description">
-            {{ workcycle.description }}
-          </p>
+          <div class="flex-grow-1 ms-3">
+            <div class="text-muted small">Needs Review</div>
+            <div class="h3 fw-bold mb-0" style="color: var(--primary-dark);">{{ submitted_count }}</div>
+            <div class="small mt-1" style="color: #92400e;">
+              <i class="fas fa-clipboard-check me-1"></i>
+              Awaiting your attention
+            </div>
+          </div>
         </div>
-        {% endif %}
-
+      </div>
+</div>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center">
+          <div class="flex-shrink-0">
+            <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                 style="background: linear-gradient(135deg, #fae8ff, #f5d0fe); width: 56px; height: 56px;">
+              <i class="fas fa-spinner" style="color: #a21caf; font-size: 1.5rem;"></i>
+            </div>
+          </div>
+          <div class="flex-grow-1 ms-3">
+            <div class="text-muted small">In Progress</div>
+            <div class="h3 fw-bold mb-0" style="color: var(--primary-dark);">{{ ongoing_count }}</div>
+            <div class="small mt-1" style="color: #a21caf;">
+              <i class="fas fa-clock me-1"></i>
+              Still working on it
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -53,18 +110,20 @@
 <!-- ================= ACCORDION WRAPPER ================= -->
 <div class="accordion mb-4" id="statusAccordion">
 
-<!-- ================= APPROVED ================= -->
+<!-- ================= APPROVED (LIGHT BLUE) ================= -->
 <div class="accordion-item monday-board mb-3 border-0">
   <h2 class="accordion-header">
-    <button class="accordion-button monday-group-title approved p-3 rounded collapsed"
+    <button class="accordion-button monday-group-title p-3 rounded collapsed"
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#collapseApproved"
             aria-expanded="true"
-            aria-controls="collapseApproved">
-      <span class="dot approved me-2"></span>
-      Approved <span class="group-count">{{ approved_count }}</span>
-      <i class="fas fa-chevron-down ms-auto accordion-icon"></i>
+            aria-controls="collapseApproved"
+            style="background: linear-gradient(135deg, var(--primary-light), #dbeafe); border: none;">
+      <span class="dot me-2" style="background: var(--primary);"></span>
+      <span style="color: var(--primary-dark); font-weight: 600;">Approved</span>
+      <span class="group-count" style="background: var(--primary); color: white;">{{ approved_count }}</span>
+      <i class="fas fa-chevron-down ms-auto accordion-icon" style="color: var(--primary);"></i>
     </button>
   </h2>
 
@@ -75,49 +134,81 @@
     <div class="accordion-body p-0">
 
       <!-- 👇 CONTEXT LABEL ROW -->
-      <div class="monday-label-row">
+      <div class="monday-label-row" style="background: #f1f5f9; border-top: 1px solid #e5e7eb;">
         <div></div>
-        <div class="label">Worker</div>
-        <div class="label">Review status</div>
-        <div class="label">Submitted at</div>
-        <div class="label text-end">Action</div>
+        <div class="label" style="color: var(--primary-dark);">Worker</div>
+        <div class="label" style="color: var(--primary-dark);">Review Status</div>
+        <div class="label" style="color: var(--primary-dark);">Submitted</div>
+        <div class="label" style="color: var(--primary-dark);">Reviewed At</div>
+        <div class="label text-end" style="color: var(--primary-dark);">Action</div>
       </div>
 
       {% for item in approved_items %}
-      <div class="monday-row">
+      <div class="monday-row" style="border-top: 1px solid #e5e7eb; transition: background 0.2s ease;">
+        <div class="status-bar" style="background: var(--primary-accent);"></div>
 
-        <div class="status-bar approved"
-             title="Approved work item"></div>
-
-        <div class="cell worker"
-             title="Assigned worker">
-          {{ item.owner.get_full_name|default:item.owner.username }}
+        <div class="cell worker" style="font-weight: 600; color: var(--primary-dark);">
+          <div class="d-flex align-items-center gap-2">
+            <div class="user-avatar-sm" 
+                 style="background: linear-gradient(135deg, var(--primary), var(--primary-accent)); 
+                        color: white; width: 32px; height: 32px; border-radius: 50%; 
+                        display: flex; align-items: center; justify-content: center; 
+                        font-weight: 700; text-transform: uppercase; font-size: 0.8rem;">
+              {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
+            </div>
+            <div>
+              <div>{{ item.owner.get_full_name|default:item.owner.username }}</div>
+              <div class="text-muted small">{{ item.owner.email|default:"" }}</div>
+            </div>
+          </div>
         </div>
 
         <div class="cell">
-          <span class="status-pill approved-blue"
-                title="This submission has been approved">
+          <span class="status-pill" 
+                style="background: var(--primary-light); color: var(--primary); 
+                       border: 1px solid var(--primary-accent); padding: 6px 12px; 
+                       border-radius: 999px; font-size: 0.8rem; font-weight: 600; 
+                       display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fas fa-check"></i>
             Approved
           </span>
         </div>
 
-        <div class="cell small text-muted"
-             title="Date and time the work was submitted">
-          {{ item.submitted_at|date:"M d, Y · H:i" }}
+        <div class="cell small" style="color: var(--gray-600);">
+          <div class="d-flex align-items-center gap-2">
+            <i class="far fa-clock"></i>
+            {{ item.submitted_at|date:"M d, Y · H:i" }}
+          </div>
         </div>
 
-        <div class="cell action">
+        <div class="cell small" style="color: var(--gray-600);">
+          {% if item.reviewed_at %}
+          <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-calendar-check"></i>
+            {{ item.reviewed_at|date:"M d, Y · H:i" }}
+          </div>
+          {% else %}
+          <span class="text-muted">—</span>
+          {% endif %}
+        </div>
+
+        <div class="cell action text-end">
           <a href="{% url 'admin_app:work-item-review' item.id %}"
-             class="btn btn-sm btn-outline-primary"
-             title="View review details">
-            View
+             class="btn btn-sm"
+             style="background: var(--primary-light); color: var(--primary); 
+                    border: 1px solid var(--primary-accent); padding: 6px 12px; 
+                    font-size: 0.85rem; font-weight: 500; border-radius: 6px; 
+                    text-decoration: none; transition: all 0.2s ease;">
+            <i class="fas fa-eye me-1"></i>
+            View Details
           </a>
         </div>
 
       </div>
       {% empty %}
-      <div class="empty-state">
-        No approved work yet
+      <div class="empty-state" style="padding: 40px; text-align: center; color: var(--gray-600);">
+        <i class="fas fa-check-circle" style="font-size: 2rem; color: #d1d5db; margin-bottom: 12px;"></i>
+        <p class="mb-0">No approved work yet</p>
       </div>
       {% endfor %}
     </div>
@@ -127,16 +218,17 @@
  <!-- ================= SUBMITTED ================= -->
 <div class="accordion-item monday-board mb-3 border-0">
   <h2 class="accordion-header">
-    <button class="accordion-button monday-group-title done p-3 rounded collapsed"
+    <button class="accordion-button monday-group-title p-3 rounded collapsed"
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#collapseSubmitted"
             aria-expanded="true"
-            aria-controls="collapseSubmitted">
-      <span class="dot done me-2"></span>
-      Submitted (Needs Review)
-      <span class="group-count">{{ submitted_count }}</span>
-      <i class="fas fa-chevron-down ms-auto accordion-icon"></i>
+            aria-controls="collapseSubmitted"
+            style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: none;">
+      <span class="dot me-2" style="background: #92400e;"></span>
+      <span style="color: #92400e; font-weight: 600;">Submitted (Needs Review)</span>
+      <span class="group-count" style="background: #92400e; color: white;">{{ submitted_count }}</span>
+      <i class="fas fa-chevron-down ms-auto accordion-icon" style="color: #92400e;"></i>
     </button>
   </h2>
 
@@ -147,82 +239,107 @@
     <div class="accordion-body p-0">
 
       <!-- 👇 CONTEXT LABEL ROW -->
-      <div class="monday-label-row">
+      <div class="monday-label-row" style="background: #f1f5f9; border-top: 1px solid #e5e7eb;">
         <div></div>
-        <div class="label">Worker</div>
-        <div class="label">Review status</div>
-        <div class="label">Submitted at</div>
-        <div class="label text-end">Action</div>
+        <div class="label" style="color: var(--primary-dark);">Worker</div>
+        <div class="label" style="color: var(--primary-dark);">Review Status</div>
+        <div class="label" style="color: var(--primary-dark);">Submitted</div>
+        <div class="label text-end" style="color: var(--primary-dark);">Action</div>
       </div>
 
       {% for item in submitted_items %}
-      <div class="monday-row">
+      <div class="monday-row" style="border-top: 1px solid #e5e7eb; transition: background 0.2s ease;">
+        <div class="status-bar" style="background: #f59e0b;"></div>
 
-        <div class="status-bar done"
-             title="Submitted work item"></div>
-
-        <div class="cell worker"
-             title="Assigned worker">
-          {{ item.owner.get_full_name|default:item.owner.username }}
+        <div class="cell worker" style="font-weight: 600; color: var(--primary-dark);">
+          <div class="d-flex align-items-center gap-2">
+            <div class="user-avatar-sm" 
+                 style="background: linear-gradient(135deg, #f59e0b, #d97706); 
+                        color: white; width: 32px; height: 32px; border-radius: 50%; 
+                        display: flex; align-items: center; justify-content: center; 
+                        font-weight: 700; text-transform: uppercase; font-size: 0.8rem;">
+              {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
+            </div>
+            <div>
+              <div>{{ item.owner.get_full_name|default:item.owner.username }}</div>
+              <div class="text-muted small">{{ item.owner.email|default:"" }}</div>
+            </div>
+          </div>
         </div>
 
         <div class="cell">
           {% if item.review_decision == "revision" %}
-            <span class="status-pill revision"
-                  title="Reviewer requested changes">
-              Needs revision
+            <span class="status-pill" 
+                  style="background: #fee2e2; color: #991b1b; 
+                         border: 1px solid #fca5a5; padding: 6px 12px; 
+                         border-radius: 999px; font-size: 0.8rem; font-weight: 600; 
+                         display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fas fa-exclamation-triangle"></i>
+              Needs Revision
             </span>
           {% else %}
-            <span class="status-pill pending"
-                  title="Waiting for review">
-              Pending review
+            <span class="status-pill" 
+                  style="background: #fef3c7; color: #92400e; 
+                         border: 1px solid #fbbf24; padding: 6px 12px; 
+                         border-radius: 999px; font-size: 0.8rem; font-weight: 600; 
+                         display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fas fa-hourglass-half"></i>
+              Pending Review
             </span>
           {% endif %}
         </div>
 
-        <div class="cell small text-muted"
-             title="Date and time the work was submitted">
-          {{ item.submitted_at|date:"M d, Y · H:i" }}
+        <div class="cell small" style="color: var(--gray-600);">
+          <div class="d-flex align-items-center gap-2">
+            <i class="far fa-clock"></i>
+            {{ item.submitted_at|date:"M d, Y · H:i" }}
+          </div>
           {% if item.submitted_at > workcycle.due_at %}
-            <span class="late"
-                  title="Submitted after deadline">
-              Late
-            </span>
+            <div class="text-danger smaller mt-1">
+              <i class="fas fa-exclamation-circle me-1"></i>
+              Late submission
+            </div>
           {% endif %}
         </div>
 
-        <div class="cell action">
+        <div class="cell action text-end">
           <a href="{% url 'admin_app:work-item-review' item.id %}"
-             class="btn btn-sm btn-primary"
-             title="Review this submission">
-            Review
+             class="btn btn-sm"
+             style="background: linear-gradient(135deg, #f59e0b, #d97706); 
+                    color: white; border: none; padding: 6px 16px; 
+                    font-size: 0.85rem; font-weight: 600; border-radius: 6px; 
+                    text-decoration: none; transition: all 0.2s ease; 
+                    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">
+            <i class="fas fa-clipboard-check me-1"></i>
+            Review Now
           </a>
         </div>
 
       </div>
       {% empty %}
-      <div class="empty-state">
-        No pending submissions
+      <div class="empty-state" style="padding: 40px; text-align: center; color: var(--gray-600);">
+        <i class="fas fa-clipboard-check" style="font-size: 2rem; color: #d1d5db; margin-bottom: 12px;"></i>
+        <p class="mb-0">No pending submissions</p>
       </div>
       {% endfor %}
     </div>
   </div>
 </div>
 
-
-  <!-- ================= ONGOING ================= -->
+  <!-- ================= IN PROGRESS (RED-VIOLET) ================= -->
 <div class="accordion-item monday-board mb-3 border-0">
   <h2 class="accordion-header">
-    <button class="accordion-button monday-group-title warning p-3 rounded collapsed"
+    <button class="accordion-button monday-group-title p-3 rounded collapsed"
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#collapseOngoing"
             aria-expanded="true"
-            aria-controls="collapseOngoing">
-      <span class="dot warning me-2"></span>
-      In Progress / Not Started
-      <span class="group-count">{{ ongoing_count }}</span>
-      <i class="fas fa-chevron-down ms-auto accordion-icon"></i>
+            aria-controls="collapseOngoing"
+            style="background: linear-gradient(135deg, #fae8ff, #f5d0fe); border: none;">
+      <span class="dot me-2" style="background: #a21caf;"></span>
+      <span style="color: #a21caf; font-weight: 600;">In Progress / Not Started</span>
+      <span class="group-count" style="background: #a21caf; color: white;">{{ ongoing_count }}</span>
+      <i class="fas fa-chevron-down ms-auto accordion-icon" style="color: #a21caf;"></i>
     </button>
   </h2>
 
@@ -233,53 +350,83 @@
     <div class="accordion-body p-0">
 
       <!-- 👇 CONTEXT LABEL ROW -->
-      <div class="monday-label-row">
+      <div class="monday-label-row" style="background: #f1f5f9; border-top: 1px solid #e5e7eb;">
         <div></div>
-        <div class="label">Worker</div>
-        <div class="label">Work status</div>
-        <div class="label">Submission</div>
-        <div class="label text-end">Action</div>
+        <div class="label" style="color: var(--primary-dark);">Worker</div>
+        <div class="label" style="color: var(--primary-dark);">Work Status</div>
+        <div class="label" style="color: var(--primary-dark);">Progress</div>
+        <div class="label text-end" style="color: var(--primary-dark);">Status</div>
       </div>
 
       {% for item in ongoing_items %}
-      <div class="monday-row">
+      <div class="monday-row" style="border-top: 1px solid #e5e7eb; transition: background 0.2s ease;">
+        <div class="status-bar" style="background: #a21caf;"></div>
 
-        <div class="status-bar warning"
-             title="Work not yet submitted"></div>
-
-        <div class="cell worker"
-             title="Assigned worker">
-          {{ item.owner.get_full_name|default:item.owner.username }}
+        <div class="cell worker" style="font-weight: 600; color: var(--primary-dark);">
+          <div class="d-flex align-items-center gap-2">
+            <div class="user-avatar-sm" 
+                 style="background: linear-gradient(135deg, #a21caf, #86198f); 
+                        color: white; width: 32px; height: 32px; border-radius: 50%; 
+                        display: flex; align-items: center; justify-content: center; 
+                        font-weight: 700; text-transform: uppercase; font-size: 0.8rem;">
+              {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
+            </div>
+            <div>
+              <div>{{ item.owner.get_full_name|default:item.owner.username }}</div>
+              <div class="text-muted small">{{ item.owner.email|default:"" }}</div>
+            </div>
+          </div>
         </div>
 
         <div class="cell">
           {% if item.status == "working_on_it" %}
-            <span class="status-pill working"
-                  title="Worker is currently working">
+            <span class="status-pill" 
+                  style="background: #fae8ff; color: #a21caf; 
+                         border: 1px solid #e879f9; padding: 6px 12px; 
+                         border-radius: 999px; font-size: 0.8rem; font-weight: 600; 
+                         display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fas fa-spinner fa-spin"></i>
               Working on it
             </span>
           {% else %}
-            <span class="status-pill not-started"
-                  title="Work has not started yet">
+            <span class="status-pill" 
+                  style="background: #f8fafc; color: #64748b; 
+                         border: 1px solid #e5e7eb; padding: 6px 12px; 
+                         border-radius: 999px; font-size: 0.8rem; font-weight: 600; 
+                         display: inline-flex; align-items: center; gap: 6px;">
+              <i class="fas fa-circle-notch"></i>
               Not started
             </span>
           {% endif %}
         </div>
 
-        <div class="cell muted"
-             title="No submission yet">
-          —
+        <div class="cell" style="color: #64748b;">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-hourglass-half"></i>
+            <span>Awaiting submission</span>
+          </div>
+          <div class="smaller text-muted mt-1">
+            <i class="far fa-calendar-alt me-1"></i>
+            Due: {{ workcycle.due_at|date:"M d, Y" }}
+          </div>
         </div>
 
-        <div class="cell muted action"
-             title="No action available until submission">
-          —
+        <div class="cell action text-end">
+          <span class="badge" 
+                style="background: #f8fafc; color: #64748b; 
+                       border: 1px solid #e5e7eb; padding: 6px 12px; 
+                       font-size: 0.8rem; font-weight: 500; border-radius: 6px;">
+            <i class="fas fa-clock me-1"></i>
+            Pending
+          </span>
         </div>
 
       </div>
       {% empty %}
-      <div class="empty-state success">
-        All workers are done 🎉
+      <div class="empty-state success" style="padding: 40px; text-align: center; color: var(--primary);">
+        <i class="fas fa-trophy" style="font-size: 2rem; margin-bottom: 12px;"></i>
+        <h6 class="fw-bold mb-2">All workers are done! 🎉</h6>
+        <p class="mb-0 small">Every assigned worker has submitted their work for review.</p>
       </div>
       {% endfor %}
     </div>
@@ -290,200 +437,307 @@
 
 <!-- ================= STYLES ================= -->
 <style>
-  /* COLUMN CONTEXT LABELS (MONDAY STYLE) */
+:root {
+  --primary-dark: #1e3a5f;
+  --primary: #2d4a7c;
+  --primary-light: #e8f0fe;
+  --primary-accent: #4a90d9;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --gray-100: #f8fafc;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --red-violet: #a21caf;
+  --red-violet-light: #fae8ff;
+}
+
+/* HEADER (USING YOUR PALETTE) */
+.wc-header {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  border-radius: 16px;
+  padding: 24px;
+  color: white;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.wc-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.wc-title h3 {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wc-title h3 i {
+  color: var(--primary-accent);
+}
+
+.wc-meta {
+  margin-top: 10px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.wc-meta span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.wc-desc {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.wc-back-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.wc-back-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  color: white;
+  text-decoration: none;
+}
+
+/* COLUMN CONTEXT LABELS (MONDAY STYLE) */
 .monday-label-row{
   display:grid;
-  grid-template-columns:6px 1.6fr 1fr 1.2fr 1fr;
-  padding:6px 0;
-  font-size:.7rem;
+  grid-template-columns:6px 1.6fr 1fr 1.2fr 1fr 1fr;
+  padding:12px 0;
+  font-size:.75rem;
   font-weight:700;
-  color:#64748b;
-  background:#f1f5f9;
-  border-top:1px solid #e5e7eb;
+  text-transform:uppercase;
+  letter-spacing:.04em;
 }
 
 .monday-label-row .label{
-  padding:0 12px;
-  text-transform:uppercase;
-  letter-spacing:.04em;
+  padding:0 16px;
 }
 
 .monday-label-row .label.text-end{
   text-align:right;
 }
 
-  .wc-back-btn{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:6px 12px;
-  font-size:.85rem;
-  font-weight:600;
-  color:#334155;
-  background:#f8fafc;
-  border:1px solid #e5e7eb;
-  border-radius:999px;
-  text-decoration:none;
-  transition:all .15s ease;
+/* Stats Cards */
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.wc-back-btn i{
-  font-size:.75rem;
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
 }
 
-.wc-back-btn:hover{
-  background:#eef2ff;
-  border-color:#c7d2fe;
-  color:#1e3a8a;
-  text-decoration:none;
+/* GROUP TITLE */
+.group-count{
+  margin-left: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 700;
 }
 
-  .alignment-between{
-    display: flex;
-    justify-content: space-between;
-  }
-  /* Improved Header Styles */
-  .wc-description-container {
-    max-width: 100%;
-  }
-  
-  .wc-description {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: #374151;
-  }
-  
-  /* Stats Badges */
-  .badge.bg-approved {
-    background-color: #2563eb !important;
-  }
-  
-  .badge.bg-submitted {
-    background-color: #10b981 !important;
-  }
-  
-  .badge.bg-ongoing {
-    background-color: #f59e0b !important;
-  }
-  
-  /* Accordion Specific Styles */
-  .accordion-button:not(.collapsed) .accordion-icon {
-    transform: rotate(180deg);
-  }
-  .accordion-button {
-    transition: all 0.2s ease;
-  }
-  .accordion-button:focus {
-    box-shadow: none;
-    border-color: #c7d2fe;
-  }
+/* BOARD */
+.monday-board{
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
 
-  /* Original styles updated for integration */
-  .group-count{
-    margin-left: 6px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: .7rem;
-    font-weight: 700;
-    background: #e5e7eb;
-    color: #374151;
-  }
-  .monday-group-title.approved .group-count{
-    background: #dbeafe;
-    color: #1e40af;
-  }
-  .monday-group-title.done .group-count{
-    background: #d1fae5;
-    color: #065f46;
-  }
-  .monday-group-title.warning .group-count{
-    background: #fde68a;
-    color: #92400e;
-  }
+/* GROUP TITLE (Now an accordion button) */
+.accordion-button.monday-group-title {
+  padding: 14px 20px;
+  font-weight: 600;
+  font-size: .9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+}
 
-  /* BOARD */
-  .monday-board{
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    overflow: hidden;
-  }
+.accordion-button.monday-group-title::after {
+  display: none; /* Hide Bootstrap's default icon */
+}
 
-  /* GROUP TITLE (Now an accordion button) */
-  .accordion-button.monday-group-title {
-    padding: 10px 14px;
-    font-weight: 600;
-    font-size: .85rem;
-    display: flex;
-    align-items: center;
+/* ROW */
+.monday-row{
+  display: grid;
+  grid-template-columns: 6px 1.6fr 1fr 1.2fr 1fr 1fr;
+  align-items: center;
+  min-height: 60px;
+  padding: 4px 0;
+  transition: all 0.2s ease;
+}
+
+.monday-row:hover{ 
+  background: var(--primary-light);
+  transform: translateY(-1px);
+}
+
+/* STATUS BAR */
+.status-bar{ 
+  height: 100%; 
+  border-radius: 0 4px 4px 0;
+}
+
+/* CELLS */
+.cell{ 
+  padding: 12px 16px; 
+  font-size: .9rem; 
+}
+
+.cell.worker{ font-weight: 600; }
+.cell.action{ text-align: right; }
+.cell.muted{ color: var(--gray-400); }
+
+/* PILLS */
+.status-pill{
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* DOT */
+.dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* MISC */
+.late{
+  margin-left: 6px;
+  font-size: .7rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.empty-state{
+  padding: 40px 20px;
+  text-align: center;
+  font-size: .9rem;
+  color: var(--gray-600);
+}
+
+.empty-state.success{ 
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+/* Hover Effects */
+.monday-row:hover .status-bar {
+  opacity: 0.9;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.fa-spinner.fa-spin {
+  animation: pulse 1.5s infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .wc-header {
+    padding: 20px;
+  }
+  
+  .wc-back-btn {
+    position: relative;
+    top: 0;
+    right: 0;
+    margin-top: 12px;
+  }
+  
+  .monday-label-row,
+  .monday-row {
+    grid-template-columns: 6px 1fr;
     gap: 8px;
-    border: none;
   }
-  .monday-group-title.done{ background: #ecfdf5; }
-  .monday-group-title.approved{ background: #eff6ff; }
-  .monday-group-title.warning{ background: #fff7ed; }
-  .accordion-button.monday-group-title::after {
-    display: none; /* Hide Bootstrap's default icon */
+  
+  .monday-label-row .label:nth-child(3),
+  .monday-label-row .label:nth-child(4),
+  .monday-label-row .label:nth-child(5),
+  .monday-label-row .label:nth-child(6),
+  .monday-row .cell:nth-child(3),
+  .monday-row .cell:nth-child(4),
+  .monday-row .cell:nth-child(5),
+  .monday-row .cell:nth-child(6) {
+    display: none;
   }
-
-  /* ROW */
-  .monday-row{
-    display: grid;
-    grid-template-columns: 6px 1.6fr 1fr 1.2fr 1fr;
-    align-items: center;
-    min-height: 48px;
-    border-top: 1px solid #e5e7eb;
-  }
-  .monday-row:hover{ background: #f9fafb; }
-
-  /* STATUS BAR */
-  .status-bar{ height: 100%; }
-  .status-bar.done{ background: #10b981; }
-  .status-bar.approved{ background: #2563eb; }
-  .status-bar.warning{ background: #f59e0b; }
-
-  /* CELLS */
-  .cell{ padding: 8px 12px; font-size: .85rem; }
-  .cell.worker{ font-weight: 600; }
-  .cell.action{ text-align: right; }
-  .cell.muted{ color: #9ca3af; }
-
-  /* PILLS */
-  .status-pill{
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: .75rem;
-    font-weight: 600;
-  }
-  .status-pill.approved-blue{ background: #dbeafe; color: #1e40af; }
-  .status-pill.pending{ background: #fde68a; color: #92400e; }
-  .status-pill.revision{ background: #fecaca; color: #991b1b; }
-  .status-pill.working{ background: #e0f2fe; color: #075985; }
-  .status-pill.not-started{ background: #e5e7eb; color: #374151; }
-
-  /* DOT */
-  .dot{
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-  }
-  .dot.done{ background: #10b981; }
-  .dot.approved{ background: #2563eb; }
-  .dot.warning{ background: #f59e0b; }
-
-  /* MISC */
-  .late{
-    margin-left: 6px;
-    font-size: .7rem;
-    font-weight: 600;
-    color: #dc2626;
-  }
-  .empty-state{
-    padding: 14px;
-    font-size: .85rem;
-    color: #6b7280;
-  }
-  .empty-state.success{ color: #15803d; }
+}
 </style>
+
+<script>
+// Auto-expand the first non-empty section
+document.addEventListener('DOMContentLoaded', function() {
+  const sections = [
+    { id: 'collapseSubmitted', count: {{ submitted_count }} },
+    { id: 'collapseApproved', count: {{ approved_count }} },
+    { id: 'collapseOngoing', count: {{ ongoing_count }} }
+  ];
+  
+  const nonEmptySections = sections.filter(s => s.count > 0);
+  
+  if (nonEmptySections.length > 0) {
+    // Expand the first non-empty section
+    const firstSection = nonEmptySections[0];
+    const bsCollapse = new bootstrap.Collapse(document.getElementById(firstSection.id), {
+      toggle: true
+    });
+  }
+});
+</script>
 
 {% endblock %}

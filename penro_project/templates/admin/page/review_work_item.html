@@ -5,7 +5,7 @@
 
 <style>
 /* ===============================
-   MONDAY-STYLE REVIEW UI
+   LAYOUT
 ================================ */
 .review-layout{
   display:grid;
@@ -13,7 +13,9 @@
   gap:20px;
 }
 
-/* HEADER */
+/* ===============================
+   HEADER
+================================ */
 .review-header{
   display:flex;
   justify-content:space-between;
@@ -31,22 +33,43 @@
   color:#6b7280;
 }
 
-/* LEFT PANEL */
+/* ===============================
+   LEFT PANEL (BASE)
+================================ */
 .review-main{
-  background:#fff;
   border-radius:16px;
   border:1px solid #e5e7eb;
   box-shadow:0 10px 28px rgba(15,23,42,.08);
   padding:20px;
+  transition:.25s ease;
 }
 
-/* INFO ROW */
+/* Soft backgrounds based on review state */
+.review-main.approved{
+  background:#eff6ff;
+  border-color:#bfdbfe;
+}
+
+.review-main.revision{
+  background:#fef2f2;
+  border-color:#fecaca;
+}
+
+.review-main.pending{
+  background:#fffbeb;
+  border-color:#fde68a;
+}
+
+/* ===============================
+   INFO ROW
+================================ */
 .review-info{
   display:flex;
   gap:20px;
   font-size:.8rem;
-  color:#6b7280;
+  color:#374151;
   margin-bottom:14px;
+  align-items:center;
 }
 
 .review-pill{
@@ -56,11 +79,13 @@
   font-weight:700;
 }
 
-.review-pill.approved{ background:#d1fae5;color:#065f46; }
+.review-pill.approved{ background:#dbeafe;color:#1e40af; }
 .review-pill.revision{ background:#fee2e2;color:#991b1b; }
 .review-pill.pending{ background:#fef3c7;color:#92400e; }
 
-/* SECTIONS */
+/* ===============================
+   SECTIONS
+================================ */
 .review-section{
   margin-top:16px;
 }
@@ -73,38 +98,81 @@
   margin-bottom:6px;
 }
 
-/* MESSAGE */
+/* ===============================
+   MESSAGE
+================================ */
 .review-message{
-  background:#f9fafb;
+  background:#ffffff;
   border-radius:12px;
   padding:14px;
   font-size:.85rem;
   line-height:1.5;
+  border:1px solid #e5e7eb;
 }
 
-/* ATTACHMENTS */
-.review-attachments{
+.review-message-short{
+  background:#ffffff;
+  border-radius:12px;
+  padding:14px;
+  width:fit-content;
+  font-size:.85rem;
+  line-height:1.5;
+  border:1px solid #e5e7eb;
+}
+/* ===============================
+   ATTACHMENTS
+================================ */
+.attachment-group{
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  margin-top:10px;
+  overflow:hidden;
+}
+
+.attachment-header{
   display:flex;
-  flex-direction:column;
-  gap:8px;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 14px;
+  cursor:pointer;
+  background:#f9fafb;
+  font-size:.8rem;
+  font-weight:700;
+}
+
+.attachment-header i{
+  transition:transform .2s ease;
+}
+
+.attachment-header.collapsed i{
+  transform:rotate(-90deg);
+}
+
+.attachment-body{
+  display:none;
+  padding:10px;
+  background:#ffffff;
 }
 
 .review-attachment{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:10px 12px;
-  border-radius:10px;
+  padding:8px 10px;
+  border-radius:8px;
   background:#f9fafb;
   font-size:.8rem;
+  margin-bottom:6px;
 }
 
-/* RIGHT PANEL */
+/* ===============================
+   RIGHT PANEL
+================================ */
 .review-side{
   position:sticky;
   top:20px;
   height:fit-content;
-  background:#fff;
+  background:#ffffff;
   border-radius:16px;
   border:1px solid #e5e7eb;
   box-shadow:0 10px 28px rgba(15,23,42,.08);
@@ -116,7 +184,9 @@
   margin-bottom:12px;
 }
 
-/* ACTION BUTTONS */
+/* ===============================
+   ACTION BUTTONS
+================================ */
 .review-actions{
   display:flex;
   flex-direction:column;
@@ -131,6 +201,10 @@
   font-size:.8rem;
   border:1px solid transparent;
   transition:.2s ease;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
 }
 
 .review-btn.pending{
@@ -140,9 +214,9 @@
 }
 
 .review-btn.approved{
-  background:#d1fae5;
-  color:#065f46;
-  border-color:#6ee7b7;
+  background:#dbeafe; /* LIGHT BLUE */
+  color:#1e40af;
+  border-color:#93c5fd;
 }
 
 .review-btn.revision{
@@ -155,9 +229,16 @@
   transform:translateY(-1px);
   box-shadow:0 6px 16px rgba(15,23,42,.12);
 }
+.wc-header-divider {
+  margin: 0.875rem 0;
+  border: 0;
+  border-top: 1px solid black;
+}
 </style>
 
-<!-- HEADER -->
+<!-- ===============================
+     HEADER
+================================ -->
 <div class="review-header">
   <div class="review-title">
     <h4>
@@ -169,118 +250,135 @@
     </div>
   </div>
 
-      <div class="d-flex gap-2">
+  <div class="d-flex gap-2">
+    <a href="#"
+       class="btn btn-sm btn-outline-primary"
+       data-qxdlg-trigger
+       data-qxdlg-url="{% url 'admin_app:work-item-discussion' work_item.id %}">
+      <i class="fas fa-comments me-1"></i> Discussion
+    </a>
 
-          <!-- OPEN DISCUSSION MODAL -->
-          <a href="#"
-   class="btn btn-sm btn-outline-primary"
-   data-qxdlg-trigger
-   data-qxdlg-url="{% url 'admin_app:work-item-discussion' work_item.id %}"
-   data-qxdlg-title="{{ work_item.workcycle.title }}"
-   data-qxdlg-subtitle="Assigned to: {{ work_item.owner.get_full_name|default:work_item.owner.username }}">
-  <i class="fas fa-comments me-1"></i> Discussion
-</a>
-
-          <!-- BACK BUTTON -->
-          <a href="{% url 'admin_app:done-workers-by-workcycle' work_item.workcycle.id %}"
-            class="btn btn-sm btn-outline-secondary">
-            <i class="fas fa-arrow-left me-1"></i> Back
-          </a>
-
-      </div>
-
+    <a href="{% url 'admin_app:done-workers-by-workcycle' work_item.workcycle.id %}"
+       class="btn btn-sm btn-outline-secondary">
+      <i class="fas fa-arrow-left me-1"></i> Back
+    </a>
+  </div>
 </div>
+
+ <hr class="wc-header-divider">
 
 <div class="review-layout">
 
-  <!-- LEFT : DETAILS -->
-  <div class="review-main">
+  <!-- ===============================
+       LEFT PANEL
+  ================================ -->
+  <div class="review-main {{ work_item.review_decision }}">
 
     <div class="review-info">
       <div>
         <i class="far fa-user me-1"></i>
         <strong>{{ work_item.owner.get_full_name|default:work_item.owner.username }}</strong>
       </div>
+
       <div>
         <i class="far fa-clock me-1"></i>
-        {{ work_item.submitted_at|date:"M d, Y · H:i" }}
+        {{ work_item.submitted_at|date:"l, F j, Y · g:i A" }}
       </div>
+
       <div class="review-pill {{ work_item.review_decision }}">
         {{ work_item.get_review_decision_display }}
       </div>
     </div>
+    <!-- ===============================
+     STATUS LABEL
+================================ -->
+{% if work_item.status_label %}
+<div class="review-section">
+  <div class="review-section-title">
+    <i class="fas fa-tag me-1"></i> Status Label
+  </div>
+  <div class="review-message-short">
+    {{ work_item.status_label }}
+  </div>
+</div>
+{% endif %}
 
-    <!-- STATUS LABEL -->
-    <div class="review-section">
-      <div class="review-section-title">Status Label</div>
-      <div class="small">
-        {{ work_item.status_label|default:"—" }}
-      </div>
-    </div>
-
-    <!-- MESSAGE -->
     <div class="review-section">
       <div class="review-section-title">Worker Message</div>
       <div class="review-message">
-        {{ work_item.message|linebreaksbr|default:"No message provided." }}
+        {{ work_item.message|default:"No message provided."|linebreaksbr }}
       </div>
     </div>
 
-    <!-- ATTACHMENTS -->
+    <!-- ===============================
+         ATTACHMENTS
+    ================================ -->
     <div class="review-section">
       <div class="review-section-title">Attachments</div>
 
-      {% if work_item.attachments.all %}
-        <div class="review-attachments">
-          {% for f in work_item.attachments.all %}
+      {% for type, files in attachments_by_type.items %}
+      <div class="attachment-group">
+        <div class="attachment-header collapsed" onclick="toggleAttachment(this)">
+          <span>
+            <i class="fas fa-paperclip me-1"></i> {{ type }}
+          </span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+
+        <div class="attachment-body">
+          {% for f in files %}
           <div class="review-attachment">
-            <a href="{{ f.file.url }}" target="_blank" class="text-decoration-none">
+            <a href="{{ f.file.url }}" target="_blank">
               <i class="far fa-file me-1"></i>
               {{ f.file.name|slice:"-40:" }}
             </a>
             <span class="text-muted">
-              {{ f.uploaded_at|date:"M d, Y · H:i" }}
+              {{ f.uploaded_at|date:"M d, Y · g:i A" }}
             </span>
           </div>
           {% endfor %}
         </div>
-      {% else %}
-        <div class="text-muted small fst-italic">
-          No attachments submitted.
-        </div>
-      {% endif %}
+      </div>
+      {% empty %}
+        <div class="text-muted small fst-italic">No attachments submitted.</div>
+      {% endfor %}
     </div>
 
   </div>
 
-  <!-- RIGHT : REVIEW ACTIONS -->
+  <!-- ===============================
+       RIGHT PANEL
+  ================================ -->
   <div class="review-side">
-
     <h6>Review Decision</h6>
 
     <form method="post" class="review-actions">
       {% csrf_token %}
       <input type="hidden" name="action" value="update_review">
 
-      <button name="review_decision" value="pending"
-              class="review-btn pending">
-        ⏳ Mark as Pending
+      <button name="review_decision" value="pending" class="review-btn pending">
+        <i class="fas fa-hourglass-half"></i> Mark as Pending
       </button>
 
-      <button name="review_decision" value="approved"
-              class="review-btn approved">
-        ✔ Approve Work
+      <button name="review_decision" value="approved" class="review-btn approved">
+        <i class="fas fa-check-circle"></i> Approve Work
       </button>
 
-      <button name="review_decision" value="revision"
-              class="review-btn revision">
-        🔁 Needs Revision
+      <button name="review_decision" value="revision" class="review-btn revision">
+        <i class="fas fa-undo-alt"></i> Needs Revision
       </button>
     </form>
-
   </div>
 
 </div>
-{% include "admin/page/modals/message_ui_modal.html" %}
 
+<script>
+function toggleAttachment(header){
+  header.classList.toggle("collapsed");
+  header.nextElementSibling.style.display =
+    header.nextElementSibling.style.display === "block" ? "none" : "block";
+}
+</script>
+
+{% include "admin/page/modals/message_ui_modal.html" %}
 {% endblock %}

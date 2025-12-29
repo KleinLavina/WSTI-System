@@ -26,7 +26,7 @@
   <!-- RIGHT: VIEW TOGGLE -->
   <div class="btn-group shadow-sm" role="group">
     <button type="button"
-            class="btn btn-outline-secondary active"
+            class="btn btn-outline-secondary"
             id="listViewBtn"
             title="List view">
       <i class="fas fa-list"></i>
@@ -72,26 +72,44 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+  const STORAGE_KEY = "completed_work_view";
+
   const listBtn = document.getElementById("listViewBtn");
   const cardBtn = document.getElementById("cardViewBtn");
-  const list = document.getElementById("listView");
-  const card = document.getElementById("cardView");
+  const listView = document.getElementById("listView");
+  const cardView = document.getElementById("cardView");
 
-  listBtn.addEventListener("click", () => {
-    list.classList.remove("d-none");
-    card.classList.add("d-none");
+  function showListView(save = true) {
+    listView.classList.remove("d-none");
+    cardView.classList.add("d-none");
     listBtn.classList.add("active");
     cardBtn.classList.remove("active");
-  });
+    if (save) localStorage.setItem(STORAGE_KEY, "list");
+  }
 
-  cardBtn.addEventListener("click", () => {
-    card.classList.remove("d-none");
-    list.classList.add("d-none");
+  function showCardView(save = true) {
+    cardView.classList.remove("d-none");
+    listView.classList.add("d-none");
     cardBtn.classList.add("active");
     listBtn.classList.remove("active");
-  });
-});
+    if (save) localStorage.setItem(STORAGE_KEY, "card");
+  }
 
+  // Restore preference
+  const savedView = localStorage.getItem(STORAGE_KEY);
+  if (savedView === "card") {
+    showCardView(false);
+  } else {
+    showListView(false); // default
+  }
+
+  // Button handlers
+  listBtn.addEventListener("click", () => showListView());
+  cardBtn.addEventListener("click", () => showCardView());
+});
+</script>
+
+<script>
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".progressPie").forEach(canvas => {
     const done = Number(canvas.dataset.done || 0);

@@ -1,6 +1,6 @@
 from django.urls import path
 from admin_app.views import (
-    dashboard, inactive_workcycle_list,
+    dashboard, inactive_workcycle_list,  toggle_workcycle_archive,
     workcycle_list,  create_workcycle, edit_workcycle, reassign_workcycle, workcycle_assignments, 
     create_user, users,
     completed_work_summary, done_workers_by_workcycle,
@@ -33,6 +33,12 @@ urlpatterns = [
         workcycle_assignments,
         name="workcycle-assignments",
     ),
+ path(
+    "workcycles/<int:pk>/archive/",
+    toggle_workcycle_archive,
+    name="workcycle-archive",
+),
+
 
     # Analytics
     path(

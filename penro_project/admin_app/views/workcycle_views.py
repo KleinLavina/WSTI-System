@@ -238,15 +238,32 @@ def create_workcycle(request):
         description = request.POST.get("description", "")
         due_at = request.POST.get("due_at")
 
-        # USERS
+        # -----------------------------
+        # USERS (OPTIONAL)
+        # -----------------------------
         raw_user_ids = request.POST.getlist("users[]")
         user_ids = [uid for uid in raw_user_ids if uid.isdigit()]
         users = User.objects.filter(id__in=user_ids)
 
-        # TEAM (optional)
+        # -----------------------------
+        # TEAM (OPTIONAL)
+        # -----------------------------
         team_id = request.POST.get("team")
         team = Team.objects.filter(id=team_id).first() if team_id else None
 
+        # -----------------------------
+        # SAFETY CHECK
+        # -----------------------------
+        if not users.exists() and not team:
+            messages.error(
+                request,
+                "You must assign at least one user or a team."
+            )
+            return redirect("admin_app:workcycles")
+
+        # -----------------------------
+        # CREATE WORK CYCLE
+        # -----------------------------
         create_workcycle_with_assignments(
             title=title,
             description=description,
@@ -259,7 +276,9 @@ def create_workcycle(request):
         messages.success(request, "Work cycle created successfully.")
         return redirect("admin_app:workcycles")
 
-    # Fallback (rarely used)
+    # -----------------------------
+    # GET REQUEST
+    # -----------------------------
     return render(
         request,
         "admin/page/workcycle_create.html",
@@ -268,8 +287,6 @@ def create_workcycle(request):
             "teams": Team.objects.all(),
         },
     )
-
-
 # ============================================================
 # EDIT WORK CYCLE
 # ============================================================
@@ -299,19 +316,27 @@ def reassign_workcycle(request):
     wc_id = request.POST.get("workcycle_id")
     workcycle = get_object_or_404(WorkCycle, id=wc_id)
 
-    # USERS (optional)
+    # -----------------------------
+    # USERS (OPTIONAL)
+    # -----------------------------
     raw_user_ids = request.POST.getlist("users[]")
     user_ids = [uid for uid in raw_user_ids if uid.isdigit()]
     users = User.objects.filter(id__in=user_ids)
 
-    # TEAM (optional)
+    # -----------------------------
+    # TEAM (OPTIONAL)
+    # -----------------------------
     team_id = request.POST.get("team")
     team = Team.objects.filter(id=team_id).first() if team_id else None
 
+    # -----------------------------
     # OPTIONAL NOTE
+    # -----------------------------
     inactive_note = request.POST.get("inactive_note", "").strip()
 
+    # -----------------------------
     # SAFETY CHECK
+    # -----------------------------
     if not users.exists() and not team:
         messages.error(
             request,
@@ -319,7 +344,9 @@ def reassign_workcycle(request):
         )
         return redirect("admin_app:workcycles")
 
-    # BUSINESS LOGIC (SERVICE)
+    # -----------------------------
+    # REASSIGN
+    # -----------------------------
     reassign_workcycle_service(
         workcycle=workcycle,
         users=users,
@@ -330,7 +357,6 @@ def reassign_workcycle(request):
 
     messages.success(request, "Work cycle reassigned successfully.")
     return redirect("admin_app:workcycles")
-
 
 # ============================================================
 # WORK CYCLE ASSIGNMENT DETAILS
@@ -378,3 +404,18 @@ def workcycle_assignments(request, pk):
         },
     )
 
+from django.views.decorators.http import require_POST
+
+@require_POST
+def toggle_workcycle_archive(request, pk):
+    workcycle = get_object_or_404(WorkCycle, pk=pk)
+
+    workcycle.is_active = not workcycle.is_active
+    workcycle.save(update_fields=["is_active"])
+
+    if workcycle.is_active:
+        messages.success(request, "Work cycle restored successfully.")
+        return redirect("admin_app:workcycles")
+    else:
+        messages.success(request, "Work cycle archived successfully.")
+        return redirect("admin_app:workcycles")

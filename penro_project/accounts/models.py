@@ -442,7 +442,7 @@ class WorkItem(models.Model):
         max_length=30,
         choices=[
             ("not_started", "Not Started"),
-            ("working_on_it", "Working on It"), 
+            ("working_on_it", "Working on It"),
             ("done", "Done (Submitted)"),
         ],
         default="not_started",
@@ -452,6 +452,9 @@ class WorkItem(models.Model):
     status_label = models.CharField(max_length=100, blank=True)
     message = models.TextField(blank=True)
 
+    # ======================
+    # REVIEW
+    # ======================
     review_decision = models.CharField(
         max_length=30,
         choices=[
@@ -463,8 +466,20 @@ class WorkItem(models.Model):
         db_index=True
     )
 
-    # 👇 Automatically managed submission timestamp
-    submitted_at = models.DateTimeField(null=True, blank=True)
+    reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when this item was reviewed (approved or revised)"
+    )
+
+    # ======================
+    # TIMESTAMPS
+    # ======================
+    submitted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when work was submitted"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -478,21 +493,43 @@ class WorkItem(models.Model):
             models.Index(fields=["inactive_reason"]),
         ]
 
+    # =====================================================
+    # SAVE LOGIC (SAFE + AUDITABLE)
+    # =====================================================
     def save(self, *args, **kwargs):
-        """
-        Auto-manage timestamps:
-        - Set submitted_at when status becomes 'done'
-        - Clear if status is reverted
-        - Set inactive_at when item becomes inactive
-        """
-        # Handle submission timestamp
+        is_new = self.pk is None
+        old_review = None
+
+        if not is_new:
+            old_review = (
+                WorkItem.objects
+                .filter(pk=self.pk)
+                .values_list("review_decision", flat=True)
+                .first()
+            )
+
+        # ---------------------
+        # SUBMISSION TIMESTAMP
+        # ---------------------
         if self.status == "done":
             if self.submitted_at is None:
                 self.submitted_at = timezone.now()
         else:
             self.submitted_at = None
 
-        # Handle inactive timestamp
+        # ---------------------
+        # REVIEW TIMESTAMP
+        # ---------------------
+        if self.review_decision in ("approved", "revision"):
+            if old_review != self.review_decision:
+                self.reviewed_at = timezone.now()
+        else:
+            # reverted to pending
+            self.reviewed_at = None
+
+        # ---------------------
+        # INACTIVE TIMESTAMP
+        # ---------------------
         if not self.is_active:
             if self.inactive_at is None:
                 self.inactive_at = timezone.now()

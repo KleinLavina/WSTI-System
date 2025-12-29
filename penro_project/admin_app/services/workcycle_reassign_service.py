@@ -1,7 +1,12 @@
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
-from accounts.models import WorkItem, WorkAssignment
+from accounts.models import (
+    WorkItem,
+    WorkAssignment,
+    OrgAssignment,
+)
 
 
 @transaction.atomic
@@ -11,43 +16,58 @@ def reassign_workcycle(
     users,
     team=None,
     performed_by=None,
-    inactive_note=""
+    inactive_note="",
 ):
     """
     Reassign a work cycle.
 
-    - Deactivates removed users' work items
-    - Reactivates or creates work items for new users
-    - Replaces work assignments atomically
-
-    IMPORTANT:
-    - This function NO LONGER resolves users via TeamMembership
-    - `users` must be an explicit iterable of User objects
+    - Team assignment expands to users via OrgAssignment
+    - Removed users' work items are archived
+    - Added users receive new or reactivated work items
+    - Work assignments are fully replaced
     """
 
-    # =====================================================
-    # 1️⃣ Resolve target users (EXPLICIT ONLY)
-    # =====================================================
-    target_users = set(users)
+    # ============================
+    # RESOLVE TARGET USERS
+    # ============================
+    target_user_ids = set()
 
-    # =====================================================
-    # 2️⃣ Existing work items & owners
-    # =====================================================
+    # Team → org users
+    if team:
+        org_users = OrgAssignment.objects.filter(
+            Q(division=team) |
+            Q(section=team) |
+            Q(service=team) |
+            Q(unit=team)
+        ).select_related("user")
+
+        for org in org_users:
+            target_user_ids.add(org.user_id)
+
+    # Direct users
+    for user in users:
+        target_user_ids.add(user.id)
+
+    if not target_user_ids and not team:
+        raise ValueError("Must assign at least one user or a team.")
+
+    # ============================
+    # EXISTING WORK ITEMS
+    # ============================
     existing_items = WorkItem.objects.filter(workcycle=workcycle)
-    existing_users = {wi.owner for wi in existing_items}
+    existing_user_ids = set(
+        existing_items.values_list("owner_id", flat=True)
+    )
 
-    # =====================================================
-    # 3️⃣ Users removed by reassignment
-    # =====================================================
-    removed_users = existing_users - target_users
+    # ============================
+    # USERS REMOVED
+    # ============================
+    removed_user_ids = existing_user_ids - target_user_ids
 
-    # =====================================================
-    # 4️⃣ Deactivate removed users' work items
-    # =====================================================
-    if removed_users:
+    if removed_user_ids:
         WorkItem.objects.filter(
             workcycle=workcycle,
-            owner__in=removed_users,
+            owner_id__in=removed_user_ids,
             is_active=True
         ).update(
             is_active=False,
@@ -56,13 +76,13 @@ def reassign_workcycle(
             inactive_at=timezone.now()
         )
 
-    # =====================================================
-    # 5️⃣ Reactivate or create work items for target users
-    # =====================================================
-    for user in target_users:
+    # ============================
+    # ADD / REACTIVATE USERS
+    # ============================
+    for user_id in target_user_ids:
         wi, created = WorkItem.objects.get_or_create(
             workcycle=workcycle,
-            owner=user,
+            owner_id=user_id,
             defaults={
                 "status": "not_started",
                 "is_active": True,
@@ -83,23 +103,23 @@ def reassign_workcycle(
                 "status",
             ])
 
-    # =====================================================
-    # 6️⃣ Replace work assignments (METADATA ONLY)
-    # =====================================================
+    # ============================
+    # REPLACE ASSIGNMENTS
+    # ============================
     WorkAssignment.objects.filter(workcycle=workcycle).delete()
 
     if team:
-        # Team assignment is informational / grouping only
+        # Team responsibility
         WorkAssignment.objects.create(
             workcycle=workcycle,
             assigned_team=team
         )
-    else:
-        # Direct user assignments
-        WorkAssignment.objects.bulk_create([
-            WorkAssignment(
-                workcycle=workcycle,
-                assigned_user=user
-            )
-            for user in target_users
-        ])
+
+    # Direct user responsibility
+    WorkAssignment.objects.bulk_create([
+        WorkAssignment(
+            workcycle=workcycle,
+            assigned_user_id=user_id
+        )
+        for user_id in target_user_ids
+    ])

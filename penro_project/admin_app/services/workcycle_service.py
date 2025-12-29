@@ -1,5 +1,12 @@
 from django.db import transaction
-from accounts.models import WorkCycle, WorkAssignment, WorkItem
+from django.db.models import Q
+
+from accounts.models import (
+    WorkCycle,
+    WorkAssignment,
+    WorkItem,
+    OrgAssignment,
+)
 
 
 @transaction.atomic
@@ -10,8 +17,22 @@ def create_workcycle_with_assignments(
     due_at,
     created_by,
     users,
-    team,
+    team=None,
 ):
+    """
+    Creates a WorkCycle and assigns work via:
+    - Direct users
+    - OR a team (division / section / service / unit)
+
+    Team assignment EXPANDS to users using OrgAssignment.
+    """
+
+    if not users.exists() and not team:
+        raise ValueError("Must assign at least one user or a team.")
+
+    # ============================
+    # CREATE WORK CYCLE
+    # ============================
     workcycle = WorkCycle.objects.create(
         title=title,
         description=description,
@@ -19,27 +40,46 @@ def create_workcycle_with_assignments(
         created_by=created_by,
     )
 
+    assigned_user_ids = set()
+
+    # ============================
+    # TEAM → USERS (ORG SNAPSHOT)
+    # ============================
     if team:
+        # Metadata / responsibility
         WorkAssignment.objects.create(
             workcycle=workcycle,
             assigned_team=team
         )
 
-        for membership in team.memberships.select_related("user"):
-            WorkItem.objects.create(
-                workcycle=workcycle,
-                owner=membership.user
-            )
+        org_users = OrgAssignment.objects.filter(
+            Q(division=team) |
+            Q(section=team) |
+            Q(service=team) |
+            Q(unit=team)
+        ).select_related("user")
 
+        for org in org_users:
+            assigned_user_ids.add(org.user_id)
+
+    # ============================
+    # DIRECT USERS
+    # ============================
     for user in users:
+        assigned_user_ids.add(user.id)
+
         WorkAssignment.objects.create(
             workcycle=workcycle,
             assigned_user=user
         )
 
-        WorkItem.objects.create(
+    # ============================
+    # CREATE WORK ITEMS (DEDUPED)
+    # ============================
+    for user_id in assigned_user_ids:
+        WorkItem.objects.get_or_create(
             workcycle=workcycle,
-            owner=user
+            owner_id=user_id
         )
 
     return workcycle
