@@ -1,0 +1,55 @@
+<!-- =========================
+     DELETE WORK CYCLE MODAL
+========================= -->
+<div class="modal fade"
+     id="deleteWorkcycleModal"
+     tabindex="-1"
+     aria-labelledby="deleteWorkcycleModalLabel"
+     aria-hidden="true">
+
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+
+      <!-- HEADER -->
+      <div class="modal-header bg-danger text-white py-2">
+        <h6 class="modal-title fw-bold" id="deleteWorkcycleModalLabel">
+          <i class="fas fa-trash me-2"></i>
+          Delete Work Cycle
+        </h6>
+        <button type="button"
+                class="btn-close btn-close-white"
+                data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- BODY -->
+      <div class="modal-body small text-center">
+        <p class="mb-2">
+          Are you sure you want to permanently delete this work cycle?
+        </p>
+
+        <p class="text-danger fw-semibold mb-0">
+          This action cannot be undone.
+        </p>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="modal-footer py-2">
+        <button type="button"
+                class="btn btn-sm btn-outline-secondary"
+                data-bs-dismiss="modal">
+          Cancel
+        </button>
+
+        <!-- IMPORTANT: action URL will be injected -->
+        <form method="post" id="deleteWorkcycleForm">
+          {% csrf_token %}
+          <button type="submit"
+                  class="btn btn-sm btn-danger">
+            Yes, Delete
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>

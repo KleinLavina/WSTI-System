@@ -1,5 +1,6 @@
 from django.db.models import Count
 from django.contrib import messages
+from django.db.models.deletion import ProtectedError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from accounts.models import (
@@ -352,7 +353,7 @@ def reassign_workcycle(request):
         users=users,
         team=team,
         inactive_note=inactive_note,
-        performed_by=request.user,
+        performed_by=request.user,      
     )
 
     messages.success(request, "Work cycle reassigned successfully.")
@@ -419,3 +420,27 @@ def toggle_workcycle_archive(request, pk):
     else:
         messages.success(request, "Work cycle archived successfully.")
         return redirect("admin_app:workcycles")
+
+
+@require_POST
+def delete_workcycle(request, pk):
+    workcycle = get_object_or_404(WorkCycle, pk=pk)
+
+    try:
+        title = workcycle.title
+        workcycle.delete()
+
+        messages.success(
+            request,
+            f"Work cycle '{title}' was permanently deleted."
+        )
+
+    except ProtectedError:
+        messages.error(
+            request,
+            "This work cycle cannot be deleted because it still has "
+            "documents or folders linked to it. "
+            "Please archive it instead."
+        )
+
+    return redirect("admin_app:workcycles")

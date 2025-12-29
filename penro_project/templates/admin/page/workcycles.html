@@ -243,9 +243,15 @@
                     </button>
                   </li>
                   <li>
-                    <button class="wc-dropdown-item wc-dropdown-item-danger">
-                      <i class="fas fa-trash"></i> Delete
-                    </button>
+     <button
+  class="wc-dropdown-item wc-dropdown-item-danger"
+  data-bs-toggle="modal"
+  data-bs-target="#deleteWorkcycleModal"
+  data-delete-url="{% url 'admin_app:workcycle-delete' wc.id %}">
+  <i class="fas fa-trash"></i> Delete
+</button>
+
+
                   </li>
                 </ul>
               </div>
@@ -346,6 +352,7 @@
   {% include "admin/page/modals/workcycle_purpose_modal.html" %}
   {% include "admin/page/modals/create_workcycle_modal.html" %}
   {% include "admin/page/modals/edit_workcycle_modal.html" %}
+    {% include "admin/page/modals/delete_workcycles_modal.html" %}
   {% include "admin/page/modals/reassign_workcycle_modal.html" %}
 
   {% endblock %}
@@ -411,5 +418,22 @@
       });
     }
   });
+
+  document.addEventListener("DOMContentLoaded", function () {
+  const deleteModal = document.getElementById("deleteWorkcycleModal");
+
+  if (!deleteModal) return;
+
+  deleteModal.addEventListener("show.bs.modal", function (event) {
+    const button = event.relatedTarget;
+
+    // URL from clicked delete button
+    const deleteUrl = button.getAttribute("data-delete-url");
+
+    // Inject into form
+    const form = deleteModal.querySelector("#deleteWorkcycleForm");
+    form.action = deleteUrl;
+  });
+});
   </script>
   {% endblock %}
