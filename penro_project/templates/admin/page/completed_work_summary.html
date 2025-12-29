@@ -3,46 +3,71 @@
 
 {% block content %}
 
-<!-- HEADER -->
+<!-- =========================
+     HEADER
+========================= -->
 <div class="mb-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
+
+  <!-- LEFT -->
   <div>
     <h3 class="fw-bold d-flex align-items-center gap-2 mb-1">
       <i class="fas fa-chart-bar text-primary"></i>
       Work Assignment Analytics
+      <span class="badge bg-primary bg-opacity-10 text-primary ms-2">
+        {{ total_workcycles }}
+      </span>
     </h3>
-    <p class="text-muted mb-0">
+
+    <p class="text-muted mb-1">
       Status and review breakdown per active work cycle
     </p>
   </div>
 
-  <!-- VIEW TOGGLE -->
+  <!-- RIGHT: VIEW TOGGLE -->
   <div class="btn-group shadow-sm" role="group">
-    <button type="button" class="btn btn-outline-secondary active" id="listViewBtn">
+    <button type="button"
+            class="btn btn-outline-secondary active"
+            id="listViewBtn"
+            title="List view">
       <i class="fas fa-list"></i>
     </button>
-    <button type="button" class="btn btn-outline-secondary" id="cardViewBtn">
+    <button type="button"
+            class="btn btn-outline-secondary"
+            id="cardViewBtn"
+            title="Card view">
       <i class="fas fa-th-large"></i>
     </button>
   </div>
+
 </div>
 
+<hr class="wc-header-divider">
+
+<!-- =========================
+     CONTENT
+========================= -->
 {% if summary %}
 
-<div id="listView">
-  {% include "admin/page/_completed_work_list.html" %}
-</div>
+  <!-- LIST VIEW -->
+  <div id="listView">
+    {% include "admin/page/_completed_work_list.html" %}
+  </div>
 
-<div id="cardView" class="d-none">
-  {% include "admin/page/_completed_work_cards.html" %}
-</div>
+  <!-- CARD VIEW -->
+  <div id="cardView" class="d-none">
+    {% include "admin/page/_completed_work_cards.html" %}
+  </div>
 
 {% else %}
-<div class="p-4 text-muted text-center fst-italic">
-  <i class="far fa-folder-open me-1"></i>
-  No analytics data available
-</div>
+  <div class="p-4 text-muted text-center fst-italic">
+    <i class="far fa-folder-open me-1"></i>
+    No analytics data available
+  </div>
 {% endif %}
 
+<!-- =========================
+     SCRIPTS
+========================= -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
@@ -52,25 +77,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const list = document.getElementById("listView");
   const card = document.getElementById("cardView");
 
-  listBtn.onclick = () => {
+  listBtn.addEventListener("click", () => {
     list.classList.remove("d-none");
     card.classList.add("d-none");
     listBtn.classList.add("active");
     cardBtn.classList.remove("active");
-  };
+  });
 
-  cardBtn.onclick = () => {
+  cardBtn.addEventListener("click", () => {
     card.classList.remove("d-none");
     list.classList.add("d-none");
     cardBtn.classList.add("active");
     listBtn.classList.remove("active");
-  };
+  });
 });
 
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".progressPie").forEach(canvas => {
-    const done = Number(canvas.dataset.done);
-    const total = Number(canvas.dataset.total);
+    const done = Number(canvas.dataset.done || 0);
+    const total = Number(canvas.dataset.total || 0);
     const remaining = Math.max(total - done, 0);
 
     new Chart(canvas, {
@@ -93,8 +118,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
-
-
 </script>
+
+<!-- =========================
+     STYLES
+========================= -->
+<style>
+.wc-header-divider {
+  margin: 0.875rem 0;
+  border: 0;
+  border-top: 1px solid #000;
+}
+</style>
 
 {% endblock %}

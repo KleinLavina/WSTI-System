@@ -5,195 +5,514 @@
 
 <style>
 /* ===============================
-   MONDAY-STYLE WORKCYCLE VIEW
+   GLOBAL STYLES WITH NEW PALETTE
 ================================ */
-.wc-layout{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:20px;
+:root {
+  --primary-dark: #1e3a5f;
+  --primary: #2d4a7c;
+  --primary-light: #e8f0fe;
+  --primary-accent: #4a90d9;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --archived-red: #7f1d1d;
+  --archived-hover: #fef2f2;
+  --gray-100: #f8fafc;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
 }
 
-/* HEADER */
-.wc-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:20px;
+/* COMPACT LAYOUT */
+.wc-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
-.wc-title h3{
-  margin:0;
-  font-weight:800;
+/* HEADER (KEPT SPACIOUS) */
+.wc-header {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  border-radius: 16px;
+  padding: 24px;
+  color: white;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
 }
 
-.wc-meta{
-  margin-top:4px;
-  font-size:.8rem;
-  color:#6b7280;
-  display:flex;
-  gap:16px;
-  flex-wrap:wrap;
+.wc-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
 }
 
-.wc-desc{
-  margin-top:8px;
-  font-size:.85rem;
-  color:#475569;
+.wc-title h3 {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* BASE CARD */
-.wc-card{
-  background:#fff;
-  border-radius:16px;
-  border:1px solid #e5e7eb;
-  box-shadow:0 10px 28px rgba(15,23,42,.08);
+.wc-title h3 i {
+  color: var(--primary-accent);
 }
 
-/* CARD HEADER */
-.wc-card-header{
-  padding:14px 18px;
-  border-bottom:1px solid #e5e7eb;
-  font-weight:800;
-  display:flex;
-  align-items:center;
-  gap:8px;
+.wc-meta {
+  margin-top: 10px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
-/* ASSIGNEES */
-.wc-assignees{
-  padding:16px 18px;
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
+.wc-meta span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.wc-pill{
-  padding:6px 12px;
-  border-radius:999px;
-  font-size:.75rem;
-  font-weight:700;
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
+.wc-desc {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.95);
 }
 
-.wc-pill.user{
-  background:#eff6ff;
-  color:#2563eb;
-  border:1px solid #bfdbfe;
+/* COMPACT BACK BUTTON */
+.wc-back-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
 }
 
-.wc-pill.team{
-  background:#ecfdf5;
-  color:#065f46;
-  border:1px solid #6ee7b7;
+.wc-back-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  color: white;
+  text-decoration: none;
 }
 
-/* WORK LIST */
-.wc-list{
-  display:flex;
-  flex-direction:column;
+/* COMPACT BASE CARD */
+.wc-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--gray-200);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.wc-row{
-  display:grid;
-  grid-template-columns:1.5fr .8fr .8fr 1fr;
-  gap:12px;
-  padding:14px 18px;
-  align-items:center;
-  border-top:1px solid #f1f5f9;
-  transition:.2s ease;
+.wc-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.wc-row:hover{
-  background:#f9fafb;
+/* COMPACT CARD HEADER */
+.wc-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--gray-200);
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--primary-dark);
+  background: var(--primary-light);
+  border-radius: 12px 12px 0 0;
 }
 
-.wc-head{
-  background:#f8fafc;
-  font-size:.7rem;
-  font-weight:800;
-  text-transform:uppercase;
-  color:#6b7280;
-  border-top:none;
+.wc-card-header i {
+  color: var(--primary-accent);
 }
 
-/* BADGES */
-.wc-badge{
-  padding:6px 10px;
-  font-size:.7rem;
-  font-weight:700;
-  border-radius:999px;
-  display:inline-block;
+/* COMPACT ASSIGNEES */
+.wc-assignees {
+  padding: 16px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.wc-badge.status{
-  background:#e5e7eb;
-  color:#374151;
+.wc-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
 }
 
-.wc-badge.review.approved{
-  background:#d1fae5;
-  color:#065f46;
+.wc-pill.user {
+  background: linear-gradient(135deg, var(--primary-light), #e0e7ff);
+  color: var(--primary);
+  border: 1px solid var(--primary-accent);
 }
 
-.wc-badge.review.pending{
-  background:#fef3c7;
-  color:#92400e;
+.wc-pill.team {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  color: #065f46;
+  border: 1px solid #86efac;
 }
 
-.wc-badge.review.revision{
-  background:#fee2e2;
-  color:#991b1b;
+/* COMPACT STATS CARD */
+.wc-stats-compact {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 20px;
+  padding: 16px 20px;
+  align-items: center;
 }
 
-/* ARCHIVED */
-.wc-archived .wc-row{
-  color:#9ca3af;
+.wc-stats-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.wc-empty{
-  padding:16px 18px;
-  font-size:.8rem;
-  color:#9ca3af;
-  font-style:italic;
+.wc-stats-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gray-600);
+}
+
+.wc-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.wc-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: 10px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.wc-stat i {
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+.wc-stat span {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.wc-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* STATUS COLORS */
+.wc-status.done {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.wc-status.working_on_it {
+  background: linear-gradient(135deg, #ecfccb, #d9f99d);
+  color: #3f6212;
+  border: 1px solid #a3e635;
+}
+
+
+.wc-status.not_started {
+  background: linear-gradient(135deg, #ffedd5, #fed7aa);
+  color: #9a3412;
+  border: 1px solid #fdba74;
+}
+
+
+.wc-review.pending {
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  color: #3730a3;
+  border: 1px solid #818cf8;
+}
+
+.wc-review.approved {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  border: 1px solid #60a5fa;
+}
+
+.wc-review.revision {
+  background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+  color: #7e1f5a;
+  border: 1px solid #f472b6;
+}
+
+
+/* VERTICAL DIVIDER */
+.wc-stats-divider {
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--gray-300), transparent);
+}
+
+/* COMPACT WORK LIST */
+.wc-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.wc-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 14px 20px;
+  align-items: center;
+  border-top: 1px solid var(--gray-100);
+  transition: all 0.2s ease;
+}
+
+.wc-row:hover {
+  background: var(--primary-light);
+}
+
+.wc-head {
+  background: var(--primary-light);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gray-600);
+  border-top: none;
+  border-bottom: 1px solid var(--gray-200);
+  padding: 12px 20px;
+}
+
+/* COMPACT USER AVATAR */
+.wc-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wc-avatar {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-accent));
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+}
+
+/* COMPACT BADGES */
+.wc-badge {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* COMPACT REVIEW LINK */
+.wc-review-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--primary);
+  background: linear-gradient(135deg, var(--primary-light), #e0e7ff);
+  border: 1px solid var(--primary-accent);
+  transition: all 0.2s ease;
+}
+
+.wc-review-link:hover {
+  background: linear-gradient(135deg, var(--primary-accent), var(--primary));
+  color: white;
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+/* ARCHIVED SECTION - DARK RED THEME */
+.wc-archived .wc-card-header {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  color: var(--archived-red);
+  border-bottom: 1px solid #fecaca;
+}
+
+.wc-archived .wc-card-header i {
+  color: var(--archived-red);
+}
+
+.wc-archived .wc-row {
+  color: var(--archived-red);
+  background: white;
+}
+
+.wc-archived .wc-row:hover {
+  background: var(--archived-hover);
+  color: var(--archived-red);
+}
+
+.wc-archived .wc-head {
+  background: #fef2f2;
+  color: #991b1b;
+  border-bottom: 1px solid #fecaca;
+}
+
+.wc-archived .wc-avatar {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  color: white;
+}
+
+.wc-archived .wc-user .text-muted {
+  color: #9ca3af !important;
+}
+
+.wc-empty {
+  padding: 24px 20px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--gray-600);
+  font-style: italic;
+  border-radius: 0 0 12px 12px;
+}
+
+/* COMPACT DATE STYLES */
+.wc-date {
+  font-size: 0.85rem;
+  color: var(--gray-600);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .wc-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+  
+  .wc-head {
+    display: none;
+  }
+  
+  .wc-stats-compact {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .wc-stats-divider {
+    display: none;
+  }
+  
+  .wc-header {
+    padding: 20px;
+  }
+  
+  .wc-back-btn {
+    position: relative;
+    top: 0;
+    right: 0;
+    margin-top: 12px;
+    align-self: flex-start;
+  }
+  
+  .wc-user {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }
 </style>
 
-<!-- HEADER -->
-<div class="wc-header mb-3">
+<!-- HEADER (KEPT SPACIOUS) -->
+<div class="wc-header">
   <div class="wc-title">
     <h3>
-      <i class="fas fa-tasks text-primary me-1"></i>
+      <i class="fas fa-tasks"></i>
       {{ workcycle.title }}
     </h3>
 
     <div class="wc-meta">
       <span>
-        <i class="far fa-calendar-alt me-1"></i>
-        Due {{ workcycle.due_at|date:"M d, Y · H:i" }}
+        <i class="far fa-calendar-alt"></i>
+        Due Date:  {{ workcycle.due_at|date:"l, F j, Y · g:i A" }}
+
+      </span>
+      <span>
+        <i class="fas fa-users"></i>
+        {{ assignments|length }} assignments
       </span>
     </div>
 
     {% if workcycle.description %}
     <div class="wc-desc">
+      <i class="fas fa-info-circle me-2"></i>
       {{ workcycle.description }}
     </div>
     {% endif %}
   </div>
 
-  <a href="{% url 'admin_app:workcycles' %}"
-     class="btn btn-sm btn-outline-secondary">
-    <i class="fas fa-arrow-left me-1"></i> Back
+  <a href="{% url 'admin_app:workcycles' %}" class="wc-back-btn">
+    <i class="fas fa-arrow-left"></i> Back
   </a>
 </div>
 
+<!-- COMPACT LAYOUT -->
 <div class="wc-layout">
 
   <!-- ASSIGNED TO -->
   <div class="wc-card">
     <div class="wc-card-header">
-      <i class="fas fa-user-check text-success"></i>
+      <i class="fas fa-user-check"></i>
       Assigned To
     </div>
 
@@ -218,22 +537,75 @@
     </div>
   </div>
 
+  <!-- STATS CARD -->
+  <div class="wc-card wc-stats-compact">
+    <!-- WORK STATUS -->
+    <div class="wc-stats-side">
+      <div class="wc-stats-title">
+        <i class="fas fa-tasks"></i>
+        Work Progress
+      </div>
+      <div class="wc-stats-grid">
+        <div class="wc-stat wc-status done">
+          <i class="fas fa-check-circle"></i>
+          <span>{{ status_counts.done }}</span>
+          <div class="wc-stat-label">Done</div>
+        </div>
+        <div class="wc-stat wc-status working_on_it">
+          <i class="fas fa-spinner"></i>
+          <span>{{ status_counts.working_on_it }}</span>
+          <div class="wc-stat-label">In Progress</div>
+        </div>
+        <div class="wc-stat wc-status not_started">
+          <i class="fas fa-circle-notch"></i>
+          <span>{{ status_counts.not_started }}</span>
+          <div class="wc-stat-label">Not Started</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="wc-stats-divider"></div>
+
+    <!-- REVIEW STATUS -->
+    <div class="wc-stats-side">
+      <div class="wc-stats-title">
+        <i class="fas fa-clipboard-check"></i>
+        Review Status
+      </div>
+      <div class="wc-stats-grid">
+        <div class="wc-stat wc-review pending">
+          <i class="fas fa-hourglass-half"></i>
+          <span>{{ review_counts.pending }}</span>
+          <div class="wc-stat-label">Pending</div>
+        </div>
+        <div class="wc-stat wc-review approved">
+          <i class="fas fa-check"></i>
+          <span>{{ review_counts.approved }}</span>
+          <div class="wc-stat-label">Approved</div>
+        </div>
+        <div class="wc-stat wc-review revision">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>{{ review_counts.revision }}</span>
+          <div class="wc-stat-label">Revision</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ACTIVE WORK -->
   <div class="wc-card">
     <div class="wc-card-header d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center gap-2">
-        <i class="fas fa-play-circle text-primary"></i>
+        <i class="fas fa-play-circle"></i>
         <span>Active Work Items</span>
       </div>
 
-      <!-- CHECK REVIEW LINK -->
-      <a href="{% url 'admin_app:completed-work-summary' %}"
-        class="wc-review-link">
+      <a href="{% url 'admin_app:completed-work-summary' %}" class="wc-review-link">
         <i class="fas fa-clipboard-check"></i>
         <span>Review</span>
       </a>
     </div>
-
 
     {% if active_items %}
     <div class="wc-list">
@@ -246,84 +618,106 @@
 
       {% for item in active_items %}
       <div class="wc-row">
-        <div>
-          <i class="far fa-user me-1 text-muted"></i>
-          {{ item.owner.get_full_name|default:item.owner.username }}
+        <div class="wc-user">
+          <div class="wc-avatar">
+            {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
+          </div>
+          <div>
+            <div class="fw-semibold">{{ item.owner.get_full_name|default:item.owner.username }}</div>
+            <div class="text-muted small">{{ item.owner.email }}</div>
+          </div>
         </div>
 
         <div>
-          <span class="wc-badge status">
+          <span class="wc-badge wc-status {{ item.status }}">
+            <i class="fas {% if item.status == 'done' %}fa-check-circle
+              {% elif item.status == 'working_on_it' %}fa-spinner
+              {% else %}fa-circle-notch{% endif %}"></i>
             {{ item.get_status_display }}
           </span>
         </div>
 
         <div>
-          <span class="wc-badge review {{ item.review_decision }}">
+          <span class="wc-badge wc-review {{ item.review_decision }}">
+            <i class="fas {% if item.review_decision == 'approved' %}fa-check
+              {% elif item.review_decision == 'revision' %}fa-exclamation-triangle
+              {% else %}fa-hourglass-half{% endif %}"></i>
             {{ item.get_review_decision_display }}
           </span>
         </div>
 
         <div>
-          {% if item.submitted_at %}
-            {{ item.submitted_at|date:"M d, Y · H:i" }}
-          {% else %}—{% endif %}
+{% if item.submitted_at %}
+  <div class="wc-date">
+    <i class="far fa-clock"></i>
+    {{ item.submitted_at|date:"l, F j, Y · g:i A" }}
+  </div>
+{% else %}
+  <span class="wc-badge" style="background: var(--gray-200); color: var(--gray-700);">
+    <i class="fas fa-clock"></i>
+    Not Submitted
+  </span>
+{% endif %}
+
         </div>
       </div>
       {% endfor %}
     </div>
     {% else %}
-      <div class="wc-empty">No active work</div>
+      <div class="wc-empty">No active work items found</div>
     {% endif %}
   </div>
 
-  <!-- ARCHIVED -->
+  <!-- ARCHIVED (WITH DARK RED THEME) -->
   <div class="wc-card wc-archived">
-    <div class="wc-card-header text-secondary">
+    <div class="wc-card-header">
       <i class="fas fa-archive"></i>
-      Archived (Reassigned)
+      Archived Work Items
     </div>
 
     {% if archived_items %}
       <div class="wc-list">
+        <div class="wc-row wc-head">
+          <div>User</div>
+          <div>Status</div>
+          <div>Review</div>
+          <div>Archived Date</div>
+        </div>
         {% for item in archived_items %}
         <div class="wc-row">
-          <div>
-            <i class="far fa-user me-1"></i>
-            {{ item.owner.get_full_name|default:item.owner.username }}
+          <div class="wc-user">
+            <div class="wc-avatar">
+              {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
+            </div>
+            <div>
+              <div class="fw-semibold">{{ item.owner.get_full_name|default:item.owner.username }}</div>
+              <div class="text-muted small">{{ item.owner.email }}</div>
+            </div>
           </div>
-          <div>{{ item.get_status_display }}</div>
-          <div></div>
-          <div></div>
+          <div>
+            <span class="wc-badge" style="background: #fee2e2; color: #991b1b; border-color: #fca5a5;">
+              {{ item.get_status_display }}
+            </span>
+          </div>
+          <div>
+            <span class="wc-badge" style="background: #fee2e2; color: #991b1b; border-color: #fca5a5;">
+              {{ item.get_review_decision_display|default:"—" }}
+            </span>
+          </div>
+          <div>
+            <div class="wc-date" style="color: #991b1b;">
+              <i class="far fa-calendar-alt"></i>
+              {{ item.inactive_at|date:"M d, Y · g:i A" }}
+            </div>
+            <div class="text-muted small">{{ item.updated_at|date:"H:i" }}</div>
+          </div>
         </div>
         {% endfor %}
       </div>
     {% else %}
-      <div class="wc-empty">No archived work</div>
+      <div class="wc-empty">No archived work items</div>
     {% endif %}
   </div>
 
 </div>
-<style>
-  .wc-review-link{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:6px 12px;
-  border-radius:999px;
-  font-size:.75rem;
-  font-weight:700;
-  text-decoration:none;
-  color:#2563eb;
-  background:#eff6ff;
-  border:1px solid #bfdbfe;
-  transition:.2s ease;
-}
-
-.wc-review-link:hover{
-  background:#2563eb;
-  color:#fff;
-  border-color:#2563eb;
-}
-
-</style>
-{% endblock %}
+{% endblock %}  

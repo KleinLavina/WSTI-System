@@ -442,7 +442,7 @@ class WorkItem(models.Model):
         max_length=30,
         choices=[
             ("not_started", "Not Started"),
-            ("working_on_it", "Working on It"),
+            ("working_on_it", "Working on It"), 
             ("done", "Done (Submitted)"),
         ],
         default="not_started",

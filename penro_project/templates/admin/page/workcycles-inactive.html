@@ -4,8 +4,7 @@
   {% block title %}Work Cycles{% endblock %}
 
   {% block extra_css %}
-
-<link rel="stylesheet" href="{% static 'css/inactive_workcycles.css' %}">
+  <link rel="stylesheet" href="{% static 'css/workcycles-inactive.css' %}">
   {% endblock %}
 
   {% block content %}
@@ -41,15 +40,13 @@
           What is a Work Cycle?
         </button>
 
-  <a
-    href="{% url 'admin_app:workcycles' %}"
-    class="btn-wc-secondary"
-    aria-label="View archived work cycles">
-    <i class="fas fa-archive" aria-hidden="true"></i>
-    Back to Work Cycles
-  </a>
-
-
+        <a
+          href="{% url 'admin_app:workcycles' %}"
+          class="btn-wc-secondary"
+          aria-label="View archived work cycles">
+          <i class="fas fa-archive" aria-hidden="true"></i>
+          Back to Work Cycles
+        </a>
       </nav>
 
     </header>
@@ -61,99 +58,114 @@
     ====================================================== -->
     <section class="wc-stats-filter-row">
 
-      <!-- ================= STATS ================= -->
-      <aside class="wc-stats-container" aria-label="Work cycle statistics">
+      <!-- ================= STATS SECTION ================= -->
+      <div class="wc-stats-section">
+                <aside class="wc-stats-container" aria-label="Work cycle statistics">
+          <h1>
+            <i class="fas fa-filter"></i> Filter By:
+          </h1>
+<div class="wc-stats-badges">
 
-        <!-- Activity Status Group -->
-        <div class="wc-stats-group">
-          <span class="wc-badge wc-badge-inactive">
-            <i class="fas fa-times-circle"></i>
-            {{ inactive_count }} Inactive
-          </span>
-        </div>
+  <!-- RESET / TOTAL INACTIVE -->
+  <a href="{% url 'admin_app:inactive-workcycles' %}"
+     class="wc-badge wc-badge-inactive
+     {% if not has_filters %}is-selected{% endif %}">
+
+    <i class="fas fa-archive"></i>
+    Total Inactive: {{ inactive_count }}
+
+  </a>
+
+</div>
+<form method="get" class="wc-filter-bar">
+
+  <!-- SEARCH -->
+  <div class="filter-group">
+    <input
+      type="text"
+      name="q"
+      value="{{ request.GET.q }}"
+      placeholder="Search work cycle title…"
+      class="filter-input"
+    >
+  </div>
+
+  <!-- YEAR (native select is OK) -->
+  <div class="filter-group">
+    <select name="year" class="filter-select">
+      <option value="">All Years</option>
+      {% for y in years %}
+        <option value="{{ y }}"
+          {% if request.GET.year == y|stringformat:"s" %}selected{% endif %}>
+          {{ y }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- MONTH (BOOTSTRAP DROPDOWN – CONTROLLED) -->
+  <input type="hidden"
+         name="month"
+         id="monthInput"
+         value="{{ request.GET.month }}">
+
+  <div class="dropdown filter-group">
+    <button type="button"
+            class="filter-select dropdown-toggle"
+            data-bs-toggle="dropdown"
+            id="monthDropdownBtn">
+      {% if request.GET.month %}
+        {% for m in months %}
+          {% if m.value|stringformat:"s" == request.GET.month %}
+            {{ m.label }}
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        All Months
+      {% endif %}
+    </button>
+
+    <ul class="dropdown-menu wc-scroll-dropdown">
+      <li>
+        <button type="button"
+                class="dropdown-item"
+                data-value="">
+          All Months
+        </button>
+      </li>
+
+      {% for m in months %}
+        <li>
+          <button type="button"
+                  class="dropdown-item"
+                  data-value="{{ m.value }}">
+            {{ m.label }}
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="filter-actions">
+    <button type="submit" class="btn-filter">
+      Apply
+    </button>
+
+    <a href="{% url 'admin_app:inactive-workcycles' %}"
+       class="btn-reset">
+      Reset
+    </a>
+  </div>
+
+</form>
 
 
-      </aside>
+        </aside>
 
-      <!-- ================= FILTER FORM ================= -->
-      <section class="wc-filter-area">
 
-        <form
-          method="get"
-          action="{% url 'admin_app:workcycles' %}"
-          class="wc-filter-form"
-          role="search">
+      </div>
 
-          <!-- ---------- SEARCH ---------- -->
-          <aside class="wc-search-panel">
-
-            <article class="wc-filter-card wc-search-card">
-              <label class="wc-filter-label">
-                <i class="fas fa-search"></i> Search
-              </label>
-
-              <div class="wc-search-input-wrapper">
-                <input
-                  type="search"
-                  name="q"
-                  value="{{ search_query }}"
-                  class="wc-filter-input"
-                  placeholder="Search…">
-                <button type="submit" class="btn-wc-primary">
-                  <i class="fas fa-search"></i>
-                </button>
-              </div>
-            </article>
-
-          </aside>
-
-          <!-- ---------- FILTER CONTROLS ---------- -->
-          <section class="wc-filter-panel">
-            <article class="wc-filter-card">
-              <div class="wc-filter-fields-container">
-
-  
-
-                <div class="wc-filter-field">
-                  <label class="wc-filter-label">
-                    <i class="fas fa-calendar-alt"></i> Year
-                  </label>
-                  <select name="year" class="wc-filter-select wc-filter-select-limited">
-                    <option value="">All</option>
-                    {% for y in years %}
-                      <option value="{{ y }}">{{ y }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-
-                <div class="wc-filter-field">
-                  <label class="wc-filter-label">
-                    <i class="fas fa-calendar-day"></i> Month
-                  </label>
-                  <select name="month" class="wc-filter-select wc-filter-select-limited">
-                    <option value="">All</option>
-                    {% for m in months %}
-                      <option value="{{ m.value }}">{{ m.label }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-
-                <div class="wc-filter-field wc-filter-actions-field">
-                  <button type="submit" class="btn-wc-primary">
-                    <i class="fas fa-filter"></i>
-                  </button>
-                  <a href="{% url 'admin_app:workcycles' %}"
-                    class="btn btn-outline-secondary btn-sm">
-                    Reset
-                  </a>
-                </div>
-              </div>
-            </article>
-          </section>
-
-        </form>
-
-      </section>
 
     </section>
 
@@ -172,18 +184,32 @@
           <header class="wc-card-header">
 
             <section class="wc-card-header-main">
+              
+              <!-- TOP ROW: Lifecycle State + Active Badge (HORIZONTAL) -->
+              <div class="wc-header-top-row">
+                <span class="wc-card-section-title lifecycle-{{ wc.lifecycle_state }}">
+                  {% if wc.lifecycle_state == 'ongoing' %}
+                    <i class="fas fa-sync-alt"></i>
+                  {% elif wc.lifecycle_state == 'due_soon' %}
+                    <i class="fas fa-hourglass-half"></i>
+                  {% elif wc.lifecycle_state == 'lapsed' %}
+                    <i class="fas fa-exclamation-triangle"></i>
+                  {% endif %}
+                  {{ wc.lifecycle_state|upper }}
+                </span>
 
-              <span class="wc-card-section-title lifecycle-{{ wc.lifecycle_state }}">
-                {{ wc.lifecycle_state|upper }}
-              </span>
+                <span class="wc-badge {% if wc.is_active %}wc-badge-active{% else %}wc-badge-inactive{% endif %}">
+                  {% if wc.is_active %}
+                    <i class="fas fa-check-circle"></i> Active
+                  {% else %}
+                    <i class="fas fa-times-circle"></i> Inactive
+                  {% endif %}
+                </span>
+              </div>
 
               <h2 class="wc-card-title">
                 {{ wc.title }}
               </h2>
-
-              <span class="wc-badge {% if wc.is_active %}wc-badge-active{% else %}wc-badge-inactive{% endif %}">
-                {% if wc.is_active %}Active{% else %}Inactive{% endif %}
-              </span>
 
             </section>
 
@@ -202,10 +228,15 @@
                     </a>
                   </li>
                   <li>
-                    <button class="wc-dropdown-item"
-                            data-bs-toggle="modal"
-                            data-bs-target="#editWorkcycleModal"
-                            data-id="{{ wc.id }}">
+                    <button
+                      type="button"
+                      class="wc-dropdown-item"
+                      data-bs-toggle="modal"
+                      data-bs-target="#editWorkcycleModal"
+                      data-id="{{ wc.id }}"
+                      data-title="{{ wc.title|escapejs }}"
+                      data-description="{{ wc.description|default:''|escapejs }}"
+                      data-due="{{ wc.due_at|date:'Y-m-d\\TH:i' }}">
                       <i class="fas fa-edit"></i> Edit
                     </button>
                   </li>
@@ -223,52 +254,64 @@
           <!-- ================= CARD BODY ================= -->
           <section class="wc-card-body">
 
-            <article class="wc-due-date lifecycle-{{ wc.lifecycle_state }}">
-              <header class="wc-due-date-header">
-                <span class="wc-due-date-label">
-                  <i class="fas fa-clock"></i> Deadline
-                </span>
-              </header>
+            <!-- DEADLINE + TIME REMAINING (HORIZONTAL) -->
+            <div class="wc-deadline-time-row">
+              <article class="wc-due-date lifecycle-{{ wc.lifecycle_state }}">
+                <header class="wc-due-date-header">
+                  <span class="wc-due-date-label">
+                    <i class="fas fa-clock"></i> Deadline
+                  </span>
+                </header>
 
-              <time class="wc-due-date-value">
-                {{ wc.due_at|date:"M d, Y · H:i" }}
-              </time>
-            </article>
+                <time class="wc-due-date-value">
+                  {{ wc.due_at|date:"l, F d, Y · h:i A" }}
+                </time>
+
+              </article>
+
+              <article class="wc-time-remaining">
+                <span class="wc-time-remaining-label">
+                  <i class="fas fa-hourglass-half"></i> Time Left
+                </span>
+                <strong class="wc-time-remaining-value">
+                  {{ wc.time_remaining }}
+                </strong>
+              </article>
+            </div>
 
             {% if wc.description %}
             <article class="wc-description">
-              <header class="wc-card-section-title">
-                Description
+              <header class="wc-description-header">
+                <i class="fas fa-align-left"></i> Description
               </header>
               <p class="wc-description-text">
-                {{ wc.description|truncatechars:120 }}
+                {{ wc.description|truncatechars:50 }}
               </p>
             </article>
             {% endif %}
 
-            <article class="wc-time-remaining">
-              <span class="wc-time-remaining-label">Time Remaining</span>
-              <strong class="wc-time-remaining-value">
-                {{ wc.time_remaining }}
-              </strong>
-            </article>
-
             <footer class="wc-meta-grid">
 
               <section class="wc-meta-item">
-                <span class="wc-meta-label">Created By</span>
+                <span class="wc-meta-label">
+                  <i class="fas fa-user"></i> Created By
+                </span>
                 <span class="wc-meta-value">{{ wc.created_by|default:"System" }}</span>
               </section>
 
               <section class="wc-meta-item">
-                <span class="wc-meta-label">Created On</span>
+                <span class="wc-meta-label">
+                  <i class="fas fa-calendar"></i> Created On
+                </span>
                 <time class="wc-meta-value">
                   {{ wc.created_at|date:"M d, Y" }}
                 </time>
               </section>
 
               <section class="wc-meta-item">
-                <span class="wc-meta-label">Assignments</span>
+                <span class="wc-meta-label">
+                  <i class="fas fa-tasks"></i> Assignments
+                </span>
                 <span class="wc-meta-value">
                   {{ wc.assignment_count|default:"0" }}
                 </span>
@@ -285,6 +328,7 @@
 
       {% else %}
       <section class="wc-empty-state">
+        <i class="fas fa-inbox fa-3x" style="color: var(--text-light); margin-bottom: 1rem;"></i>
         <h2>No Work Cycles Found</h2>
         <p>Create your first work cycle to get started.</p>
       </section>
@@ -347,7 +391,7 @@
         modal.querySelector('#edit_workcycle_id').value = id;
         modal.querySelector('#edit_title').value = title;
         modal.querySelector('#edit_description').value = description;
-        modal.querySelector('#edit_due_at').value = due; 
+        modal.querySelector('#edit_due_at').value = due;
       });
     }
 
@@ -366,4 +410,14 @@
     }
   });
   </script>
+  <script>
+document.querySelectorAll(".dropdown-item[data-value]").forEach(item => {
+  item.addEventListener("click", () => {
+    document.getElementById("monthInput").value = item.dataset.value;
+    document.getElementById("monthDropdownBtn").textContent =
+      item.textContent;
+  });
+});
+</script>
+
   {% endblock %}

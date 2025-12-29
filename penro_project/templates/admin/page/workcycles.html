@@ -196,6 +196,24 @@
                       <i class="fas fa-eye"></i> View
                     </a>
                   </li>
+                      <li>
+                    <button
+                      type="button"
+                      class="wc-dropdown-item"
+                      data-bs-toggle="modal"
+                      data-bs-target="#reassignWorkcycleModal"
+
+                      data-id="{{ wc.id }}"
+                      data-title="{{ wc.title|escapejs }}"
+
+                      data-users="{% for a in wc.assignments.all %}{% if a.assigned_user %}{{ a.assigned_user.get_full_name|default:a.assigned_user.username }}|{% endif %}{% endfor %}"
+
+                      data-teams="{% for a in wc.assignments.all %}{% if a.assigned_team %}{{ a.assigned_team.name }}|{% endif %}{% endfor %}"
+                    >
+                      <i class="fas fa-random"></i> Reassign
+                    </button>
+                  </li>
+
                   <li>
                     <button
                       type="button"
@@ -254,7 +272,7 @@
                 <i class="fas fa-align-left"></i> Description
               </header>
               <p class="wc-description-text">
-                {{ wc.description|truncatechars:18 }}
+                {{ wc.description|truncatechars:50 }}
               </p>
             </article>
             {% endif %}

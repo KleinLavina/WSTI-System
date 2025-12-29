@@ -107,18 +107,25 @@ def workcycle_list(request):
         },
     )
 
-
 def inactive_workcycle_list(request):
     """
     Admin list view for INACTIVE (ARCHIVED) Work Cycles
+
+    Filtering via:
+      ?year=
+      ?month=
+      ?q=
+
+    Reset state:
+      no filters applied → "Total Inactive"
     """
 
     # =========================================================
     # BASE QUERYSET (INACTIVE ONLY)
     # =========================================================
-    workcycles_qs = (
+    qs = (
         WorkCycle.objects
-        .filter(is_active=False)   # ✅ INACTIVE ONLY
+        .filter(is_active=False)
         .annotate(
             assignment_count=Count("assignments__id", distinct=True)
         )
@@ -129,7 +136,8 @@ def inactive_workcycle_list(request):
         .order_by("-created_at")
     )
 
-    workcycles = list(workcycles_qs)
+    all_inactive = list(qs)   # for stats + filter options
+    workcycles = list(all_inactive)
 
     # =========================================================
     # FILTER PARAMS
@@ -141,13 +149,12 @@ def inactive_workcycle_list(request):
     # =========================================================
     # APPLY FILTERS
     # =========================================================
-
     if year_filter:
         try:
             year_filter = int(year_filter)
             workcycles = [
                 wc for wc in workcycles
-                if wc.due_at.year == year_filter
+                if wc.due_at and wc.due_at.year == year_filter
             ]
         except ValueError:
             pass
@@ -157,7 +164,7 @@ def inactive_workcycle_list(request):
             month_filter = int(month_filter)
             workcycles = [
                 wc for wc in workcycles
-                if wc.due_at.month == month_filter
+                if wc.due_at and wc.due_at.month == month_filter
             ]
         except ValueError:
             pass
@@ -170,15 +177,27 @@ def inactive_workcycle_list(request):
         ]
 
     # =========================================================
-    # STATS (INACTIVE PAGE)
+    # STATS (ALWAYS BASED ON *ALL* INACTIVE)
     # =========================================================
-    inactive_count = len(workcycles)
+    inactive_count = len(all_inactive)
 
+    # =========================================================
+    # UI STATE (MIRRORS `current_state` FROM ACTIVE VIEW)
+    # =========================================================
+    has_filters = any([
+        year_filter,
+        month_filter,
+        search_query,
+    ])
 
     # =========================================================
-    # FILTER OPTIONS
+    # FILTER OPTIONS (BASED ON ALL INACTIVE)
     # =========================================================
-    years = sorted({wc.due_at.year for wc in workcycles})
+    years = sorted({
+        wc.due_at.year
+        for wc in all_inactive
+        if wc.due_at
+    })
 
     months = [
         {"value": 1, "label": "January"},
@@ -197,16 +216,17 @@ def inactive_workcycle_list(request):
 
     return render(
         request,
-        "admin/page/inactive_workcycles.html",
+        "admin/page/workcycles-inactive.html",
         {
             "workcycles": workcycles,
             "inactive_count": inactive_count,
             "years": years,
             "months": months,
+            "search_query": search_query,
+            "has_filters": has_filters,   # 👈 key for badge selection
             "now": timezone.now(),
         },
     )
-
 
 # ============================================================
 # CREATE WORK CYCLE
@@ -334,7 +354,17 @@ def workcycle_assignments(request, pk):
         workcycle=workcycle,
         is_active=False,
     )
+    status_counts = {
+        "done": active_items.filter(status="done").count(),
+        "working_on_it": active_items.filter(status="working_on_it").count(),
+        "not_started": active_items.filter(status="not_started").count(),
+    }
 
+    review_counts = {
+        "pending": active_items.filter(review_decision="pending").count(),
+        "approved": active_items.filter(review_decision="approved").count(),
+        "revision": active_items.filter(review_decision="revision").count(),
+    }
     return render(
         request,
         "admin/page/workcycle_assignments.html",
@@ -343,5 +373,8 @@ def workcycle_assignments(request, pk):
             "assignments": assignments,
             "active_items": active_items,
             "archived_items": archived_items,
+            "status_counts": status_counts,   # 👈 new
+            "review_counts": review_counts,
         },
     )
+
