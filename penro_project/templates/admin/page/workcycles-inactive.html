@@ -253,10 +253,16 @@
                       <i class="fas fa-edit"></i> Edit
                     </button>
                   </li>
-                  <li>
-                    <button class="wc-dropdown-item wc-dropdown-item-danger">
-                      <i class="fas fa-trash"></i> Delete
-                    </button>
+      <li>
+     <button
+  class="wc-dropdown-item wc-dropdown-item-danger"
+  data-bs-toggle="modal"
+  data-bs-target="#deleteWorkcycleModal"
+  data-delete-url="{% url 'admin_app:workcycle-delete' wc.id %}">
+  <i class="fas fa-trash"></i> Delete
+</button>
+
+
                   </li>
                 </ul>
               </div>
@@ -358,7 +364,7 @@
   {% include "admin/page/modals/create_workcycle_modal.html" %}
   {% include "admin/page/modals/edit_workcycle_modal.html" %}
   {% include "admin/page/modals/reassign_workcycle_modal.html" %}
-
+   {% include "admin/page/modals/delete_workcycles_modal.html" %}
   {% endblock %}
 
   {% block extra_js %}
