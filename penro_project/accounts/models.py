@@ -672,6 +672,9 @@ class WorkItemAttachment(models.Model):
         return f"{self.get_attachment_type_display()} — {self.work_item}"
     
 class WorkItemMessage(models.Model):
+    # ============================================================
+    # RELATIONSHIPS
+    # ============================================================
     work_item = models.ForeignKey(
         WorkItem,
         on_delete=models.CASCADE,
@@ -684,6 +687,9 @@ class WorkItemMessage(models.Model):
         related_name="work_item_messages"
     )
 
+    # ============================================================
+    # MESSAGE META
+    # ============================================================
     sender_role = models.CharField(
         max_length=50,
         choices=[
@@ -697,7 +703,9 @@ class WorkItemMessage(models.Model):
         help_text="Message regarding status, review, or work clarification"
     )
 
-    # Optional context (VERY useful)
+    # ============================================================
+    # OPTIONAL CONTEXT (VERY USEFUL)
+    # ============================================================
     related_status = models.CharField(
         max_length=30,
         blank=True,
@@ -710,16 +718,55 @@ class WorkItemMessage(models.Model):
         help_text="Review decision this message refers to (optional)"
     )
 
+    # ============================================================
+    # READ / SEEN STATE
+    # ============================================================
+    is_read = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Whether this message has been read by the other party"
+    )
+
+    read_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when the message was read"
+    )
+
+    # ============================================================
+    # TIMESTAMPS
+    # ============================================================
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # ============================================================
+    # MODEL CONFIG
+    # ============================================================
     class Meta:
         ordering = ["created_at"]
-        indexes = [ 
+        indexes = [
             models.Index(fields=["sender_role"]),
             models.Index(fields=["created_at"]),
+            models.Index(fields=["is_read"]),
+            models.Index(fields=["work_item", "is_read"]),
         ]
 
+    # ============================================================
+    # STRING REPRESENTATION
+    # ============================================================
     def __str__(self):
-        return f"{self.sender} → {self.work_item}"
+        return f"{self.sender} → {self.work_item} ({'read' if self.is_read else 'unread'})"
 
+    # ============================================================
+    # HELPER METHODS (OPTIONAL BUT POWERFUL)
+    # ============================================================
+    def mark_as_read(self):
+        """Mark this message as read safely."""
+        if not self.is_read:
+            from django.utils import timezone
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save(update_fields=["is_read", "read_at"])
 
+    def is_system_message(self):
+        """Detect system-generated messages (status/review updates)."""
+        return bool(self.related_status or self.related_review)

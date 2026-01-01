@@ -131,7 +131,6 @@ def workcycle_list(request):
         },
     )
 
-
 def inactive_workcycle_list(request):
     """
     Admin list view for INACTIVE (ARCHIVED) Work Cycles
@@ -140,6 +139,7 @@ def inactive_workcycle_list(request):
       ?year=
       ?month=
       ?q=
+      ?sort=due_asc | due_desc
 
     Reset state:
       no filters applied → "Total Inactive"
@@ -158,10 +158,9 @@ def inactive_workcycle_list(request):
             "assignments__assigned_user",
             "assignments__assigned_team",
         )
-        .order_by("-created_at")
     )
 
-    all_inactive = list(qs)   # for stats + filter options
+    all_inactive = list(qs)        # for stats + filter options
     workcycles = list(all_inactive)
 
     # =========================================================
@@ -170,9 +169,10 @@ def inactive_workcycle_list(request):
     year_filter = request.GET.get("year")
     month_filter = request.GET.get("month")
     search_query = request.GET.get("q", "").strip()
+    sort_param = request.GET.get("sort")   # 👈 ADD THIS
 
     # =========================================================
-    # APPLY FILTERS
+    # APPLY FILTERS (IN MEMORY – MATCHES YOUR CURRENT DESIGN)
     # =========================================================
     if year_filter:
         try:
@@ -202,17 +202,32 @@ def inactive_workcycle_list(request):
         ]
 
     # =========================================================
+    # APPLY SORTING (FIXED)
+    # =========================================================
+    if sort_param == "due_asc":
+        workcycles.sort(
+            key=lambda wc: wc.due_at or timezone.datetime.max
+        )
+
+    elif sort_param == "due_desc":
+        workcycles.sort(
+            key=lambda wc: wc.due_at or timezone.datetime.min,
+            reverse=True
+        )
+
+    # =========================================================
     # STATS (ALWAYS BASED ON *ALL* INACTIVE)
     # =========================================================
     inactive_count = len(all_inactive)
 
     # =========================================================
-    # UI STATE (MIRRORS `current_state` FROM ACTIVE VIEW)
+    # UI STATE
     # =========================================================
     has_filters = any([
         year_filter,
         month_filter,
         search_query,
+        sort_param,
     ])
 
     # =========================================================
@@ -239,6 +254,9 @@ def inactive_workcycle_list(request):
         {"value": 12, "label": "December"},
     ]
 
+    # =========================================================
+    # RENDER
+    # =========================================================
     return render(
         request,
         "admin/page/workcycles-inactive.html",
@@ -248,7 +266,7 @@ def inactive_workcycle_list(request):
             "years": years,
             "months": months,
             "search_query": search_query,
-            "has_filters": has_filters,   # 👈 key for badge selection
+            "has_filters": has_filters,
             "now": timezone.now(),
         },
     )

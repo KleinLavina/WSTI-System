@@ -3,8 +3,12 @@
 
 {% block content %}
 {% include "admin/page/modals/message_ui_modal.html" %}
+
 <div class="container-fluid">
 
+  <!-- ======================================================
+       HEADER
+  ======================================================= -->
   <h4 class="fw-bold mb-3 d-flex align-items-center gap-2">
     <i class="fas fa-comments text-primary"></i>
     Work Item Discussions
@@ -17,13 +21,16 @@
 
   {% regroup work_items by workcycle as grouped_cycles %}
 
+  <!-- ======================================================
+       ACCORDION
+  ======================================================= -->
   {% if grouped_cycles %}
     <div class="accordion" id="discussionAccordion">
 
       {% for group in grouped_cycles %}
       <div class="accordion-item mb-2 shadow-sm">
 
-        <!-- WORKCYCLE HEADER -->
+        <!-- WORK CYCLE HEADER -->
         <h2 class="accordion-header" id="heading{{ forloop.counter }}">
           <button class="accordion-button collapsed fw-semibold"
                   type="button"
@@ -31,13 +38,16 @@
                   data-bs-target="#cycle{{ forloop.counter }}">
             <i class="fas fa-folder-open me-2 text-primary"></i>
             {{ group.grouper.title }}
+
             <span class="badge bg-secondary ms-2">
               {{ group.list|length }}
             </span>
           </button>
         </h2>
 
-        <!-- WORK ITEMS UNDER THIS WORKCYCLE -->
+        <!-- ==================================================
+             WORK ITEMS UNDER WORK CYCLE
+        =================================================== -->
         <div id="cycle{{ forloop.counter }}"
              class="accordion-collapse collapse"
              data-bs-parent="#discussionAccordion">
@@ -45,48 +55,50 @@
           <div class="list-group list-group-flush">
 
             {% for item in group.list %}
-           <a href="#"
-              class="list-group-item list-group-item-action"
-              data-qxdlg-trigger
-              data-qxdlg-url="{% url 'admin_app:work-item-discussion' item.id %}"
-              data-qxdlg-title="{{ item.workcycle.title }}"
-              data-qxdlg-subtitle="Assigned to: {{ item.owner.get_full_name|default:item.owner.username }}">
-
-
-
-
-
+            <a href="#"
+               class="list-group-item list-group-item-action
+                      {% if item.unread_count > 0 %}fw-semibold{% endif %}"
+               data-qxdlg-trigger
+               data-qxdlg-url="{% url 'admin_app:work-item-discussion' item.id %}"
+               data-qxdlg-title="{{ item.workcycle.title }}"
+               data-qxdlg-subtitle="Assigned to: {{ item.owner.get_full_name|default:item.owner.username }}">
 
               <div class="d-flex justify-content-between align-items-start">
 
-                <!-- LEFT -->
+                <!-- ================= LEFT ================= -->
                 <div>
-                  <div class="fw-semibold">
+                  <div>
                     {{ item.owner.get_full_name|default:item.owner.username }}
                   </div>
+
                   <div class="small text-muted">
                     Due {{ item.workcycle.due_at|date:"M d, Y" }}
                     · Thread #{{ item.id }}
                   </div>
                 </div>
 
-                <!-- RIGHT -->
-                <div class="text-end small text-muted">
-                  {% if item.message_count %}
-                    <div class="fw-semibold text-dark">
-                      {{ item.message_count }} message{{ item.message_count|pluralize }}
-                    </div>
+                <!-- ================= RIGHT ================= -->
+                <div class="text-end small">
+
+                  <!-- UNREAD COUNT (ONLY THING THAT COUNTS) -->
+                  {% if item.unread_count > 0 %}
+                    <span class="badge bg-danger">
+                      {{ item.unread_count }}
+                    </span>
                   {% else %}
-                    <div>No messages</div>
+                    <span class="text-muted">
+                      Seen
+                    </span>
                   {% endif %}
 
+                  <!-- LAST MESSAGE TIME -->
                   {% if item.last_message_at %}
-                    <div>
+                    <div class="text-muted mt-1">
                       {{ item.last_message_at|date:"M d · H:i" }}
                     </div>
                   {% endif %}
-                </div>
 
+                </div>
               </div>
             </a>
             {% endfor %}
@@ -105,6 +117,4 @@
   {% endif %}
 
 </div>
-
-
 {% endblock %}

@@ -1,63 +1,68 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Discussion</title>
+
   {% load static %}
+
   <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    /* ============================================
-       ZXCHAT IFRAME - Unique prefix to avoid conflicts
-    ============================================ */
-    * {
-      box-sizing: border-box;
-    }
-    
+    /* =========================================================
+       ZXCHAT – ISOLATED CHAT UI (NO CONFLICTS)
+    ========================================================= */
+    * { box-sizing: border-box; }
+
     html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
-      height: 100%;
     }
-    
-    .zxchat-iframe-wrap {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-      min-height: 100%;
+
+    body.zxchat-iframe-wrap {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(180deg, #f8fafc, #f1f5f9);
       display: flex;
       flex-direction: column;
     }
 
+    /* =========================================================
+       THREAD AREA
+    ========================================================= */
     .zxchat-thread-area {
       flex: 1;
+      padding: 20px 16px 120px;
       display: flex;
       flex-direction: column;
-      padding: 20px 16px;
       gap: 16px;
       overflow-y: auto;
-      padding-bottom: 100px;
     }
 
+    /* =========================================================
+       EMPTY STATE
+    ========================================================= */
     .zxchat-empty-state {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 60px 20px;
       text-align: center;
-      flex: 1;
+      color: #64748b;
     }
 
     .zxchat-empty-icon {
       width: 64px;
       height: 64px;
-      background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
       border-radius: 50%;
+      background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .zxchat-empty-icon svg {
@@ -67,23 +72,23 @@
     }
 
     .zxchat-empty-title {
-      font-size: 15px;
       font-weight: 600;
-      color: #334155;
-      margin-bottom: 4px;
+      font-size: 15px;
     }
 
     .zxchat-empty-desc {
       font-size: 13px;
-      color: #94a3b8;
+      opacity: .8;
     }
 
-    /* Message Bubble */
+    /* =========================================================
+       MESSAGE ROWS
+    ========================================================= */
     .zxchat-bubble-row {
       display: flex;
       gap: 10px;
       max-width: 85%;
-      animation: zxchat-fadein 0.3s ease-out;
+      animation: zxchat-fadein .25s ease-out;
     }
 
     .zxchat-bubble-row--self {
@@ -95,56 +100,46 @@
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+      background: linear-gradient(135deg, #0ea5e9, #06b6d4);
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
-      font-size: 13px;
-      font-weight: 600;
       color: #fff;
-      text-transform: uppercase;
-      box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+      font-weight: 600;
+      font-size: 13px;
+      flex-shrink: 0;
     }
 
     .zxchat-bubble-row--self .zxchat-avatar-ring {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
     }
 
     .zxchat-bubble-content {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      min-width: 0;
     }
 
     .zxchat-bubble-meta {
       display: flex;
-      align-items: center;
       gap: 6px;
-      padding: 0 4px;
-      flex-wrap: wrap;
+      font-size: 11px;
+      color: #64748b;
+      align-items: center;
     }
 
-    .zxchat-sender-name {
-      font-size: 12px;
-      font-weight: 600;
-      color: #475569;
+    .zxchat-bubble-row--self .zxchat-bubble-meta {
+      justify-content: flex-end;
     }
 
     .zxchat-sender-role {
-      font-size: 10px;
-      font-weight: 500;
-      color: #6366f1;
       background: #eef2ff;
+      color: #6366f1;
       padding: 2px 6px;
       border-radius: 4px;
-    }
-
-    .zxchat-timestamp {
-      font-size: 11px;
-      color: #94a3b8;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
     }
 
     .zxchat-bubble-box {
@@ -153,45 +148,39 @@
       border-top-left-radius: 4px;
       padding: 12px 16px;
       font-size: 14px;
-      line-height: 1.5;
       color: #334155;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-      border: 1px solid rgba(0, 0, 0, 0.04);
-      word-wrap: break-word;
+      box-shadow: 0 2px 6px rgba(0,0,0,.05);
+      border: 1px solid rgba(0,0,0,.04);
+      white-space: pre-wrap;
     }
 
     .zxchat-bubble-row--self .zxchat-bubble-box {
-      background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%);
-      color: #ffffff;
-      border-radius: 16px;
+      background: linear-gradient(135deg, #6366f1, #7c3aed);
+      color: #fff;
       border-top-right-radius: 4px;
+      border-top-left-radius: 16px;
       border: none;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
     }
 
-    .zxchat-bubble-row--self .zxchat-bubble-meta {
-      justify-content: flex-end;
+    .zxchat-read-indicator {
+      font-size: 10px;
+      margin-top: 2px;
+      text-align: right;
+      color: #94a3b8;
     }
 
-    .zxchat-bubble-row--self .zxchat-sender-name {
-      color: #475569;
-    }
-
-    .zxchat-bubble-row--self .zxchat-sender-role {
-      background: rgba(99, 102, 241, 0.15);
-      color: #6366f1;
-    }
-
-    /* Composer */
+    /* =========================================================
+       COMPOSER
+    ========================================================= */
     .zxchat-composer-dock {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: #ffffff;
-      border-top: 1px solid #e2e8f0;
       padding: 12px 16px;
-      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+      background: #fff;
+      border-top: 1px solid #e2e8f0;
+      box-shadow: 0 -6px 20px rgba(0,0,0,.05);
     }
 
     .zxchat-composer-inner {
@@ -200,35 +189,20 @@
       align-items: flex-end;
     }
 
-    .zxchat-input-grow {
-      flex: 1;
-      position: relative;
-    }
-
     .zxchat-textarea-field {
       width: 100%;
-      border: 2px solid #e2e8f0;
+      resize: none;
       border-radius: 12px;
+      border: 2px solid #e2e8f0;
       padding: 10px 14px;
       font-size: 14px;
-      font-family: inherit;
-      resize: none;
-      min-height: 44px;
-      max-height: 100px;
-      line-height: 1.4;
-      transition: all 0.2s ease;
       background: #f8fafc;
     }
 
     .zxchat-textarea-field:focus {
       outline: none;
       border-color: #6366f1;
-      background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }
-
-    .zxchat-textarea-field::placeholder {
-      color: #94a3b8;
+      background: #fff;
     }
 
     .zxchat-send-btn {
@@ -236,68 +210,59 @@
       height: 44px;
       border-radius: 12px;
       border: none;
-      background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%);
-      color: #ffffff;
-      cursor: pointer;
+      background: linear-gradient(135deg, #6366f1, #7c3aed);
+      color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-      flex-shrink: 0;
     }
 
-    .zxchat-send-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
-    }
-
-    .zxchat-send-btn:active {
-      transform: translateY(0);
-    }
-
-    .zxchat-send-btn svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    /* Animations */
     @keyframes zxchat-fadein {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
+
 <body class="zxchat-iframe-wrap">
 
+  <!-- =======================================================
+       THREAD
+  ======================================================== -->
   <div class="zxchat-thread-area" id="zxchatThreadArea">
-    {% if messages %}
+
+    {% if has_messages %}
       {% for m in messages %}
         <div class="zxchat-bubble-row {% if m.sender == request.user %}zxchat-bubble-row--self{% endif %}">
           <div class="zxchat-avatar-ring">
-            {{ m.sender.first_name|slice:":1"|default:m.sender.username|slice:":1" }}
+            {{ m.sender.first_name|default:m.sender.username|slice:":1"|upper }}
           </div>
+
           <div class="zxchat-bubble-content">
             <div class="zxchat-bubble-meta">
-              <span class="zxchat-sender-name">{{ m.sender.get_full_name|default:m.sender.username }}</span>
+              <strong>{{ m.sender.get_full_name|default:m.sender.username }}</strong>
               <span class="zxchat-sender-role">{{ m.sender_role }}</span>
-              <span class="zxchat-timestamp">{{ m.created_at|date:"M d, H:i" }}</span>
+              <span>{{ m.created_at|date:"M d, H:i" }}</span>
             </div>
-            <div class="zxchat-bubble-box">{{ m.message }}</div>
+
+            <div class="zxchat-bubble-box">
+              {{ m.message }}
+            </div>
+
+            {% if m.sender == request.user %}
+              <div class="zxchat-read-indicator">
+                {% if m.is_read %}Seen{% else %}Sent{% endif %}
+              </div>
+            {% endif %}
           </div>
         </div>
       {% endfor %}
     {% else %}
       <div class="zxchat-empty-state">
         <div class="zxchat-empty-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         </div>
         <div class="zxchat-empty-title">No messages yet</div>
@@ -306,54 +271,32 @@
     {% endif %}
   </div>
 
+  <!-- =======================================================
+       COMPOSER
+  ======================================================== -->
   <form method="post" class="zxchat-composer-dock">
     {% csrf_token %}
     <div class="zxchat-composer-inner">
-      <div class="zxchat-input-grow">
-        <textarea
-          name="message"
-          id="zxchatTextarea"
-          class="zxchat-textarea-field"
-          rows="1"
-          required
-          placeholder="Type your message..."></textarea>
-      </div>
+      <textarea
+        name="message"
+        class="zxchat-textarea-field"
+        placeholder="Type your message…"
+        rows="1"
+        required></textarea>
+
       <button type="submit" class="zxchat-send-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-        </svg>
+        ➤
       </button>
     </div>
   </form>
 
+  <!-- =======================================================
+       JS
+  ======================================================== -->
   <script>
-    (function() {
-      var textarea = document.getElementById('zxchatTextarea');
-      var threadArea = document.getElementById('zxchatThreadArea');
-      
-      // Auto-resize textarea
-      if (textarea) {
-        textarea.addEventListener('input', function() {
-          this.style.height = 'auto';
-          this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-        });
-      }
-
-      // Scroll to bottom on load
-      function scrollToBottom() {
-        if (threadArea) {
-          threadArea.scrollTop = threadArea.scrollHeight;
-        }
-        window.scrollTo(0, document.body.scrollHeight);
-      }
-      
-      window.addEventListener('load', scrollToBottom);
-      
-      // Also scroll after a short delay to ensure content is rendered
-      setTimeout(scrollToBottom, 100);
-    })();
+    const thread = document.getElementById('zxchatThreadArea');
+    if (thread) thread.scrollTop = thread.scrollHeight;
   </script>
 
 </body>
 </html>
-  

@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -11,22 +12,24 @@ from accounts.models import WorkItem, WorkItemMessage
 # REVIEW WORK ITEM (ADMIN)
 # ============================================================
 @xframe_options_exempt
+@login_required
 def review_work_item(request, item_id):
     """
     Admin review page for a submitted WorkItem.
 
     - Shows submission details
-    - Groups attachments by type (Matrix A, Matrix B, MOV)
-    - Allows updating review_decision
-    - Correctly records reviewed_at via model save()
+    - Groups attachments by type
+    - Updates review_decision
+    - Posts system message to discussion
+    - Sends UI notification via Django messages
     """
 
     work_item = get_object_or_404(
         WorkItem.objects
         .select_related("owner", "workcycle")
-        .prefetch_related("attachments"),
+        .prefetch_related("attachments", "messages"),
         id=item_id,
-        status="done",  # only submitted items can be reviewed
+        status="done",
     )
 
     # --------------------------------------------------------
@@ -36,12 +39,45 @@ def review_work_item(request, item_id):
         decision = request.POST.get("review_decision")
 
         if decision in {"pending", "approved", "revision"}:
+            old_decision = work_item.review_decision
             work_item.review_decision = decision
+            work_item.save()  # ensures reviewed_at is updated
 
-            # IMPORTANT:
-            # Do NOT use update_fields here
-            # so reviewed_at is saved correctly
-            work_item.save()
+            # --------------------------------------------
+            # DISCUSSION MESSAGE (PERSISTENT)
+            # --------------------------------------------
+            if old_decision != decision:
+                decision_label = decision.replace("_", " ").title()
+
+                WorkItemMessage.objects.create(
+                    work_item=work_item,
+                    sender=request.user,
+                    sender_role=request.user.login_role,
+                    message=(
+                        f"📝 Review Update\n\n"
+                        f"This work item has been marked as "
+                        f"{decision_label}."
+                    )
+                )
+
+                # ----------------------------------------
+                # UI NOTIFICATION (TEMPORARY)
+                # ----------------------------------------
+                messages.success(
+                    request,
+                    f"Review decision updated to {decision_label}."
+                )
+            else:
+                messages.info(
+                    request,
+                    "Review decision was not changed."
+                )
+
+        else:
+            messages.error(
+                request,
+                "Invalid review decision submitted."
+            )
 
         return redirect(
             "admin_app:work-item-review",
@@ -54,7 +90,6 @@ def review_work_item(request, item_id):
     attachments_by_type = defaultdict(list)
 
     for attachment in work_item.attachments.all():
-        # Uses Django choice label: "Matrix A", "Matrix B", "MOV"
         label = attachment.get_attachment_type_display()
         attachments_by_type[label].append(attachment)
 
@@ -77,8 +112,18 @@ def admin_work_item_discussion(request, item_id):
     """
     Admin discussion thread for a WorkItem.
     Used inside modal / iframe.
+
+    Responsibilities:
+    - Send messages
+    - Prevent empty messages
+    - Mark other party's messages as read
+    - Provide unread count
+    - Allow template to hide UI if no messages exist
     """
 
+    # --------------------------------------------------------
+    # LOAD WORK ITEM
+    # --------------------------------------------------------
     work_item = get_object_or_404(
         WorkItem.objects.select_related("owner", "workcycle"),
         id=item_id
@@ -97,11 +142,23 @@ def admin_work_item_discussion(request, item_id):
                 sender_role=request.user.login_role,
                 message=text
             )
+            messages.success(request, "Message sent.")
+        else:
+            messages.warning(request, "Message cannot be empty.")
 
         return redirect(
             "admin_app:work-item-discussion",
             item_id=work_item.id
         )
+
+    # --------------------------------------------------------
+    # MARK MESSAGES AS READ (OTHER PARTY ONLY)
+    # --------------------------------------------------------
+    work_item.messages.filter(
+        is_read=False
+    ).exclude(
+        sender=request.user
+    ).update(is_read=True)
 
     # --------------------------------------------------------
     # LOAD DISCUSSION
@@ -112,11 +169,25 @@ def admin_work_item_discussion(request, item_id):
         .order_by("created_at")
     )
 
+    # --------------------------------------------------------
+    # DISCUSSION STATE
+    # --------------------------------------------------------
+    has_messages = messages_qs.exists()
+
+    unread_count = work_item.messages.filter(
+        is_read=False
+    ).exclude(sender=request.user).count()
+
+    # --------------------------------------------------------
+    # RENDER
+    # --------------------------------------------------------
     return render(
         request,
         "admin/page/work_item_discussion.html",
         {
             "work_item": work_item,
             "messages": messages_qs,
+            "has_messages": has_messages,
+            "unread_count": unread_count,
         }
     )

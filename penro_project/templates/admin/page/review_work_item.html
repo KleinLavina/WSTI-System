@@ -41,13 +41,22 @@
   border:1px solid #e5e7eb;
   box-shadow:0 10px 28px rgba(15,23,42,.08);
   padding:20px;
-  transition:.25s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
-/* Soft backgrounds based on review state */
+/* Glowing border effects based on review state */
 .review-main.approved{
   background:#eff6ff;
   border-color:#bfdbfe;
+}
+
+.review-main.approved:hover {
+  border-color: #3b82f6;
+  box-shadow: 
+    0 10px 28px rgba(15,23,42,.08),
+    0 0 0 3px rgba(59, 130, 246, 0.15),
+    0 0 0 1px #3b82f6;
 }
 
 .review-main.revision{
@@ -55,9 +64,58 @@
   border-color:#fecaca;
 }
 
+.review-main.revision:hover {
+  border-color: #ef4444;
+  box-shadow: 
+    0 10px 28px rgba(15,23,42,.08),
+    0 0 0 3px rgba(239, 68, 68, 0.15),
+    0 0 0 1px #ef4444;
+}
+
 .review-main.pending{
   background:#fffbeb;
   border-color:#fde68a;
+}
+
+.review-main.pending:hover {
+  border-color: #f59e0b;
+  box-shadow: 
+    0 10px 28px rgba(15,23,42,.08),
+    0 0 0 3px rgba(245, 158, 11, 0.15),
+    0 0 0 1px #f59e0b;
+}
+
+/* Status indicator dot in top-right corner */
+.review-main::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.review-main:hover::before {
+  opacity: 1;
+}
+
+.review-main.approved::before {
+  background: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.review-main.revision::before {
+  background: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+}
+
+.review-main.pending::before {
+  background: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
 }
 
 /* ===============================
@@ -77,17 +135,61 @@
   border-radius:999px;
   font-size:.7rem;
   font-weight:700;
+  transition: all 0.2s ease;
 }
 
-.review-pill.approved{ background:#dbeafe;color:#1e40af; }
-.review-pill.revision{ background:#fee2e2;color:#991b1b; }
-.review-pill.pending{ background:#fef3c7;color:#92400e; }
+.review-pill.approved{ 
+  background:#dbeafe;
+  color:#1e40af;
+  border: 1px solid transparent;
+}
+
+.review-pill.approved:hover {
+  background:#2563eb;
+  color:#ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  transform: translateY(-1px);
+}
+
+.review-pill.revision{ 
+  background:#fee2e2;
+  color:#991b1b;
+  border: 1px solid transparent;
+}
+
+.review-pill.revision:hover {
+  background:#dc2626;
+  color:#ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+  transform: translateY(-1px);
+}
+
+.review-pill.pending{ 
+  background:#fef3c7;
+  color:#92400e;
+  border: 1px solid transparent;
+}
+
+.review-pill.pending:hover {
+  background:#f59e0b;
+  color:#ffffff;
+  border-color: #f59e0b;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+  transform: translateY(-1px);
+}
 
 /* ===============================
    SECTIONS
 ================================ */
 .review-section{
   margin-top:16px;
+  transition: all 0.2s ease;
+}
+
+.review-section:hover {
+  transform: translateY(-2px);
 }
 
 .review-section-title{
@@ -96,6 +198,7 @@
   color:#6b7280;
   text-transform:uppercase;
   margin-bottom:6px;
+  letter-spacing: 0.03em;
 }
 
 /* ===============================
@@ -108,6 +211,12 @@
   font-size:.85rem;
   line-height:1.5;
   border:1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.review-message:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
 }
 
 .review-message-short{
@@ -118,7 +227,15 @@
   font-size:.85rem;
   line-height:1.5;
   border:1px solid #e5e7eb;
+  transition: all 0.2s ease;
 }
+
+.review-message-short:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  transform: translateY(-1px);
+}
+
 /* ===============================
    ATTACHMENTS
 ================================ */
@@ -127,6 +244,12 @@
   border-radius:12px;
   margin-top:10px;
   overflow:hidden;
+  transition: all 0.2s ease;
+}
+
+.attachment-group:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
 }
 
 .attachment-header{
@@ -138,6 +261,11 @@
   background:#f9fafb;
   font-size:.8rem;
   font-weight:700;
+  transition: all 0.2s ease;
+}
+
+.attachment-header:hover {
+  background:#f3f4f6;
 }
 
 .attachment-header i{
@@ -163,6 +291,15 @@
   background:#f9fafb;
   font-size:.8rem;
   margin-bottom:6px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.review-attachment:hover {
+  background:#ffffff;
+  border-color: #e5e7eb;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  transform: translateX(4px);
 }
 
 /* ===============================
@@ -177,6 +314,12 @@
   border:1px solid #e5e7eb;
   box-shadow:0 10px 28px rgba(15,23,42,.08);
   padding:18px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.review-side:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 12px 32px rgba(15,23,42,.1);
 }
 
 .review-side h6{
@@ -200,11 +343,28 @@
   font-weight:700;
   font-size:.8rem;
   border:1px solid transparent;
-  transition:.2s ease;
+  transition:all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display:flex;
   align-items:center;
   justify-content:center;
   gap:8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.review-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.review-btn:hover::before {
+  left: 100%;
 }
 
 .review-btn.pending{
@@ -213,10 +373,30 @@
   border-color:#fde68a;
 }
 
+.review-btn.pending:hover {
+  background:#f59e0b;
+  color:#ffffff;
+  border-color:#f59e0b;
+  box-shadow: 
+    0 6px 20px rgba(245, 158, 11, 0.25),
+    0 0 0 3px rgba(245, 158, 11, 0.15);
+  transform: translateY(-2px);
+}
+
 .review-btn.approved{
-  background:#dbeafe; /* LIGHT BLUE */
+  background:#dbeafe;
   color:#1e40af;
   border-color:#93c5fd;
+}
+
+.review-btn.approved:hover {
+  background:#3b82f6;
+  color:#ffffff;
+  border-color:#3b82f6;
+  box-shadow: 
+    0 6px 20px rgba(59, 130, 246, 0.25),
+    0 0 0 3px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
 }
 
 .review-btn.revision{
@@ -225,14 +405,41 @@
   border-color:#fecaca;
 }
 
-.review-btn:hover{
-  transform:translateY(-1px);
-  box-shadow:0 6px 16px rgba(15,23,42,.12);
+.review-btn.revision:hover {
+  background:#ef4444;
+  color:#ffffff;
+  border-color:#ef4444;
+  box-shadow: 
+    0 6px 20px rgba(239, 68, 68, 0.25),
+    0 0 0 3px rgba(239, 68, 68, 0.15);
+  transform: translateY(-2px);
 }
+
+/* Active state for buttons when they match current status */
+.review-btn.active {
+  border-width: 2px;
+  transform: translateY(-1px);
+}
+
+.review-btn.active.pending {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+.review-btn.active.approved {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.review-btn.active.revision {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
 .wc-header-divider {
   margin: 0.875rem 0;
   border: 0;
-  border-top: 1px solid black;
+  border-top: 1px solid #e5e7eb;
 }
 </style>
 
@@ -254,12 +461,16 @@
     <a href="#"
        class="btn btn-sm btn-outline-primary"
        data-qxdlg-trigger
-       data-qxdlg-url="{% url 'admin_app:work-item-discussion' work_item.id %}">
+       data-qxdlg-url="{% url 'admin_app:work-item-discussion' work_item.id %}"
+       onmouseenter="this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.15), 0 0 0 1px #3b82f6'"
+       onmouseleave="this.style.boxShadow=''">
       <i class="fas fa-comments me-1"></i> Discussion
     </a>
 
     <a href="{% url 'admin_app:done-workers-by-workcycle' work_item.workcycle.id %}"
-       class="btn btn-sm btn-outline-secondary">
+       class="btn btn-sm btn-outline-secondary"
+       onmouseenter="this.style.boxShadow='0 0 0 3px rgba(107, 114, 128, 0.15), 0 0 0 1px #6b7280'"
+       onmouseleave="this.style.boxShadow=''">
       <i class="fas fa-arrow-left me-1"></i> Back
     </a>
   </div>
@@ -289,6 +500,7 @@
         {{ work_item.get_review_decision_display }}
       </div>
     </div>
+    
     <!-- ===============================
      STATUS LABEL
 ================================ -->
@@ -328,7 +540,10 @@
         <div class="attachment-body">
           {% for f in files %}
           <div class="review-attachment">
-            <a href="{{ f.file.url }}" target="_blank">
+            <a href="{{ f.file.url }}" target="_blank" 
+               style="text-decoration: none; color: inherit;"
+               onmouseenter="this.style.color='#3b82f6'"
+               onmouseleave="this.style.color='inherit'">
               <i class="far fa-file me-1"></i>
               {{ f.file.name|slice:"-40:" }}
             </a>
@@ -356,15 +571,18 @@
       {% csrf_token %}
       <input type="hidden" name="action" value="update_review">
 
-      <button name="review_decision" value="pending" class="review-btn pending">
+      <button name="review_decision" value="pending" 
+              class="review-btn pending {% if work_item.review_decision == 'pending' %}active{% endif %}">
         <i class="fas fa-hourglass-half"></i> Mark as Pending
       </button>
 
-      <button name="review_decision" value="approved" class="review-btn approved">
+      <button name="review_decision" value="approved" 
+              class="review-btn approved {% if work_item.review_decision == 'approved' %}active{% endif %}">
         <i class="fas fa-check-circle"></i> Approve Work
       </button>
 
-      <button name="review_decision" value="revision" class="review-btn revision">
+      <button name="review_decision" value="revision" 
+              class="review-btn revision {% if work_item.review_decision == 'revision' %}active{% endif %}">
         <i class="fas fa-undo-alt"></i> Needs Revision
       </button>
     </form>
@@ -378,6 +596,56 @@ function toggleAttachment(header){
   header.nextElementSibling.style.display =
     header.nextElementSibling.style.display === "block" ? "none" : "block";
 }
+
+// Add active state to buttons that match current review decision
+document.addEventListener('DOMContentLoaded', function() {
+  const currentDecision = '{{ work_item.review_decision }}';
+  const buttons = document.querySelectorAll('.review-btn');
+  
+  buttons.forEach(button => {
+    if (button.value === currentDecision) {
+      button.classList.add('active');
+    }
+  });
+  
+  // Add hover effect to review main panel
+  const reviewMain = document.querySelector('.review-main');
+  if (reviewMain) {
+    reviewMain.addEventListener('mouseenter', function() {
+      const decision = this.classList.contains('approved') ? 'approved' : 
+                      this.classList.contains('revision') ? 'revision' : 
+                      this.classList.contains('pending') ? 'pending' : '';
+      
+      if (decision) {
+        this.style.transform = 'translateY(-4px)';
+      }
+    });
+    
+    reviewMain.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+    });
+  }
+  
+  // Add ripple effect to buttons
+  const reviewButtons = document.querySelectorAll('.review-btn');
+  reviewButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      const x = e.clientX - e.target.getBoundingClientRect().left;
+      const y = e.clientY - e.target.getBoundingClientRect().top;
+      
+      const ripple = document.createElement('span');
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+      ripple.classList.add('ripple');
+      
+      this.appendChild(ripple);
+      
+      setTimeout(() => {
+        ripple.remove();
+      }, 600);
+    });
+  });
+});
 </script>
 
 {% include "admin/page/modals/message_ui_modal.html" %}
