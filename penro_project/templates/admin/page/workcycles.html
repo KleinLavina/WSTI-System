@@ -1,439 +1,215 @@
-  {% extends "admin/layout/base.html" %}
-  {% load static %}
+{% extends "admin/layout/base.html" %}
+{% load static %}
 
-  {% block title %}Work Cycles{% endblock %}
+{% block title %}Work Cycles{% endblock %}
 
-  {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/workcycles.css' %}">
-  {% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/workcycles.css' %}">
+{% endblock %}
 
-  {% block content %}
+{% block content %}
 
-  <main class="wc-page" role="main">
-
-    <!-- =====================================================
-        PAGE HEADER
-    ====================================================== -->
-    <header class="wc-admin-header" role="banner">
-
-      <section class="wc-header-title-block">
-        <h1>
-          <i class="fas fa-layer-group" aria-hidden="true"></i>
-          Work Cycles
-          <span class="wc-header-count-badge">
-            {{ workcycles|length }}
-          </span>
-        </h1>
-
-        <p class="wc-header-subtitle">
-          TIWI Reference · Task Management & Deadline Tracking
-        </p>
-      </section>
-
-      <nav class="wc-header-actions" aria-label="Header actions">
-        <button
-          type="button"
-          class="btn-wc-link"
-          data-bs-toggle="modal"
-          data-bs-target="#workcyclePurposeModal">
-          <i class="fas fa-info-circle"></i>
-          What is a Work Cycle?
-        </button>
-
-        <a
-          href="{% url 'admin_app:inactive-workcycles' %}"
-          class="btn-wc-secondary"
-          aria-label="View archived work cycles">
-          <i class="fas fa-archive" aria-hidden="true"></i>
-          Archived Work Cycles
-        </a>
-
-        <button
-          type="button"
-          class="btn-wc-success"
-          data-bs-toggle="modal"
-          data-bs-target="#createWorkcycleModal">
-          <span class="btn-icon">+</span>
-          Create New Cycle
-        </button>
-      </nav>
-
-    </header>
-
-    <hr class="wc-header-divider">
-
-    <!-- =====================================================
-        STATS + FILTERS
-    ====================================================== -->
-    <section class="wc-stats-filter-row">
-
-      <!-- ================= STATS SECTION ================= -->
-      <div class="wc-stats-section">
-        <aside class="wc-stats-container" aria-label="Work cycle statistics">
-          <h1>
-            <i class="fas fa-filter"></i> Filter By:
-          </h1>
-          <div class="wc-stats-badges">
-            <!-- RESET -->
-            <a href="{% url 'admin_app:workcycles' %}"
-              class="wc-badge wc-badge-active {% if not current_state %}is-selected{% endif %}">
-              <i class="fas fa-check-circle"></i>
-              Total Active: {{ active_count }}
-            </a>
-
-            <a href="?state=ongoing"
-              class="wc-badge wc-badge-ongoing {% if current_state == 'ongoing' %}is-selected{% endif %}">
-              <i class="fas fa-sync-alt"></i>
-              {{ lifecycle_counts.ongoing }} Ongoing
-            </a>
-
-            <a href="?state=due_soon"
-              class="wc-badge wc-badge-due-soon {% if current_state == 'due_soon' %}is-selected{% endif %}">
-              <i class="fas fa-hourglass-half"></i>
-              {{ lifecycle_counts.due_soon }} Due Soon
-            </a>
-
-            <a href="?state=lapsed"
-              class="wc-badge wc-badge-lapsed {% if current_state == 'lapsed' %}is-selected{% endif %}">
-              <i class="fas fa-exclamation-triangle"></i>
-              {{ lifecycle_counts.lapsed }} Lapsed
-            </a>
-          </div>
-        </aside>
-      </div>
-
-      <!-- ================= SEARCH SECTION ================= -->
-      <div class="wc-search-section">
-        <form
-          method="get"
-          action="{% url 'admin_app:workcycles' %}"
-          class="wc-filter-form"
-          role="search">
-
-          <!-- ---------- SEARCH ---------- -->
-          <aside class="wc-search-panel">
-
-            <article class="wc-filter-card wc-search-card">
-              <label class="wc-filter-label">
-                <i class="fas fa-search"></i> Search
-              </label>
-
-              <div class="wc-search-input-wrapper">
-                <input
-                  type="search"
-                  name="q"
-                  value="{{ search_query }}"
-                  class="wc-filter-input"
-                  placeholder="Search…">
-                <button type="submit" class="btn-wc-primary">
-                  <i class="fas fa-search"></i>
-                </button>
-              </div>
-            </article>
-
-          </aside>
-
-        </form>
-      </div>
-
-    </section>
-
-    <!-- =====================================================
-        WORK CYCLE GRID
-    ====================================================== -->
-    <section class="wc-content-area">
-
-      {% if workcycles %}
-      <section class="wc-grid" aria-label="Work cycle list">
-
-        {% for wc in workcycles %}
-        <article class="wc-card" tabindex="0">
-
-          <!-- ================= CARD HEADER ================= -->
-          <header class="wc-card-header">
-
-            <section class="wc-card-header-main">
-              
-              <!-- TOP ROW: Lifecycle State + Active Badge (HORIZONTAL) -->
-              <div class="wc-header-top-row">
-                <span class="wc-card-section-title lifecycle-{{ wc.lifecycle_state }}">
-                  {% if wc.lifecycle_state == 'ongoing' %}
-                    <i class="fas fa-sync-alt"></i>
-                  {% elif wc.lifecycle_state == 'due_soon' %}
-                    <i class="fas fa-hourglass-half"></i>
-                  {% elif wc.lifecycle_state == 'lapsed' %}
-                    <i class="fas fa-exclamation-triangle"></i>
-                  {% endif %}
-                  {{ wc.lifecycle_state|upper }}
-                </span>
-
-                <span class="wc-badge {% if wc.is_active %}wc-badge-active{% else %}wc-badge-inactive{% endif %}">
-                  {% if wc.is_active %}
-                    <i class="fas fa-check-circle"></i> Active
-                  {% else %}
-                    <i class="fas fa-times-circle"></i> Inactive
-                  {% endif %}
-                </span>
-              </div>
-
-              <h2 class="wc-card-title">
-                {{ wc.title }}
-              </h2>
-
-            </section>
-
-            <aside class="wc-card-actions">
-              <div class="dropdown">
-                <button class="wc-action-menu-btn"
-                        data-bs-toggle="dropdown">
-                  <i class="fas fa-ellipsis-v"></i>
-                </button>
-
-                <ul class="dropdown-menu wc-dropdown-menu">
-                  <li>
-                    <a class="wc-dropdown-item"
-                      href="{% url 'admin_app:workcycle-assignments' wc.id %}">
-                      <i class="fas fa-eye"></i> View
-                    </a>
-                  </li>
-  <li>
-  <form method="post"
-        action="{% url 'admin_app:workcycle-archive' wc.id %}">
-    {% csrf_token %}
-    <button type="submit" class="wc-dropdown-item">
-      {% if wc.is_active %}
-        <i class="fas fa-archive"></i> Archive
-      {% else %}
-        <i class="fas fa-box-open"></i> Unarchive
-      {% endif %}
-    </button>
-  </form>
-</li>
-
-
-                      <li>
-                    <button
-                      type="button"
-                      class="wc-dropdown-item"
-                      data-bs-toggle="modal"
-                      data-bs-target="#reassignWorkcycleModal"
-
-                      data-id="{{ wc.id }}"
-                      data-title="{{ wc.title|escapejs }}"
-
-                      data-users="{% for a in wc.assignments.all %}{% if a.assigned_user %}{{ a.assigned_user.get_full_name|default:a.assigned_user.username }}|{% endif %}{% endfor %}"
-
-                      data-teams="{% for a in wc.assignments.all %}{% if a.assigned_team %}{{ a.assigned_team.name }}|{% endif %}{% endfor %}"
-                    >
-                      <i class="fas fa-random"></i> Reassign
-                    </button>
-                  </li>
-
-                  <li>
-                    <button
-                      type="button"
-                      class="wc-dropdown-item"
-                      data-bs-toggle="modal"
-                      data-bs-target="#editWorkcycleModal"
-                      data-id="{{ wc.id }}"
-                      data-title="{{ wc.title|escapejs }}"
-                      data-description="{{ wc.description|default:''|escapejs }}"
-                      data-due="{{ wc.due_at|date:'Y-m-d\\TH:i' }}">
-                      <i class="fas fa-edit"></i> Edit
-                    </button>
-                  </li>
-                  <li>
-     <button
-  class="wc-dropdown-item wc-dropdown-item-danger"
-  data-bs-toggle="modal"
-  data-bs-target="#deleteWorkcycleModal"
-  data-delete-url="{% url 'admin_app:workcycle-delete' wc.id %}">
-  <i class="fas fa-trash"></i> Delete
-</button>
-
-
-                  </li>
-                </ul>
-              </div>
-            </aside>
-
-          </header>
-
-          <!-- ================= CARD BODY ================= -->
-          <section class="wc-card-body">
-
-            <!-- DEADLINE + TIME REMAINING (HORIZONTAL) -->
-            <div class="wc-deadline-time-row">
-              <article class="wc-due-date lifecycle-{{ wc.lifecycle_state }}">
-                <header class="wc-due-date-header">
-                  <span class="wc-due-date-label">
-                    <i class="fas fa-clock"></i> Deadline
-                  </span>
-                </header>
-
-                <time class="wc-due-date-value">
-                  {{ wc.due_at|date:"l, F d, Y · h:i A" }}
-                </time>
-
-              </article>
-
-              <article class="wc-time-remaining">
-                <span class="wc-time-remaining-label">
-                  <i class="fas fa-hourglass-half"></i> Time Left
-                </span>
-                <strong class="wc-time-remaining-value">
-                  {{ wc.time_remaining }}
-                </strong>
-              </article>
-            </div>
-
-            {% if wc.description %}
-            <article class="wc-description">
-              <header class="wc-description-header">
-                <i class="fas fa-align-left"></i> Description
-              </header>
-              <p class="wc-description-text">
-                {{ wc.description|truncatechars:50 }}
-              </p>
-            </article>
-            {% endif %}
-
-            <footer class="wc-meta-grid">
-
-              <section class="wc-meta-item">
-                <span class="wc-meta-label">
-                  <i class="fas fa-user"></i> Created By
-                </span>
-                <span class="wc-meta-value">{{ wc.created_by|default:"System" }}</span>
-              </section>
-
-              <section class="wc-meta-item">
-                <span class="wc-meta-label">
-                  <i class="fas fa-calendar"></i> Created On
-                </span>
-                <time class="wc-meta-value">
-                  {{ wc.created_at|date:"M d, Y" }}
-                </time>
-              </section>
-
-              <section class="wc-meta-item">
-                <span class="wc-meta-label">
-                  <i class="fas fa-tasks"></i> Assignments
-                </span>
-                <span class="wc-meta-value">
-                  {{ wc.assignment_count|default:"0" }}
-                </span>
-              </section>
-
-            </footer>
-
-          </section>
-
-        </article>
-        {% endfor %}
-
-      </section>
-
-      {% else %}
-      <section class="wc-empty-state">
-        <i class="fas fa-inbox fa-3x" style="color: var(--text-light); margin-bottom: 1rem;"></i>
-        <h2>No Work Cycles Found</h2>
-        <p>Create your first work cycle to get started.</p>
-      </section>
-      {% endif %}
-
-    </section>
-
-  </main>
+<main class="wc-page" role="main">
 
   <!-- =====================================================
-      MODALS
+      PAGE HEADER
   ====================================================== -->
-  {% include "admin/page/modals/workcycle_purpose_modal.html" %}
-  {% include "admin/page/modals/create_workcycle_modal.html" %}
-  {% include "admin/page/modals/edit_workcycle_modal.html" %}
-    {% include "admin/page/modals/delete_workcycles_modal.html" %}
-  {% include "admin/page/modals/reassign_workcycle_modal.html" %}
+  <header class="wc-admin-header" role="banner">
 
-  {% endblock %}
+    <section class="wc-header-title-block">
+      <h1>
+        <i class="fas fa-layer-group" aria-hidden="true"></i>
+        Work Cycles
+        <span class="wc-header-count-badge">
+          {{ workcycles|length }}
+        </span>
+      </h1>
 
-  {% block extra_js %}
-  <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Card hover z-index management for proper layering
-    const cards = document.querySelectorAll('.wc-card');
-    
-    cards.forEach(card => {
-      card.addEventListener('mouseenter', function() { 
-        this.style.zIndex = '10'; 
-      });
-      
-      card.addEventListener('mouseleave', function() { 
-        this.style.zIndex = '1'; 
-      });
+      <p class="wc-header-subtitle">
+        TIWI Reference · Task Management & Deadline Tracking
+      </p>
+    </section>
+
+    <nav class="wc-header-actions" aria-label="Header actions">
+      <button
+        type="button"
+        class="btn-wc-link"
+        data-bs-toggle="modal"
+        data-bs-target="#workcyclePurposeModal">
+        <i class="fas fa-info-circle"></i>
+        What is a Work Cycle?
+      </button>
+
+      <a
+        href="{% url 'admin_app:inactive-workcycles' %}"
+        class="btn-wc-secondary"
+        aria-label="View archived work cycles">
+        <i class="fas fa-archive" aria-hidden="true"></i>
+        Archived Work Cycles
+      </a>
+
+      <button
+        type="button"
+        class="btn-wc-success"
+        data-bs-toggle="modal"
+        data-bs-target="#createWorkcycleModal">
+        <span class="btn-icon">+</span>
+        Create New Cycle
+      </button>
+    </nav>
+
+  </header>
+
+  <hr class="wc-header-divider">
+
+  <!-- =====================================================
+      STATS + FILTERS
+  ====================================================== -->
+  <section class="wc-stats-filter-row">
+
+    <!-- STATS -->
+    <div class="wc-stats-section">
+      <aside class="wc-stats-container" aria-label="Work cycle statistics">
+        <h1>
+          <i class="fas fa-filter"></i> Filter By:
+        </h1>
+
+        <div class="wc-stats-badges">
+
+          <a href="{% url 'admin_app:workcycles' %}"
+             class="wc-badge wc-badge-active {% if not current_state %}is-selected{% endif %}">
+            <i class="fas fa-check-circle"></i>
+            Total Active: {{ active_count }}
+          </a>
+
+          <a href="?state=ongoing"
+             class="wc-badge wc-badge-ongoing {% if current_state == 'ongoing' %}is-selected{% endif %}">
+            <i class="fas fa-sync-alt"></i>
+            {{ lifecycle_counts.ongoing }} Ongoing
+          </a>
+
+          <a href="?state=due_soon"
+             class="wc-badge wc-badge-due-soon {% if current_state == 'due_soon' %}is-selected{% endif %}">
+            <i class="fas fa-hourglass-half"></i>
+            {{ lifecycle_counts.due_soon }} Due Soon
+          </a>
+
+          <a href="?state=lapsed"
+             class="wc-badge wc-badge-lapsed {% if current_state == 'lapsed' %}is-selected{% endif %}">
+            <i class="fas fa-exclamation-triangle"></i>
+            {{ lifecycle_counts.lapsed }} Lapsed
+          </a>
+
+        </div>
+      </aside>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="wc-search-section">
+      <form method="get"
+            action="{% url 'admin_app:workcycles' %}"
+            class="wc-filter-form"
+            role="search">
+
+        <article class="wc-filter-card wc-search-card">
+          <label class="wc-filter-label">
+            <i class="fas fa-search"></i> Search
+          </label>
+
+          <div class="wc-search-input-wrapper">
+            <input type="search"
+                   name="q"
+                   value="{{ search_query }}"
+                   class="wc-filter-input"
+                   placeholder="Search…">
+            <button type="submit" class="btn-wc-primary">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </article>
+
+      </form>
+    </div>
+
+  </section>
+
+  <!-- =====================================================
+      CONTENT (INCLUDED)
+  ====================================================== -->
+  <section class="wc-content-area">
+    {% include "admin/page/_workcycle_cards.html" %}
+  </section>
+
+</main>
+
+<!-- =====================================================
+    MODALS
+====================================================== -->
+{% include "admin/page/modals/workcycle_purpose_modal.html" %}
+{% include "admin/page/modals/create_workcycle_modal.html" %}
+{% include "admin/page/modals/edit_workcycle_modal.html" %}
+{% include "admin/page/modals/delete_workcycles_modal.html" %}
+{% include "admin/page/modals/reassign_workcycle_modal.html" %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+  const cards = document.querySelectorAll('.wc-card');
+
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.zIndex = '10';
     });
 
-    // Keyboard navigation for cards
-    cards.forEach(card => {
-      card.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-          const link = this.querySelector('.wc-dropdown-item');
-          if (link) {
-            e.preventDefault();
-            link.click();
-          }
-        }
-      });
+    card.addEventListener('mouseleave', function() {
+      this.style.zIndex = '1';
     });
-
-    // Edit modal population
-    const editModal = document.getElementById('editWorkcycleModal');
-    if (editModal) {
-      editModal.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        const id = button.getAttribute('data-id');
-        const title = button.getAttribute('data-title');
-        const description = button.getAttribute('data-description');
-        const due = button.getAttribute('data-due');
-
-        const modal = this;
-        modal.querySelector('#edit_workcycle_id').value = id;
-        modal.querySelector('#edit_title').value = title;
-        modal.querySelector('#edit_description').value = description;
-        modal.querySelector('#edit_due_at').value = due;
-      });
-    }
-
-    // Reassign modal population
-    const reassignModal = document.getElementById('reassignWorkcycleModal');
-    if (reassignModal) {
-      reassignModal.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        const id = button.getAttribute('data-id');
-        const title = button.getAttribute('data-title');
-
-        const modal = this;
-        modal.querySelector('#reassign_workcycle_id').value = id;
-        modal.querySelector('#reassign_workcycle_title').textContent = title;
-      });
-    }
   });
 
-  document.addEventListener("DOMContentLoaded", function () {
-  const deleteModal = document.getElementById("deleteWorkcycleModal");
+  cards.forEach(card => {
+    card.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const link = this.querySelector('.wc-dropdown-item');
+        if (link) {
+          e.preventDefault();
+          link.click();
+        }
+      }
+    });
+  });
 
+  const editModal = document.getElementById('editWorkcycleModal');
+  if (editModal) {
+    editModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      this.querySelector('#edit_workcycle_id').value = button.dataset.id;
+      this.querySelector('#edit_title').value = button.dataset.title;
+      this.querySelector('#edit_description').value = button.dataset.description;
+      this.querySelector('#edit_due_at').value = button.dataset.due;
+    });
+  }
+
+  const reassignModal = document.getElementById('reassignWorkcycleModal');
+  if (reassignModal) {
+    reassignModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      this.querySelector('#reassign_workcycle_id').value = button.dataset.id;
+      this.querySelector('#reassign_workcycle_title').textContent = button.dataset.title;
+    });
+  }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+  const deleteModal = document.getElementById("deleteWorkcycleModal");
   if (!deleteModal) return;
 
   deleteModal.addEventListener("show.bs.modal", function (event) {
-    const button = event.relatedTarget;
-
-    // URL from clicked delete button
-    const deleteUrl = button.getAttribute("data-delete-url");
-
-    // Inject into form
-    const form = deleteModal.querySelector("#deleteWorkcycleForm");
-    form.action = deleteUrl;
+    const deleteUrl = event.relatedTarget.getAttribute("data-delete-url");
+    deleteModal.querySelector("#deleteWorkcycleForm").action = deleteUrl;
   });
 });
-  </script>
-  {% endblock %}
+</script>
+{% endblock %}

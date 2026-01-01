@@ -1,37 +1,73 @@
 /* ===== Work Cycles Design System ===== */
 :root {
+  /* Primary Colors */
   --primary-dark: #1e3a5f;
   --primary: #2d4a7c;
   --primary-light: #e8f0fe;
   --primary-accent: #4a90d9;
   
-  --state-ongoing: #3b82f6;
-  --state-ongoing-bg: #dbeafe;
-  --state-ongoing-text: #1e40af;
-  --state-due-soon: #f59e0b;
-  --state-due-soon-bg: #fef3c7;
-  --state-due-soon-text: #92400e;
-  --state-lapsed: #6b7280;
-  --state-lapsed-bg: #f3f4f6;
-  --state-lapsed-text: #374151;
-  --state-active: #10b981;
-  --state-active-bg: #d1fae5;
-  --state-inactive: #ef4444;
-  --state-inactive-bg: #fee2e2;
+  /* SOFTER Lifecycle Color Palette - More subtle, less saturated */
+  --state-ongoing: #3b82f6;           /* Soft Blue - main color */
+  --state-ongoing-bg: #eff6ff;        /* Softer, lighter blue background */
+  --state-ongoing-text: #1e40af;      /* Darker blue for text */
   
+  --state-due-soon: #f59e0b;          /* Soft Amber - main color */
+  --state-due-soon-bg: #fffbeb;       /* Softer, lighter amber background */
+  --state-due-soon-text: #92400e;     /* Darker amber for text */
+  
+  --state-lapsed: #dc2626;            /* Soft Red - main color */
+  --state-lapsed-bg: #fef2f2;         /* Softer, lighter red background */
+  --state-lapsed-text: #991b1b;       /* Darker red for text */
+  
+  --state-archived: #6b7280;          /* Soft Gray - main color */
+  --state-archived-bg: #f9fafb;       /* Softer, lighter gray background */
+  --state-archived-text: #4b5563;     /* Darker gray for text */
+  
+  --state-active: #10b981;            /* Soft Green - main color */
+  --state-active-bg: #ecfdf5;         /* Softer, lighter green background */
+  --state-active-text: #065f46;       /* Darker green for text */
+  
+  --state-inactive: #9ca3af;          /* Softer Gray - main color */
+  --state-inactive-bg: #f3f4f6;       /* Softer, lighter gray background */
+  --state-inactive-text: #6b7280;     /* Darker gray for text */
+  
+  /* Surface Colors */
   --surface: #ffffff;
   --surface-alt: #f8fafc;
   --border: #e2e8f0;
   --border-light: #f1f5f9;
   
+  /* Text Colors */
   --text-dark: #1e293b;
   --text-muted: #64748b;
   --text-light: #94a3b8;
   
-  --shadow-sm: 0 2px 8px rgba(30, 58, 95, 0.08);
-  --shadow-md: 0 6px 20px rgba(30, 58, 95, 0.12);
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(30, 58, 95, 0.05);
+  --shadow-md: 0 6px 20px rgba(30, 58, 95, 0.08);
   
+  /* Transitions */
   --transition-base: 0.2s ease;
+}
+
+/* =============================
+   BASE FONT SETTINGS - APPLY MONTSERRAT
+============================= */
+.wc-page {
+  font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+body.wc-page {
+  font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+.wc-admin-header,
+.wc-stats-filter-row,
+.wc-grid,
+.wc-card,
+.wc-empty-state,
+.wc-card *:not(.fa):not(.fas):not(.far):not(.fab) {
+  font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
 /* ===== Admin Header ===== */
@@ -44,13 +80,15 @@
 }
 
 .wc-header-title-block h1 {
+  font-family: "Montserrat", sans-serif;
   font-size: 1.875rem;
-  font-weight: 700;
+  font-weight: 700; /* Montserrat bold */
   margin: 0;
   color: var(--primary-dark);
   display: flex;
   align-items: center;
   gap: 0.625rem;
+  letter-spacing: -0.01em;
 }
 
 .wc-header-title-block h1 i {
@@ -59,21 +97,24 @@
 }
 
 .wc-header-count-badge {
+  font-family: "Montserrat", sans-serif;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: #fff;
   font-size: 0.8125rem;
   padding: 0.25rem 0.625rem;
   border-radius: 999px;
   margin-left: 0.5rem;
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(45, 74, 124, 0.3);
+  font-weight: 700; /* Montserrat bold */
+  box-shadow: 0 2px 6px rgba(45, 74, 124, 0.2);
 }
 
 .wc-header-subtitle {
+  font-family: "Montserrat", sans-serif;
   color: var(--text-muted);
   font-size: 0.875rem;
   margin: 0.375rem 0 0 0;
-  font-weight: 500;
+  font-weight: 500; /* Montserrat medium */
+  letter-spacing: 0.01em;
 }
 
 .wc-header-actions {
@@ -85,7 +126,7 @@
 .wc-header-divider {
   margin: 0.875rem 0;
   border: 0;
-  border-top: 1px solid black;
+  border-top: 1px solid var(--border);
 }
 
 /* ===== REWORKED Stats & Filters Row - Simple & Aligned ===== */
@@ -110,12 +151,14 @@
   padding: 1rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
 }
 
 .wc-stats-container h1 {
+  font-family: "Montserrat", sans-serif;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 600; /* Montserrat semi-bold */
   color: var(--text-muted);
   margin: 0;
   text-transform: uppercase;
@@ -158,12 +201,14 @@
   padding: 1rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
 }
 
 .wc-filter-label {
+  font-family: "Montserrat", sans-serif;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 600; /* Montserrat semi-bold */
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -185,52 +230,69 @@
 }
 
 .wc-filter-input {
+  font-family: "Montserrat", sans-serif;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
-  transition: border-color 0.2s;
+  font-weight: 400; /* Montserrat regular */
+  transition: all 0.2s ease;
+  letter-spacing: 0.01em;
+  background: var(--surface-alt);
+}
+
+.wc-filter-input::placeholder {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  color: var(--text-light);
 }
 
 .wc-filter-input:focus {
   border-color: var(--primary);
   outline: none;
+  box-shadow: 0 0 0 3px rgba(45, 74, 124, 0.1);
 }
 
 /* ===== Buttons ===== */
 .btn-wc-primary {
+  font-family: "Montserrat", sans-serif;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   border: none;
   border-radius: 8px;
   padding: 0.5rem 1rem;
-  font-weight: 600;
+  font-weight: 600; /* Montserrat semi-bold */
   font-size: 0.875rem;
   color: #fff;
-  transition: opacity 0.2s;
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 4px rgba(45, 74, 124, 0.2);
 }
 
 .btn-wc-primary:hover {
-  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(45, 74, 124, 0.3);
 }
 
 .btn-wc-success {
+  font-family: "Montserrat", sans-serif;
   background: linear-gradient(135deg, var(--state-active) 0%, #059669 100%);
   border: none;
   border-radius: 8px;
   padding: 0.625rem 1.5rem;
-  font-weight: 700;
+  font-weight: 700; /* Montserrat bold */
   font-size: 0.875rem;
   color: #fff;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  letter-spacing: 0.01em;
 }
 
 .btn-wc-success:hover {
@@ -247,19 +309,21 @@
 }
 
 .btn-wc-link {
+  font-family: "Montserrat", sans-serif;
   background: rgba(45, 74, 124, 0.08);
   border: 1px solid rgba(45, 74, 124, 0.15);
   border-radius: 8px;
   padding: 0.625rem 1.125rem;
   color: var(--primary);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 600; /* Montserrat semi-bold */
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   cursor: pointer;
+  letter-spacing: 0.01em;
 }
 
 .btn-wc-link:hover {
@@ -274,26 +338,28 @@
 }
 
 .btn-wc-secondary {
-  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-  border: 1px solid #b91c1c;
+  font-family: "Montserrat", sans-serif;
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  border: 1px solid #6b7280;
   border-radius: 8px;
   padding: 0.625rem 1.25rem;
-  font-weight: 600;
+  font-weight: 600; /* Montserrat semi-bold */
   font-size: 0.875rem;
   color: #fff;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+  box-shadow: 0 2px 6px rgba(107, 114, 128, 0.25);
+  letter-spacing: 0.01em;
 }
 
 .btn-wc-secondary:hover {
-  background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.35);
+  box-shadow: 0 4px 10px rgba(107, 114, 128, 0.35);
   color: #fff;
 }
 
@@ -303,92 +369,97 @@
 
 /* ===== Badges - WITH HOVER ===== */
 .wc-badge {
+  font-family: "Montserrat", sans-serif;
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
   padding: 0.5rem 0.875rem;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.75rem;
-  font-weight: 600;
-  transition: all 0.2s;
+  font-weight: 600; /* Montserrat semi-bold */
+  transition: all 0.2s ease;
   border: 1px solid;
   text-decoration: none;
   cursor: pointer;
+  letter-spacing: 0.01em;
 }
 
 .wc-badge:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .wc-badge.is-selected {
-  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.3);
+  border-width: 2px;
+  box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.2);
 }
 
+/* SOFTER BADGE COLORS */
 .wc-badge-ongoing {
   background: var(--state-ongoing-bg);
   color: var(--state-ongoing-text);
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
 .wc-badge-ongoing:hover {
-  background: #bfdbfe;
-  border-color: rgba(59, 130, 246, 0.5);
+  background: #dbeafe;
+  border-color: rgba(59, 130, 246, 0.6);
 }
 
 .wc-badge-due-soon {
   background: var(--state-due-soon-bg);
   color: var(--state-due-soon-text);
-  border-color: rgba(245, 158, 11, 0.3);
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
 .wc-badge-due-soon:hover {
   background: #fde68a;
-  border-color: rgba(245, 158, 11, 0.5);
+  border-color: rgba(245, 158, 11, 0.6);
 }
 
 .wc-badge-lapsed {
   background: var(--state-lapsed-bg);
   color: var(--state-lapsed-text);
-  border-color: rgba(107, 114, 128, 0.3);
+  border-color: rgba(220, 38, 38, 0.4);
 }
 
 .wc-badge-lapsed:hover {
-  background: #e5e7eb;
-  border-color: rgba(107, 114, 128, 0.5);
+  background: #fecaca;
+  border-color: rgba(220, 38, 38, 0.6);
 }
 
 .wc-badge-active {
   background: var(--state-active-bg);
-  color: #047857;
-  border-color: rgba(16, 185, 129, 0.3);
+  color: var(--state-active-text);
+  border-color: rgba(16, 185, 129, 0.4);
 }
 
 .wc-badge-active:hover {
   background: #a7f3d0;
-  border-color: rgba(16, 185, 129, 0.5);
+  border-color: rgba(16, 185, 129, 0.6);
 }
 
 .wc-badge-inactive {
   background: var(--state-inactive-bg);
-  color: #991b1b;
-  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--state-inactive-text);
+  border-color: rgba(156, 163, 175, 0.4);
 }
 
 .wc-badge-inactive:hover {
-  background: #fecaca;
-  border-color: rgba(239, 68, 68, 0.5);
+  background: #e5e7eb;
+  border-color: rgba(156, 163, 175, 0.6);
 }
 
 /* ===== Card Grid ===== */
 .wc-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 /* ===== Work Cycle Card ===== */
 .wc-card {
+  font-family: "Montserrat", sans-serif;
   background: var(--surface);
   border-radius: 12px;
   border: 1px solid var(--border);
@@ -402,15 +473,15 @@
 
 .wc-card:hover,
 .wc-card:focus-within {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-md);
-  border-color: rgba(45, 74, 124, 0.25);
+  border-color: rgba(45, 74, 124, 0.3);
 }
 
 /* Card Header */
 .wc-card-header {
   background: linear-gradient(135deg, var(--primary-light) 0%, var(--surface) 100%);
-  padding: 0.75rem;
+  padding: 0.875rem;
   border-bottom: 1px solid var(--border-light);
   position: relative;
 }
@@ -431,12 +502,13 @@
 
 /* LIFECYCLE STATE SPAN WITH ICONS */
 .wc-card-section-title {
+  font-family: "Montserrat", sans-serif;
   font-size: 0.625rem;
-  font-weight: 700;
+  font-weight: 700; /* Montserrat bold */
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 0.3rem 0.65rem;
-  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -447,30 +519,35 @@
   font-size: 0.7rem;
 }
 
-/* ONGOING - BLUE */
+/* SOFTER LIFECYCLE COLORS */
 .wc-card-section-title.lifecycle-ongoing {
   background: var(--state-ongoing-bg);
   color: var(--state-ongoing-text);
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
-/* DUE SOON - ORANGE */
 .wc-card-section-title.lifecycle-due_soon {
   background: var(--state-due-soon-bg);
   color: var(--state-due-soon-text);
-  border-color: rgba(245, 158, 11, 0.3);
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
-/* LAPSED - GREY */
 .wc-card-section-title.lifecycle-lapsed {
   background: var(--state-lapsed-bg);
   color: var(--state-lapsed-text);
-  border-color: rgba(107, 114, 128, 0.3);
+  border-color: rgba(220, 38, 38, 0.4);
+}
+
+.wc-card-section-title.lifecycle-archived {
+  background: var(--state-archived-bg);
+  color: var(--state-archived-text);
+  border-color: rgba(107, 114, 128, 0.4);
 }
 
 .wc-card-title {
-  font-size: 1rem;
-  font-weight: 700;
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700; /* Montserrat bold */
   color: var(--primary-dark);
   line-height: 1.3;
   margin: 0;
@@ -479,20 +556,21 @@
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  letter-spacing: 0.01em;
 }
 
 /* Card Actions Menu */
 .wc-card-actions {
   position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
+  top: 0.875rem;
+  right: 0.875rem;
   z-index: 10;
 }
 
 .wc-action-menu-btn {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--surface);
   border: 1px solid var(--border);
   display: flex;
@@ -514,24 +592,24 @@
 
 /* Card Body */
 .wc-card-body {
-  padding: 0.75rem;
+  padding: 0.875rem;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.75rem;
 }
 
 /* HORIZONTAL ROW: Deadline + Time Remaining */
 .wc-deadline-time-row {
   display: flex;
-  gap: 0.65rem;
+  gap: 0.75rem;
 }
 
 /* DEADLINE FIELD - FILLED WITH SOFT BG */
 .wc-due-date {
   flex: 1;
   border-radius: 8px;
-  padding: 0.6rem;
+  padding: 0.7rem;
   border: 1px solid;
   position: relative;
   overflow: hidden;
@@ -542,14 +620,14 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 3px;
+  width: 4px;
   height: 100%;
 }
 
-/* ONGOING - BLUE */
+/* SOFTER LIFECYCLE COLORS */
 .wc-due-date.lifecycle-ongoing {
   background: var(--state-ongoing-bg);
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
 .wc-due-date.lifecycle-ongoing::before {
@@ -561,10 +639,9 @@
   color: var(--state-ongoing-text);
 }
 
-/* DUE SOON - ORANGE */
 .wc-due-date.lifecycle-due_soon {
   background: var(--state-due-soon-bg);
-  border-color: rgba(245, 158, 11, 0.3);
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
 .wc-due-date.lifecycle-due_soon::before {
@@ -576,10 +653,9 @@
   color: var(--state-due-soon-text);
 }
 
-/* LAPSED - GREY */
 .wc-due-date.lifecycle-lapsed {
   background: var(--state-lapsed-bg);
-  border-color: rgba(107, 114, 128, 0.3);
+  border-color: rgba(220, 38, 38, 0.4);
 }
 
 .wc-due-date.lifecycle-lapsed::before {
@@ -591,6 +667,20 @@
   color: var(--state-lapsed-text);
 }
 
+.wc-due-date.lifecycle-archived {
+  background: var(--state-archived-bg);
+  border-color: rgba(107, 114, 128, 0.4);
+}
+
+.wc-due-date.lifecycle-archived::before {
+  background: var(--state-archived);
+}
+
+.wc-due-date.lifecycle-archived .wc-due-date-label,
+.wc-due-date.lifecycle-archived .wc-due-date-value {
+  color: var(--state-archived-text);
+}
+
 .wc-due-date-header {
   display: flex;
   align-items: center;
@@ -598,8 +688,9 @@
 }
 
 .wc-due-date-label {
+  font-family: "Montserrat", sans-serif;
   font-size: 0.625rem;
-  font-weight: 700;
+  font-weight: 700; /* Montserrat bold */
   text-transform: uppercase;
   letter-spacing: 0.04em;
   display: flex;
@@ -608,8 +699,9 @@
 }
 
 .wc-due-date-value {
+  font-family: "Montserrat", sans-serif;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 600; /* Montserrat semi-bold */
   display: flex;
   align-items: center;
   gap: 0.375rem;
@@ -621,25 +713,28 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  padding: 0.6rem;
+  padding: 0.7rem;
   background: var(--primary-light);
   border-radius: 8px;
   border: 1px solid rgba(45, 74, 124, 0.1);
 }
 
 .wc-time-remaining-label {
+  font-family: "Montserrat", sans-serif;
   font-size: 0.625rem;
-  font-weight: 700;
+  font-weight: 700; /* Montserrat bold */
   color: var(--primary);
   text-transform: uppercase;
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  letter-spacing: 0.04em;
 }
 
 .wc-time-remaining-value {
+  font-family: "Montserrat", sans-serif;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 600; /* Montserrat semi-bold */
   color: var(--primary-dark);
 }
 
@@ -647,23 +742,25 @@
 .wc-description {
   background: var(--surface-alt);
   border-radius: 8px;
-  padding: 0.6rem;
+  padding: 0.7rem;
   border: 1px solid var(--border-light);
 }
 
 .wc-description-header {
+  font-family: "Montserrat", sans-serif;
   font-size: 0.625rem;
-  font-weight: 700;
+  font-weight: 700; /* Montserrat bold */
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.4rem;
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
 
 .wc-description-text {
+  font-family: "Montserrat", sans-serif;
   font-size: 0.75rem;
   line-height: 1.4;
   color: var(--text-muted);
@@ -672,6 +769,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  letter-spacing: 0.01em;
 }
 
 /* Meta Grid - HORIZONTAL */
@@ -680,7 +778,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   margin-top: auto;
-  padding-top: 0.65rem;
+  padding-top: 0.75rem;
   border-top: 1px solid var(--border-light);
 }
 
@@ -692,8 +790,9 @@
 }
 
 .wc-meta-label {
+  font-family: "Montserrat", sans-serif;
   font-size: 0.5625rem;
-  font-weight: 700;
+  font-weight: 700; /* Montserrat bold */
   color: var(--text-light);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -707,8 +806,9 @@
 }
 
 .wc-meta-value {
+  font-family: "Montserrat", sans-serif;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 500; /* Montserrat medium */
   color: var(--text-dark);
 }
 
@@ -735,9 +835,11 @@
 }
 
 .wc-dropdown-item {
-  border-radius: 5px;
+  font-family: "Montserrat", sans-serif;
+  border-radius: 6px;
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
+  font-weight: 500; /* Montserrat medium */
   transition: all var(--transition-base);
   display: flex;
   align-items: center;
@@ -749,6 +851,7 @@
   background: transparent;
   width: 100%;
   text-align: left;
+  letter-spacing: 0.01em;
 }
 
 .wc-dropdown-item:hover {
@@ -767,11 +870,11 @@
 }
 
 .wc-dropdown-item-danger {
-  color: var(--state-inactive);
+  color: var(--state-lapsed);
 }
 
 .wc-dropdown-item-danger:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(220, 38, 38, 0.1);
   color: #991b1b;
 }
 

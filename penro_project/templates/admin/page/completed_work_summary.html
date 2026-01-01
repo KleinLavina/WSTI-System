@@ -1,114 +1,138 @@
 {% extends "admin/layout/base.html" %}
+{% load static %}
+
 {% block title %}Work Assignment Analytics{% endblock %}
 
 {% block content %}
 
 <!-- =========================
-     HEADER
+     HEADER BAR (UNIFIED)
 ========================= -->
-<div class="mb-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
+<div class="wc-unified-header">
 
-  <!-- LEFT -->
-  <div>
-    <h3 class="fw-bold d-flex align-items-center gap-2 mb-1">
-      <i class="fas fa-chart-bar text-primary"></i>
-      Work Assignment Analytics
-      <span class="badge bg-primary bg-opacity-10 text-primary ms-2">
-        {{ total_workcycles }}
+  <!-- TOP ROW: Title + Stats -->
+  <div class="wc-header-top">
+    <div class="wc-title-section">
+      <h3 class="wc-main-title">
+        <i class="fas fa-chart-bar"></i>
+        Work Assignment Analytics
+      </h3>
+      <p class="wc-subtitle">
+        Status and review breakdown per active work cycle
+      </p>
+    </div>
+
+    <div class="wc-total-badge">
+      <span class="wc-badge-count">{{ totals.total_workcycles }}</span>
+      <span class="wc-badge-label">Total Work Cycles</span>
+    </div>
+  </div>
+
+  <!-- BOTTOM ROW: Filter + Search + Sort -->
+  <div class="wc-header-bottom">
+
+    <!-- FILTERS -->
+    <div class="wc-filters-section">
+      <span class="wc-section-label">
+        <i class="fas fa-filter"></i>
+        Filter
       </span>
-    </h3>
+      <div class="wc-filters">
+        <a href="?"
+           class="wc-filter-btn {% if not request.GET.state %}active{% endif %}">
+          <span>All</span>
+          <span class="wc-filter-count">{{ totals.total_workcycles }}</span>
+        </a>
 
-    <p class="text-muted mb-1">
-      Status and review breakdown per active work cycle
-    </p>
+        <a href="?state=ongoing"
+           class="wc-filter-btn wc-filter-ongoing {% if request.GET.state == 'ongoing' %}active{% endif %}">
+          <span>Ongoing</span>
+          <span class="wc-filter-count">{{ totals.ongoing }}</span>
+        </a>
+
+        <a href="?state=due_soon"
+           class="wc-filter-btn wc-filter-due-soon {% if request.GET.state == 'due_soon' %}active{% endif %}">
+          <span>Due Soon</span>
+          <span class="wc-filter-count">{{ totals.due_soon }}</span>
+        </a>
+
+        <a href="?state=lapsed"
+           class="wc-filter-btn wc-filter-lapsed {% if request.GET.state == 'lapsed' %}active{% endif %}">
+          <span>Lapsed</span>
+          <span class="wc-filter-count">{{ totals.lapsed }}</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- SEARCH & SORT -->
+    <div class="wc-actions-section">
+
+      <!-- SEARCH -->
+      <form method="get" class="wc-search-form">
+        {% if request.GET.state %}
+          <input type="hidden" name="state" value="{{ request.GET.state }}">
+        {% endif %}
+        {% if request.GET.sort %}
+          <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+        {% endif %}
+
+        <div class="wc-search-wrapper">
+          <i class="fas fa-search wc-search-icon"></i>
+          <input type="search"
+                 name="q"
+                 value="{{ request.GET.q }}"
+                 class="wc-search-input"
+                 placeholder="Search work cycles…">
+          <button type="submit" class="wc-search-btn">
+            Search
+          </button>
+        </div>
+      </form>
+
+      <!-- SORT -->
+      <div class="wc-sort-wrapper">
+        <span class="wc-sort-label">
+          <i class="fas fa-sort-amount-down"></i>
+          Sort by due
+        </span>
+        <div class="wc-sort-buttons">
+          <a href="?sort=due_asc"
+             class="wc-sort-btn {% if request.GET.sort == 'due_asc' %}active{% endif %}">
+            <i class="fas fa-arrow-up"></i>
+            <span>Asc</span>
+          </a>
+          <a href="?sort=due_desc"
+             class="wc-sort-btn {% if request.GET.sort == 'due_desc' %}active{% endif %}">
+            <i class="fas fa-arrow-down"></i>
+            <span>Desc</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
   </div>
-
-  <!-- RIGHT: VIEW TOGGLE -->
-  <div class="btn-group shadow-sm" role="group">
-    <button type="button"
-            class="btn btn-outline-secondary"
-            id="listViewBtn"
-            title="List view">
-      <i class="fas fa-list"></i>
-    </button>
-    <button type="button"
-            class="btn btn-outline-secondary"
-            id="cardViewBtn"
-            title="Card view">
-      <i class="fas fa-th-large"></i>
-    </button>
-  </div>
-
 </div>
 
-<hr class="wc-header-divider">
-
 <!-- =========================
-     CONTENT
+     CONTENT (CARDS)
 ========================= -->
 {% if summary %}
-
-  <!-- LIST VIEW -->
-  <div id="listView">
-    {% include "admin/page/_completed_work_list.html" %}
-  </div>
-
-  <!-- CARD VIEW -->
-  <div id="cardView" class="d-none">
-    {% include "admin/page/_completed_work_cards.html" %}
-  </div>
-
+  {% include "admin/page/_completed_work_cards.html" %}
 {% else %}
-  <div class="p-4 text-muted text-center fst-italic">
-    <i class="far fa-folder-open me-1"></i>
-    No analytics data available
+  <div class="wc-empty-state">
+    <div class="wc-empty-icon">
+      <i class="far fa-folder-open"></i>
+    </div>
+    <h4 class="wc-empty-title">No analytics data available</h4>
+    <p class="wc-empty-text">No work cycles match your current filters</p>
   </div>
 {% endif %}
 
 <!-- =========================
-     SCRIPTS
+     CHART SUPPORT
 ========================= -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const STORAGE_KEY = "completed_work_view";
-
-  const listBtn = document.getElementById("listViewBtn");
-  const cardBtn = document.getElementById("cardViewBtn");
-  const listView = document.getElementById("listView");
-  const cardView = document.getElementById("cardView");
-
-  function showListView(save = true) {
-    listView.classList.remove("d-none");
-    cardView.classList.add("d-none");
-    listBtn.classList.add("active");
-    cardBtn.classList.remove("active");
-    if (save) localStorage.setItem(STORAGE_KEY, "list");
-  }
-
-  function showCardView(save = true) {
-    cardView.classList.remove("d-none");
-    listView.classList.add("d-none");
-    cardBtn.classList.add("active");
-    listBtn.classList.remove("active");
-    if (save) localStorage.setItem(STORAGE_KEY, "card");
-  }
-
-  // Restore preference
-  const savedView = localStorage.getItem(STORAGE_KEY);
-  if (savedView === "card") {
-    showCardView(false);
-  } else {
-    showListView(false); // default
-  }
-
-  // Button handlers
-  listBtn.addEventListener("click", () => showListView());
-  cardBtn.addEventListener("click", () => showCardView());
-});
-</script>
-
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".progressPie").forEach(canvas => {
@@ -119,7 +143,6 @@ document.addEventListener("DOMContentLoaded", () => {
     new Chart(canvas, {
       type: "doughnut",
       data: {
-        labels: ["Done", "Remaining"],
         datasets: [{
           data: [done, remaining],
           backgroundColor: ["#10b981", "#e5e7eb"],
@@ -142,10 +165,464 @@ document.addEventListener("DOMContentLoaded", () => {
      STYLES
 ========================= -->
 <style>
-.wc-header-divider {
-  margin: 0.875rem 0;
-  border: 0;
-  border-top: 1px solid #000;
+/* =============================
+   PROTECT FONT AWESOME ICONS
+============================= */
+.fa,
+.fas,
+.far,
+.fab,
+.fal,
+.fa-solid,
+.fa-regular,
+.fa-brands {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+  font-style: normal;
+  font-weight: 900;
+}
+
+/* Ensure Font Awesome icons in header classes keep their font */
+.wc-main-title .fa,
+.wc-section-label .fa,
+.wc-filter-btn .fa,
+.wc-search-icon,
+.wc-sort-label .fa,
+.wc-sort-btn .fa,
+.wc-empty-icon .fa,
+.wc-empty-icon {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+}
+
+/* Reset font for Font Awesome icons within unified header */
+.wc-unified-header .fa,
+.wc-unified-header .fas,
+.wc-unified-header .far,
+.wc-unified-header .fab {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+}
+
+/* Reset font for Font Awesome icons within empty state */
+.wc-empty-state .fa,
+.wc-empty-state .fas,
+.wc-empty-state .far {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+}
+
+/* =============================
+   UNIFIED HEADER
+============================= */
+.wc-unified-header {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+/* TOP ROW */
+.wc-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.wc-title-section {
+  flex: 1;
+}
+
+.wc-main-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.01em;
+}
+
+.wc-main-title i {
+  color: #2563eb;
+  font-size: 1.3rem;
+}
+
+.wc-subtitle {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #64748b;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+.wc-total-badge {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  padding: 12px 16px;
+  text-align: center;
+  min-width: 140px;
+}
+
+.wc-badge-count {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #2563eb;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.wc-badge-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #3b82f6;
+  margin-top: 4px;
+  letter-spacing: 0.05em;
+}
+
+/* BOTTOM ROW */
+.wc-header-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* FILTERS SECTION */
+.wc-filters-section {
+  flex: 1;
+  min-width: 300px;
+}
+
+.wc-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+}
+
+.wc-section-label i {
+  font-size: 0.65rem;
+}
+
+.wc-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wc-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  text-decoration: none;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  height: 40px;
+  letter-spacing: 0.01em;
+}
+
+.wc-filter-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+}
+
+/* Active state - only border and box shadow */
+.wc-filter-btn.active {
+  background: #ffffff;
+  border: 2px solid #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+  color: #2563eb;
+  padding: 7px 15px; /* Adjust for thicker border */
+  font-weight: 700;
+}
+
+.wc-filter-btn.active:hover {
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
+  transform: translateY(-2px);
+}
+
+.wc-filter-count {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  min-width: 24px;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.wc-filter-btn.active .wc-filter-count {
+  background: #2563eb;
+  color: white;
+  font-weight: 700;
+}
+
+/* Ongoing color to light blue */
+.wc-filter-btn.wc-filter-ongoing:not(.active) { 
+  background: #f0f9ff; 
+  border-color: #bae6fd; 
+  color: #0369a1; 
+}
+
+.wc-filter-btn.wc-filter-ongoing:not(.active):hover { 
+  background: #e0f2fe; 
+  border-color: #7dd3fc; 
+  color: #075985; 
+}
+
+.wc-filter-btn.wc-filter-due-soon:not(.active) { 
+  background: #fef3c7; 
+  border-color: #fde68a; 
+  color: #92400e; 
+}
+
+.wc-filter-btn.wc-filter-due-soon:not(.active):hover { 
+  background: #fef9c3; 
+  border-color: #fcd34d; 
+  color: #78350f; 
+}
+
+.wc-filter-btn.wc-filter-lapsed:not(.active) { 
+  background: #fee2e2; 
+  border-color: #fecaca; 
+  color: #991b1b; 
+}
+
+.wc-filter-btn.wc-filter-lapsed:not(.active):hover { 
+  background: #fecaca; 
+  border-color: #fca5a5; 
+  color: #7f1d1d; 
+}
+
+/* ACTIONS SECTION (SEARCH + SORT) */
+.wc-actions-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* SEARCH */
+.wc-search-form {
+  min-width: 280px;
+}
+
+.wc-search-wrapper {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 2px;
+  height: 40px;
+}
+
+.wc-search-icon {
+  color: #94a3b8;
+  margin: 0 10px;
+  font-size: 0.9rem;
+}
+
+.wc-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 0;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #1e293b;
+  min-width: 0;
+  letter-spacing: 0.01em;
+}
+
+.wc-search-input::placeholder {
+  font-weight: 400;
+  color: #94a3b8;
+  letter-spacing: 0.01em;
+}
+
+.wc-search-input:focus {
+  outline: none;
+}
+
+.wc-search-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  height: 100%;
+  letter-spacing: 0.01em;
+}
+
+.wc-search-btn:hover {
+  background: #1d4ed8;
+}
+
+/* SORT */
+.wc-sort-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wc-sort-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6b7280;
+  white-space: nowrap;
+  letter-spacing: 0.05em;
+}
+
+.wc-sort-buttons {
+  display: flex;
+  gap: 4px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 2px;
+}
+
+.wc-sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 12px;
+  text-decoration: none;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  height: 32px;
+  letter-spacing: 0.01em;
+}
+
+.wc-sort-btn:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.wc-sort-btn.active {
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+}
+
+.wc-sort-btn i {
+  font-size: 0.7rem;
+}
+
+/* EMPTY STATE */
+.wc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.wc-empty-icon {
+  font-size: 3rem;
+  color: #cbd5e1;
+  margin-bottom: 20px;
+}
+
+.wc-empty-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+
+.wc-empty-text {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #94a3b8;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+/* =============================
+   CARD GRID FONT STYLING
+============================= */
+
+/* RESPONSIVE */
+@media (max-width: 992px) {
+  .wc-header-bottom {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+  
+  .wc-filters-section,
+  .wc-search-form {
+    min-width: 100%;
+  }
+  
+  .wc-actions-section {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 768px) {
+  .wc-header-top {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .wc-total-badge {
+    align-self: flex-start;
+  }
+  
+  .wc-actions-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .wc-sort-wrapper {
+    justify-content: space-between;
+  }
 }
 </style>
 

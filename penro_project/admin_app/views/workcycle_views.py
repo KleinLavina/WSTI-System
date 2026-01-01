@@ -27,8 +27,20 @@ from admin_app.services.workcycle_reassign_service import (
 def workcycle_list(request):
     """
     Admin list view for ACTIVE Work Cycles
-    Stat-driven filtering via ?state=
+
+    Features:
+    - Lifecycle filtering (?state=ongoing|due_soon|lapsed)
+    - Search by title (?q=)
+    - Sort by due date (?sort=due_asc|due_desc)
+    - Stats always based on ALL active work cycles
     """
+
+    # =========================================================
+    # REQUEST PARAMS
+    # =========================================================
+    state = request.GET.get("state")
+    search_query = request.GET.get("q", "").strip()
+    sort = request.GET.get("sort")  # due_asc | due_desc
 
     # =========================================================
     # BASE QUERYSET (ACTIVE ONLY)
@@ -43,16 +55,24 @@ def workcycle_list(request):
             "assignments__assigned_user",
             "assignments__assigned_team",
         )
-        .order_by("-created_at")
     )
 
+    # =========================================================
+    # SORTING (DB-SAFE)
+    # =========================================================
+    if sort == "due_asc":
+        qs = qs.order_by("due_at")
+    elif sort == "due_desc":
+        qs = qs.order_by("-due_at")
+    else:
+        qs = qs.order_by("-created_at")  # default
+
+    # Materialize queryset (needed for lifecycle_state property)
     workcycles = list(qs)
 
     # =========================================================
-    # STAT FILTER (FROM CLICKABLE BADGES)
+    # LIFECYCLE FILTER (PROPERTY-SAFE)
     # =========================================================
-    state = request.GET.get("state")  # ongoing | due_soon | lapsed
-
     if state:
         workcycles = [
             wc for wc in workcycles
@@ -60,18 +80,17 @@ def workcycle_list(request):
         ]
 
     # =========================================================
-    # SEARCH (OPTIONAL, KEEPS UX FLEXIBLE)
+    # SEARCH (TITLE)
     # =========================================================
-    search_query = request.GET.get("q", "").strip()
     if search_query:
-        q = search_query.lower()
+        q_lower = search_query.lower()
         workcycles = [
             wc for wc in workcycles
-            if q in wc.title.lower()
+            if q_lower in wc.title.lower()
         ]
 
     # =========================================================
-    # STATS (ALWAYS BASED ON *ALL* ACTIVE)
+    # STATS (ALWAYS FROM *ALL* ACTIVE)
     # =========================================================
     all_active = list(qs)
 
@@ -86,13 +105,16 @@ def workcycle_list(request):
             lifecycle_counts[wc.lifecycle_state] += 1
 
     # =========================================================
-    # UI HELPERS
+    # UI HELPERS (SAFE, NO ORM ABUSE)
     # =========================================================
     for wc in workcycles:
         wc.has_team_assignment = wc.assignments.filter(
             assigned_team__isnull=False
         ).exists()
 
+    # =========================================================
+    # RENDER
+    # =========================================================
     return render(
         request,
         "admin/page/workcycles.html",
@@ -100,13 +122,15 @@ def workcycle_list(request):
             "workcycles": workcycles,
             "active_count": len(all_active),
             "lifecycle_counts": lifecycle_counts,
-            "current_state": state,   # 👈 for active badge styling
+            "current_state": state,
             "search_query": search_query,
+            "current_sort": sort,   # 👈 for active ASC/DESC buttons
             "users": User.objects.filter(is_active=True),
             "teams": Team.objects.all(),
             "now": timezone.now(),
         },
     )
+
 
 def inactive_workcycle_list(request):
     """
@@ -422,14 +446,20 @@ def toggle_workcycle_archive(request, pk):
         return redirect("admin_app:workcycles")
 
 
+from django.urls import reverse
+
 @require_POST
 def delete_workcycle(request, pk):
     workcycle = get_object_or_404(WorkCycle, pk=pk)
 
+    redirect_to = request.META.get(
+        "HTTP_REFERER",
+        reverse("admin_app:workcycles")
+    )
+
     try:
         title = workcycle.title
         workcycle.delete()
-
         messages.success(
             request,
             f"Work cycle '{title}' was permanently deleted."
@@ -443,4 +473,4 @@ def delete_workcycle(request, pk):
             "Please archive it instead."
         )
 
-    return redirect("admin_app:workcycles")
+    return redirect(redirect_to)

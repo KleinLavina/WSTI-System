@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,8 +9,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <title>{% block title %}Dashboard{% endblock %}</title>
-
-  {% load static %}
 
   <!-- =====================================================
        CORE CSS
@@ -38,9 +37,37 @@
        GLOBAL BASE STYLES
   ====================================================== -->
   <style>
-    /* -------------------------------
+    /* =============================
+       FONT: MONTSERRAT (VARIABLE)
+    ============================== */
+    @font-face {
+      font-family: "Montserrat";
+      src: url("{% static 'fonts/Montserrat-VariableFont_wght.ttf' %}")
+           format("truetype-variations");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    /* =============================
+       PROTECT FONT AWESOME ICONS
+    ============================== */
+    .fa,
+    .fas,
+    .far,
+    .fab,
+    .fal,
+    .fa-solid,
+    .fa-regular,
+    .fa-brands {
+      font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+      font-style: normal;
+      font-weight: 900;
+    }
+
+    /* =============================
        BASE LAYOUT
-    -------------------------------- */
+    ============================== */
     html, body {
       height: 100%;
       margin: 0;
@@ -48,9 +75,12 @@
 
     body {
       background: #f8fafc;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-                   Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont,
+                   "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       color: #1f2937;
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 0.01em;
     }
 
     main {
@@ -59,12 +89,42 @@
 
     .page-content {
       padding: 20px;
-      min-height: calc(100vh - 64px); /* header-safe */
+      min-height: calc(100vh - 64px);
     }
 
-    /* -------------------------------
+    /* =============================
+       TYPOGRAPHY SYSTEM
+    ============================== */
+    h1, h2, h3, h4, h5, h6 {
+      font-family: "Montserrat", sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #040404;
+    }
+
+    p, span, label {
+      font-family: "Montserrat", sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font-family: "Montserrat", sans-serif;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+
+    small {
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    /* =============================
        NOTIFICATIONS
-    -------------------------------- */
+    ============================== */
     .notifications {
       position: fixed;
       top: 20px;
@@ -79,18 +139,15 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-
       padding: 14px 18px;
       margin-bottom: 14px;
-
-      border-radius: 8px;
+      border-radius: 10px;
       color: #fff;
-
       box-shadow: 0 6px 20px rgba(0,0,0,.15);
-
       animation: slideIn .25s ease-out forwards;
       opacity: 0;
       transform: translateX(-20px);
+      font-weight: 500;
     }
 
     .notification i {
@@ -205,10 +262,7 @@
   <!-- =====================================================
        CORE JS
   ====================================================== -->
-  <!-- Bootstrap -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-  <!-- Flatpickr -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
   <!-- =====================================================
