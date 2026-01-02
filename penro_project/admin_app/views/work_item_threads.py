@@ -8,27 +8,36 @@ from accounts.models import WorkItem
 @login_required
 def admin_work_item_threads(request):
     """
-    List conversation threads for admins.
-    Each thread represents a WorkItem.
+    Admin inbox view for WorkItem conversations.
 
-    Rules:
-    - Show ONLY work items that have messages
-    - Show ONLY unread message count
-    - Unread count disappears when everything is read
+    Guarantees:
+    - Only work items WITH messages appear
+    - Only UNREAD messages from the other party are counted
+    - Unread count disappears when messages are read
+    - No duplicate rows or inflated counts
+    - Ordered by most recent message activity
     """
 
     work_items = (
         WorkItem.objects
+        # ----------------------------------------------------
+        # BASIC RELATION OPTIMIZATION
+        # ----------------------------------------------------
         .select_related("owner", "workcycle")
 
         # ----------------------------------------------------
-        # ONLY WORK ITEMS THAT HAVE AT LEAST ONE MESSAGE
+        # REQUIRE AT LEAST ONE MESSAGE
         # ----------------------------------------------------
-        .filter(messages__isnull=False)
-        .distinct()
+        .annotate(
+            has_messages=Count(
+                "messages",
+                distinct=True
+            )
+        )
+        .filter(has_messages__gt=0)
 
         # ----------------------------------------------------
-        # UNREAD COUNT (not read AND not sent by admin)
+        # UNREAD COUNT (OTHER PARTY ONLY)
         # ----------------------------------------------------
         .annotate(
             unread_count=Count(
@@ -38,7 +47,7 @@ def admin_work_item_threads(request):
                 ) & ~Q(
                     messages__sender=request.user
                 ),
-                distinct=True
+                distinct=True,
             )
         )
 
@@ -50,7 +59,7 @@ def admin_work_item_threads(request):
         )
 
         # ----------------------------------------------------
-        # ORDER BY ACTIVITY
+        # ORDER BY RECENT ACTIVITY
         # ----------------------------------------------------
         .order_by(
             "-last_message_at",

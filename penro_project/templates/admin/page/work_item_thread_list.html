@@ -4,20 +4,310 @@
 {% block content %}
 {% include "admin/page/modals/message_ui_modal.html" %}
 
+<style>
+/* ============================================
+   SOFT COLOR PALETTE & CUSTOM STYLES
+============================================ */
+.discussion-page-header {
+  background: linear-gradient(135deg, #f0f4f8 0%, #e6eef5 100%);
+  padding: 24px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  border: 1px solid #d9e6f2;
+}
+
+.discussion-page-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.discussion-page-title i {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #8fa6c5 0%, #7ba3c4 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 4px 12px rgba(123, 163, 196, 0.25);
+}
+
+.discussion-page-desc {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Accordion Styling */
+.discussion-accordion .accordion-item {
+  border: 1px solid #d9e6f2;
+  border-radius: 16px;
+  background: #ffffff;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(91, 141, 179, 0.08);
+  transition: all 0.2s ease;
+}
+
+.discussion-accordion .accordion-item:hover {
+  box-shadow: 0 4px 16px rgba(91, 141, 179, 0.15);
+}
+
+.discussion-accordion .accordion-button {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #475569;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 18px 24px;
+  border: none;
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+
+.discussion-accordion .accordion-button:not(.collapsed) {
+  background: linear-gradient(135deg, #a8bedb 0%, #8fa6c5 100%);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.discussion-accordion .accordion-button:focus {
+  box-shadow: 0 0 0 3px rgba(143, 166, 197, 0.15);
+  border-color: transparent;
+}
+
+.discussion-accordion .accordion-button::after {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23475569'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+}
+
+.discussion-accordion .accordion-button:not(.collapsed)::after {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+}
+
+.discussion-accordion .accordion-button i {
+  font-size: 16px;
+  color: #7ba3c4;
+}
+
+.discussion-accordion .accordion-button:not(.collapsed) i {
+  color: #ffffff;
+}
+
+.cycle-badge {
+  background: linear-gradient(135deg, #d9e6f2 0%, #c7d9e8 100%);
+  color: #5b7a99;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.discussion-accordion .accordion-button:not(.collapsed) .cycle-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* List Items */
+.discussion-list-item {
+  padding: 18px 24px;
+  border: none;
+  border-bottom: 1px solid #e6eef5;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.discussion-list-item:last-child {
+  border-bottom: none;
+}
+
+.discussion-list-item:hover {
+  background: linear-gradient(135deg, #f8fafc 0%, #f0f4f8 100%);
+  transform: translateX(4px);
+}
+
+.discussion-list-item.has-unread {
+  background: linear-gradient(135deg, #fff5f5 0%, #fef2f2 100%);
+  border-left: 4px solid #ef4444;
+}
+
+.discussion-list-item.has-unread:hover {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+}
+
+.discussion-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+  transition: all 0.2s ease;
+}
+
+.discussion-icon-wrapper.unread {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.discussion-icon-wrapper.read {
+  background: linear-gradient(135deg, #e6eef5 0%, #d9e6f2 100%);
+  color: #94a3b8;
+}
+
+.discussion-list-item:hover .discussion-icon-wrapper.read {
+  background: linear-gradient(135deg, #a8bedb 0%, #8fa6c5 100%);
+  color: #ffffff;
+}
+
+.discussion-owner-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 4px;
+}
+
+.discussion-list-item.has-unread .discussion-owner-name {
+  color: #1e293b;
+}
+
+.discussion-meta-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+
+.discussion-meta-info i {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.discussion-meta-separator {
+  color: #cbd5e1;
+}
+
+.discussion-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.discussion-status-badge.unread {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #dc2626;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.discussion-status-badge.unread i {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.discussion-status-badge.seen {
+  background: linear-gradient(135deg, #e6eef5 0%, #d9e6f2 100%);
+  color: #5b8db3;
+}
+
+.discussion-timestamp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.discussion-timestamp i {
+  font-size: 11px;
+}
+
+.discussion-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #64748b;
+}
+
+.discussion-empty-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e6eef5 0%, #d9e6f2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(91, 141, 179, 0.1);
+}
+
+.discussion-empty-icon i {
+  font-size: 32px;
+  color: #7ba3c4;
+}
+
+.discussion-empty-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #475569;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .discussion-meta-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .discussion-meta-separator {
+    display: none;
+  }
+}
+</style>
+
 <div class="container-fluid">
 
   <!-- ======================================================
        HEADER
   ======================================================= -->
-  <h4 class="fw-bold mb-3 d-flex align-items-center gap-2">
-    <i class="fas fa-comments text-primary"></i>
-    Work Item Discussions
-  </h4>
-
-  <p class="text-muted small mb-3">
-    Discussions are grouped by work cycle. Each item represents a shared conversation
-    between the assigned worker and administrators.
-  </p>
+  <div class="discussion-page-header">
+    <div class="discussion-page-title">
+      <i class="fas fa-comments"></i>
+      <span>Work Item Discussions</span>
+    </div>
+    <p class="discussion-page-desc">
+      <i class="fas fa-info-circle me-2"></i>
+      Discussions are grouped by work cycle. Each item represents a shared conversation
+      between the assigned worker and administrators.
+    </p>
+  </div>
 
   {% regroup work_items by workcycle as grouped_cycles %}
 
@@ -25,29 +315,29 @@
        ACCORDION
   ======================================================= -->
   {% if grouped_cycles %}
-    <div class="accordion" id="discussionAccordion">
+    <div class="accordion discussion-accordion" id="discussionAccordion">
 
       {% for group in grouped_cycles %}
-      <div class="accordion-item mb-2 shadow-sm">
+      <div class="accordion-item">
 
-        <!-- WORK CYCLE HEADER -->
+        <!-- ================= WORK CYCLE HEADER ================= -->
         <h2 class="accordion-header" id="heading{{ forloop.counter }}">
-          <button class="accordion-button collapsed fw-semibold"
+          <button class="accordion-button collapsed"
                   type="button"
                   data-bs-toggle="collapse"
                   data-bs-target="#cycle{{ forloop.counter }}">
-            <i class="fas fa-folder-open me-2 text-primary"></i>
+
+            <i class="fas fa-folder-open me-2"></i>
             {{ group.grouper.title }}
 
-            <span class="badge bg-secondary ms-2">
+            <span class="cycle-badge">
+              <i class="fas fa-comments me-1"></i>
               {{ group.list|length }}
             </span>
           </button>
         </h2>
 
-        <!-- ==================================================
-             WORK ITEMS UNDER WORK CYCLE
-        =================================================== -->
+        <!-- ================= WORK ITEMS ================= -->
         <div id="cycle{{ forloop.counter }}"
              class="accordion-collapse collapse"
              data-bs-parent="#discussionAccordion">
@@ -56,49 +346,81 @@
 
             {% for item in group.list %}
             <a href="#"
-               class="list-group-item list-group-item-action
-                      {% if item.unread_count > 0 %}fw-semibold{% endif %}"
+               class="list-group-item discussion-list-item {% if item.unread_count > 0 %}has-unread{% endif %}"
                data-qxdlg-trigger
                data-qxdlg-url="{% url 'admin_app:work-item-discussion' item.id %}"
                data-qxdlg-title="{{ item.workcycle.title }}"
                data-qxdlg-subtitle="Assigned to: {{ item.owner.get_full_name|default:item.owner.username }}">
 
-              <div class="d-flex justify-content-between align-items-start">
+              <div class="d-flex justify-content-between align-items-start gap-3">
 
                 <!-- ================= LEFT ================= -->
-                <div>
-                  <div>
-                    {{ item.owner.get_full_name|default:item.owner.username }}
+                <div class="d-flex gap-3 flex-grow-1">
+
+                  <!-- THREAD ICON -->
+                  <div class="discussion-icon-wrapper {% if item.unread_count > 0 %}unread{% else %}read{% endif %}">
+                    {% if item.unread_count > 0 %}
+                      <i class="fas fa-envelope"></i>
+                    {% else %}
+                      <i class="fas fa-envelope-open"></i>
+                    {% endif %}
                   </div>
 
-                  <div class="small text-muted">
-                    Due {{ item.workcycle.due_at|date:"M d, Y" }}
-                    · Thread #{{ item.id }}
+                  <!-- THREAD META -->
+                  <div class="flex-grow-1">
+                    <div class="discussion-owner-name">
+                      <i class="fas fa-user me-2"></i>
+                      {{ item.owner.get_full_name|default:item.owner.username }}
+                    </div>
+
+                    <div class="discussion-meta-info">
+                      <span>
+                        <i class="far fa-calendar-alt me-1"></i>
+                        Due {{ item.workcycle.due_at|date:"D, M d, Y" }}
+                      </span>
+                      <span class="discussion-meta-separator">·</span>
+                      <span>
+                        <i class="fas fa-hashtag me-1"></i>
+                        Thread {{ item.id }}
+                      </span>
+                    </div>
+
+                    <!-- LAST MESSAGE TIME (Mobile: below meta) -->
+                    {% if item.last_message_at %}
+                      <div class="discussion-timestamp d-md-none">
+                        <i class="far fa-clock"></i>
+                        {{ item.last_message_at|date:"D, M d · g:i A" }}
+                      </div>
+                    {% endif %}
                   </div>
                 </div>
 
                 <!-- ================= RIGHT ================= -->
-                <div class="text-end small">
+                <div class="text-end">
 
-                  <!-- UNREAD COUNT (ONLY THING THAT COUNTS) -->
+                  <!-- UNREAD BADGE / SEEN -->
                   {% if item.unread_count > 0 %}
-                    <span class="badge bg-danger">
-                      {{ item.unread_count }}
+                    <span class="discussion-status-badge unread">
+                      <i class="fas fa-circle"></i>
+                      {{ item.unread_count }} New
                     </span>
                   {% else %}
-                    <span class="text-muted">
+                    <span class="discussion-status-badge seen">
+                      <i class="fas fa-check-double"></i>
                       Seen
                     </span>
                   {% endif %}
 
-                  <!-- LAST MESSAGE TIME -->
+                  <!-- LAST MESSAGE TIME (Desktop: in right column) -->
                   {% if item.last_message_at %}
-                    <div class="text-muted mt-1">
-                      {{ item.last_message_at|date:"M d · H:i" }}
+                    <div class="discussion-timestamp d-none d-md-flex justify-content-end">
+                      <i class="far fa-clock"></i>
+                      {{ item.last_message_at|date:"D, M d · g:i A" }}
                     </div>
                   {% endif %}
 
                 </div>
+
               </div>
             </a>
             {% endfor %}
@@ -111,8 +433,16 @@
 
     </div>
   {% else %}
-    <div class="text-muted fst-italic">
-      No discussion threads yet.
+    <div class="discussion-empty-state">
+      <div class="discussion-empty-icon">
+        <i class="far fa-comment-dots"></i>
+      </div>
+      <div class="discussion-empty-text">
+        No discussion threads yet
+      </div>
+      <p class="text-muted mt-2 mb-0">
+        Discussions will appear here when work items are assigned
+      </p>
     </div>
   {% endif %}
 

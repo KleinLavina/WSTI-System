@@ -1,9 +1,11 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-
-from accounts.models import WorkItem, WorkItemMessage
-
+from django.db.models import Q
+from accounts.models import WorkItem, WorkItemMessage, WorkItemAttachment
+from django.utils import timezone
+from datetime import timedelta
+from django.urls import reverse
 from ..services.work_item_service import (
     update_work_item_status,
     submit_work_item,
@@ -12,38 +14,405 @@ from ..services.work_item_service import (
 )
 
 # ============================================================
-# WORK ITEMS LIST
+# HELPER: Calculate Time Remaining
 # ============================================================
+# ============================================================
+# TIME REMAINING LOGIC (STATUS-AWARE)
+# ============================================================
+# ============================================================
+# TIME REMAINING LOGIC (STATUS-AWARE)
+# ============================================================
+def calculate_time_remaining(due_at, status):
+    """
+    Human-readable time logic based on:
+    - deadline
+    - work item status
 
+    Rules:
+    1. DONE before deadline  -> countdown continues (submitted)
+    2. NOT DONE past deadline -> overdue countdown continues
+    3. DONE past deadline -> countdown stops, show how late
+    """
+    now = timezone.now()
+    delta = due_at - now
+
+    # ---------------------------
+    # BEFORE DEADLINE
+    # ---------------------------
+    if delta.total_seconds() >= 0:
+        days = delta.days
+        hours = delta.seconds // 3600
+        minutes = (delta.seconds % 3600) // 60
+
+        if days > 0:
+            remaining = f"{days}d remaining"
+        elif hours > 0:
+            remaining = f"{hours}h remaining"
+        else:
+            remaining = f"{minutes}m remaining"
+
+        if status == "done":
+            return f"{remaining} (submitted)"
+
+        return remaining
+
+    # ---------------------------
+    # AFTER DEADLINE
+    # ---------------------------
+    overdue = abs(delta)
+    days = overdue.days
+    hours = overdue.seconds // 3600
+    minutes = (overdue.seconds % 3600) // 60
+
+    if days > 0:
+        overdue_str = f"{days}d {hours}h"
+    elif hours > 0:
+        overdue_str = f"{hours}h {minutes}m"
+    else:
+        overdue_str = f"{minutes}m"
+
+    # DONE but late → stop countdown
+    if status == "done":
+        return f"Submitted {overdue_str} late"
+
+    # NOT DONE → keep overdue countdown
+    return f"{overdue_str} overdue"
+
+
+# ============================================================
+# ACTIVE WORK ITEMS (WITH FILTER COUNTS & TIME REMAINING)
+# ============================================================
 @login_required
 def user_work_items(request):
     """
-    List ALL work items assigned to the user.
-    Inactive ones remain visible but marked.
+    List ACTIVE work items with:
+    - search
+    - work item filters (status, review)
+    - work cycle lifecycle filters (derived)
+    - due date sorting
+    - total active count
+    - filter counts
+    - status-aware time remaining
     """
-    work_items = (
+
+    now = timezone.now()
+    soon_threshold = now + timedelta(days=3)
+
+    # -------------------------------------------------
+    # BASE QUERYSET (ACTIVE ONLY)
+    # -------------------------------------------------
+    base_qs = (
         WorkItem.objects
         .select_related("workcycle")
-        .filter(owner=request.user)
-        .order_by("-is_active", "workcycle__due_at")
+        .filter(
+            owner=request.user,
+            is_active=True,
+            workcycle__is_active=True
+        )
     )
+
+    qs = base_qs
+
+    # -------------------------------------------------
+    # SEARCH
+    # -------------------------------------------------
+    search = request.GET.get("q", "").strip()
+    if search:
+        qs = qs.filter(
+            Q(workcycle__title__icontains=search) |
+            Q(message__icontains=search)
+        )
+
+    # -------------------------------------------------
+    # WORK ITEM FILTERS
+    # -------------------------------------------------
+    status = request.GET.get("status")
+    if status in {"not_started", "working_on_it", "done"}:
+        qs = qs.filter(status=status)
+
+    review = request.GET.get("review")
+    if review in {"pending", "approved", "revision"}:
+        qs = qs.filter(review_decision=review)
+
+    # -------------------------------------------------
+    # WORK CYCLE LIFECYCLE FILTER
+    # -------------------------------------------------
+    lifecycle = request.GET.get("lifecycle")
+
+    if lifecycle == "ongoing":
+        qs = qs.filter(workcycle__due_at__gt=soon_threshold)
+
+    elif lifecycle == "due_soon":
+        qs = qs.filter(
+            workcycle__due_at__gt=now,
+            workcycle__due_at__lte=soon_threshold
+        )
+
+    elif lifecycle == "lapsed":
+        qs = qs.filter(workcycle__due_at__lte=now)
+
+    # -------------------------------------------------
+    # FILTER COUNTS (FROM BASE)
+    # -------------------------------------------------
+    count_base = base_qs
+    if search:
+        count_base = count_base.filter(
+            Q(workcycle__title__icontains=search) |
+            Q(message__icontains=search)
+        )
+
+    status_counts = {
+        "not_started": count_base.filter(status="not_started").count(),
+        "working_on_it": count_base.filter(status="working_on_it").count(),
+        "done": count_base.filter(status="done").count(),
+    }
+
+    review_counts = {
+        "pending": count_base.filter(review_decision="pending").count(),
+        "approved": count_base.filter(review_decision="approved").count(),
+        "revision": count_base.filter(review_decision="revision").count(),
+    }
+
+    lifecycle_counts = {
+        "ongoing": count_base.filter(workcycle__due_at__gt=soon_threshold).count(),
+        "due_soon": count_base.filter(
+            workcycle__due_at__gt=now,
+            workcycle__due_at__lte=soon_threshold
+        ).count(),
+        "lapsed": count_base.filter(workcycle__due_at__lte=now).count(),
+    }
+
+    # -------------------------------------------------
+    # SORTING
+    # -------------------------------------------------
+    sort = request.GET.get("sort")
+
+    if sort == "due_asc":
+        qs = qs.order_by("workcycle__due_at")
+    elif sort == "due_desc":
+        qs = qs.order_by("-workcycle__due_at")
+    else:
+        qs = qs.order_by("workcycle__due_at")
+
+    # -------------------------------------------------
+    # APPLY TIME REMAINING
+    # -------------------------------------------------
+    work_items_list = list(qs)
+    for item in work_items_list:
+        item.time_remaining = calculate_time_remaining(
+            item.workcycle.due_at,
+            item.status
+        )
+
+    total_active_count = base_qs.count()
 
     return render(
         request,
         "user/page/work_items.html",
-        {"work_items": work_items}
+        {
+            "work_items": work_items_list,
+            "search_query": search,
+            "active_status": status,
+            "active_review": review,
+            "active_lifecycle": lifecycle,
+            "active_sort": sort,
+            "total_active_count": total_active_count,
+            "status_counts": status_counts,
+            "review_counts": review_counts,
+            "lifecycle_counts": lifecycle_counts,
+            "view_mode": "active",
+        }
     )
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
 
-from accounts.models import WorkItemAttachment
+# ============================================================
+# WORK ITEM DETAIL
+# ============================================================
+@login_required
+def user_work_item_detail(request, item_id):
+    work_item = get_object_or_404(
+        WorkItem,
+        id=item_id,
+        owner=request.user,
+        is_active=True
+    )
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        try:
+            if action == "update_status":
+                update_work_item_status(
+                    work_item,
+                    request.POST.get("status")
+                )
+                messages.success(request, "Status updated.")
+
+            elif action == "update_context":
+                update_work_item_context(
+                    work_item=work_item,
+                    label=request.POST.get("status_label", "").strip(),
+                    message=request.POST.get("message", "").strip(),
+                )
+                messages.success(request, "Notes updated.")
+
+            elif action == "submit":
+                submit_work_item(
+                    work_item=work_item,
+                    user=request.user
+                )
+                messages.success(request, "Work item submitted successfully.")
+
+            elif action == "undo_submit":
+                if work_item.status == "done" and work_item.review_decision == "pending":
+                    work_item.status = "working_on_it"
+                    work_item.save(update_fields=["status"])
+                    messages.info(request, "Submission reverted.")
+                else:
+                    messages.error(request, "Cannot undo after review.")
+
+            return redirect(
+                "user_app:work-item-detail",
+                item_id=work_item.id
+            )
+
+        except Exception as e:
+            messages.error(request, str(e))
+
+    attachments = work_item.attachments.all()
+
+    attachment_types = [
+        ("matrix_a", "Monthly Report Form – Matrix A"),
+        ("matrix_b", "Monthly Report Form – Matrix B"),
+        ("mov", "Means of Verification (MOV)"),
+    ]
+
+    uploaded_types = set(
+        work_item.attachments.values_list("attachment_type", flat=True)
+    )
+
+    return render(
+        request,
+        "user/page/work_item_detail.html",
+        {
+            "work_item": work_item,
+            "attachments": attachments,
+            "can_edit": work_item.status != "done",
+            "status_choices": WorkItem._meta.get_field("status").choices,
+            "attachment_types": attachment_types,
+            "uploaded_types": uploaded_types,
+        }
+    )
+
+# ============================================================
+# INACTIVE WORK ITEMS (WITH FILTER COUNTS)
+# ============================================================
+@login_required
+def user_inactive_work_items(request):
+    """
+    List INACTIVE (archived) work items with:
+    - search
+    - filters
+    - sorting
+    - filter counts
+    """
+
+    base_qs = (
+        WorkItem.objects
+        .select_related("workcycle")
+        .filter(
+            owner=request.user,
+            is_active=False,  # WorkItem archived
+        )
+    )
+
+    qs = base_qs
+
+    # ==========================
+    # SEARCH
+    # ==========================
+    search = request.GET.get("q", "").strip()
+    if search:
+        qs = qs.filter(
+            Q(workcycle__title__icontains=search) |
+            Q(message__icontains=search) |
+            Q(inactive_note__icontains=search)
+        )
+
+    # ==========================
+    # WORK ITEM FILTERS
+    # ==========================
+    status = request.GET.get("status")
+    if status in {"not_started", "working_on_it", "done"}:
+        qs = qs.filter(status=status)
+
+    review = request.GET.get("review")
+    if review in {"pending", "approved", "revision"}:
+        qs = qs.filter(review_decision=review)
+
+    # ==========================
+    # CALCULATE FILTER COUNTS
+    # ==========================
+    count_base = base_qs
+    if search:
+        count_base = count_base.filter(
+            Q(workcycle__title__icontains=search) |
+            Q(message__icontains=search) |
+            Q(inactive_note__icontains=search)
+        )
+
+    # Work Status Counts
+    status_counts = {
+        'not_started': count_base.filter(status='not_started').count(),
+        'working_on_it': count_base.filter(status='working_on_it').count(),
+        'done': count_base.filter(status='done').count(),
+    }
+
+    # Review Status Counts
+    review_counts = {
+        'pending': count_base.filter(review_decision='pending').count(),
+        'approved': count_base.filter(review_decision='approved').count(),
+        'revision': count_base.filter(review_decision='revision').count(),
+    }
+
+    # ==========================
+    # ADD TIME REMAINING
+    # ==========================
+    work_items_list = list(qs)
+    for item in work_items_list:
+        item.time_remaining = calculate_time_remaining(item.workcycle.due_at)
+
+    # ==========================
+    # SORTING
+    # ==========================
+    sort = request.GET.get("sort")
+
+    if sort == "due_asc":
+        work_items_list.sort(key=lambda x: x.workcycle.due_at)
+    elif sort == "due_desc":
+        work_items_list.sort(key=lambda x: x.workcycle.due_at, reverse=True)
+    else:
+        work_items_list.sort(key=lambda x: x.inactive_at, reverse=True)
+
+    return render(
+        request,
+        "user/page/work_items_inactive.html",
+        {
+            "work_items": work_items_list,
+            "search_query": search,
+            "active_status": status,
+            "active_review": review,
+            "active_sort": sort,
+            "status_counts": status_counts,
+            "review_counts": review_counts,
+            "view_mode": "archived",
+        }
+    )
 
 
-from django.shortcuts import redirect
-from django.urls import reverse
-
+# ============================================================
+# DELETE ATTACHMENT
+# ============================================================
 @login_required
 def delete_work_item_attachment(request, attachment_id):
     attachment = get_object_or_404(
@@ -53,7 +422,7 @@ def delete_work_item_attachment(request, attachment_id):
     )
 
     work_item = attachment.work_item
-    attachment_type = attachment.attachment_type  # 👈 capture BEFORE delete
+    attachment_type = attachment.attachment_type
 
     # 🔒 Safety rules
     if work_item.review_decision == "approved":
@@ -67,7 +436,6 @@ def delete_work_item_attachment(request, attachment_id):
         attachment.delete()
         messages.success(request, "Attachment deleted.")
 
-    # ✅ Redirect back to attachments page with same type
     return redirect(
         f"{reverse('user_app:work-item-attachments', args=[work_item.id])}?type={attachment_type}"
     )
@@ -76,7 +444,6 @@ def delete_work_item_attachment(request, attachment_id):
 # ============================================================
 # WORK ITEM DETAIL
 # ============================================================
-
 @login_required
 def user_work_item_detail(request, item_id):
     work_item = get_object_or_404(
@@ -120,7 +487,6 @@ def user_work_item_detail(request, item_id):
                 else:
                     messages.error(request, "Cannot undo after review.")
 
-
             return redirect(
                 "user_app:work-item-detail",
                 item_id=work_item.id
@@ -129,7 +495,6 @@ def user_work_item_detail(request, item_id):
         except Exception as e:
             messages.error(request, str(e))
 
-    # ✅ ADD THIS
     attachments = work_item.attachments.all()
 
     attachment_types = [
@@ -150,7 +515,7 @@ def user_work_item_detail(request, item_id):
         "user/page/work_item_detail.html",
         {
             "work_item": work_item,
-            "attachments": attachments,   # 👈 REQUIRED
+            "attachments": attachments,
             "can_edit": work_item.status != "done",
             "status_choices": WorkItem._meta.get_field("status").choices,
             "attachment_types": attachment_types,
@@ -160,9 +525,8 @@ def user_work_item_detail(request, item_id):
 
 
 # ============================================================
-# WORK ITEM ATTACHMENTS (NO BREADCRUMBS)
+# WORK ITEM ATTACHMENTS
 # ============================================================
-
 @login_required
 def user_work_item_attachments(request, item_id):
     work_item = get_object_or_404(
@@ -226,7 +590,6 @@ def user_work_item_attachments(request, item_id):
 # ============================================================
 # WORK ITEM COMMENTS
 # ============================================================
-
 @login_required
 def user_work_item_comments(request, item_id):
     work_item = get_object_or_404(

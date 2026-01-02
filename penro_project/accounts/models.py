@@ -696,7 +696,8 @@ class WorkItemMessage(models.Model):
             ("admin", "Admin"),
             ("user", "User"),
         ],
-        db_index=True
+        db_index=True,
+        help_text="Role of the sender at the time the message was sent"
     )
 
     message = models.TextField(
@@ -704,7 +705,7 @@ class WorkItemMessage(models.Model):
     )
 
     # ============================================================
-    # OPTIONAL CONTEXT (VERY USEFUL)
+    # OPTIONAL CONTEXT (SYSTEM / AUDIT MESSAGES)
     # ============================================================
     related_status = models.CharField(
         max_length=30,
@@ -742,7 +743,7 @@ class WorkItemMessage(models.Model):
     # MODEL CONFIG
     # ============================================================
     class Meta:
-        ordering = ["created_at"]
+        ordering = ["created_at", "id"]  # Stable ordering
         indexes = [
             models.Index(fields=["sender_role"]),
             models.Index(fields=["created_at"]),
@@ -751,18 +752,33 @@ class WorkItemMessage(models.Model):
         ]
 
     # ============================================================
+    # SAVE OVERRIDE (LOCK ROLE AT CREATION)
+    # ============================================================
+    def save(self, *args, **kwargs):
+        """
+        Lock sender_role at creation time to prevent
+        historical inconsistencies if user role changes.
+        """
+        if not self.pk and not self.sender_role:
+            self.sender_role = getattr(self.sender, "login_role", "user")
+        super().save(*args, **kwargs)
+
+    # ============================================================
     # STRING REPRESENTATION
     # ============================================================
     def __str__(self):
-        return f"{self.sender} → {self.work_item} ({'read' if self.is_read else 'unread'})"
+        return (
+            f"[{self.created_at:%Y-%m-%d %H:%M}] "
+            f"{self.sender} → WorkItem#{self.work_item_id} "
+            f"({'read' if self.is_read else 'unread'})"
+        )
 
     # ============================================================
-    # HELPER METHODS (OPTIONAL BUT POWERFUL)
+    # INSTANCE HELPERS
     # ============================================================
     def mark_as_read(self):
         """Mark this message as read safely."""
         if not self.is_read:
-            from django.utils import timezone
             self.is_read = True
             self.read_at = timezone.now()
             self.save(update_fields=["is_read", "read_at"])
@@ -770,3 +786,22 @@ class WorkItemMessage(models.Model):
     def is_system_message(self):
         """Detect system-generated messages (status/review updates)."""
         return bool(self.related_status or self.related_review)
+
+    # ============================================================
+    # BULK HELPERS (VERY IMPORTANT FOR INBOX UX)
+    # ============================================================
+    @classmethod
+    def mark_thread_as_read(cls, work_item, reader):
+        """
+        Mark all unread messages in a work item thread
+        as read for the given reader.
+        """
+        return cls.objects.filter(
+            work_item=work_item,
+            is_read=False
+        ).exclude(
+            sender=reader
+        ).update(
+            is_read=True,
+            read_at=timezone.now()
+        )

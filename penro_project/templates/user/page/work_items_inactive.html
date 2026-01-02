@@ -1,0 +1,689 @@
+{% extends "user/layout/base.html" %}
+{% block title %}Archived Work Items{% endblock %}
+
+{% block content %}
+
+<style>
+/* =====================================================
+   ARCHIVED PAGE COLOR SYSTEM
+===================================================== */
+:root {
+  /* ARCHIVED THEME COLORS */
+  --archived-primary: #8b0000;          /* Dark Red - primary accent */
+  --archived-secondary: #5d0010;        /* Deeper Dark Red */
+  --archived-accent: #b22222;           /* Firebrick Red - for highlights */
+  
+  /* NEUTRAL ARCHIVED PALETTE */
+  --archived-bg-primary: #ffffff;       /* White background */
+  --archived-bg-secondary: #f9f9f9;     /* Off-white for cards */
+  --archived-bg-tertiary: #f2f2f2;      /* Light grey for sections */
+  
+  --archived-text-primary: #1a1a1a;     /* Near black for main text */
+  --archived-text-secondary: #404040;   /* Dark grey for secondary text */
+  --archived-text-tertiary: #666666;    /* Medium grey for muted text */
+  
+  --archived-border-light: #e0e0e0;     /* Light grey borders */
+  --archived-border-medium: #cccccc;    /* Medium grey borders */
+  --archived-border-dark: #999999;      /* Dark grey borders */
+  
+  /* STATUS COLORS (MUTED FOR ARCHIVED) */
+  --archived-status-not-started: #8c8c8c;  /* Muted grey */
+  --archived-status-working: #8b7355;      /* Muted brown */
+  --archived-status-done: #5f7d5f;         /* Muted green */
+  
+  /* REVIEW COLORS (MUTED FOR ARCHIVED) */
+  --archived-review-pending: #7d7d9c;      /* Muted purple */
+  --archived-review-approved: #4d7d6f;     /* Muted teal */
+  --archived-review-revision: #8c4d4d;     /* Muted red */
+}
+
+/* =====================================================
+   COMPACT ARCHIVED HEADER LAYOUT
+===================================================== */
+.archived-header {
+  background: var(--archived-bg-primary);
+  border: 1px solid var(--archived-border-light);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(26, 26, 26, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Header accent stripe */
+.archived-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--archived-primary), var(--archived-accent));
+}
+
+/* HEADER TOP: Title + Back Button */
+.header-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-title-section {
+  flex: 1;
+}
+
+.header-main-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--archived-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.header-main-title i {
+  color: var(--archived-primary);
+  font-size: 1.125rem;
+  opacity: 0.9;
+}
+
+.header-top-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Back to Active Button */
+.back-active-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid var(--archived-border-medium);
+  border-radius: 6px;
+  background: var(--archived-bg-primary);
+  color: var(--archived-text-secondary);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.back-active-btn:hover {
+  background: var(--archived-bg-tertiary);
+  border-color: var(--archived-border-dark);
+  color: var(--archived-primary);
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(139, 0, 0, 0.1);
+}
+
+.back-active-btn i {
+  font-size: 0.75rem;
+}
+
+/* HEADER BOTTOM: Search + Sort */
+.header-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--archived-border-light);
+}
+
+/* Search Container */
+.search-container {
+  flex: 1;
+  min-width: 300px;
+}
+
+.search-wrapper {
+  display: flex;
+  align-items: center;
+  background: var(--archived-bg-tertiary);
+  border: 1px solid var(--archived-border-light);
+  border-radius: 8px;
+  padding: 6px 12px;
+  transition: all 0.2s ease;
+}
+
+.search-wrapper:focus-within {
+  border-color: var(--archived-primary);
+  box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
+  background: var(--archived-bg-primary);
+}
+
+.search-icon {
+  color: var(--archived-text-tertiary);
+  margin-right: 8px;
+  font-size: 0.875rem;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 0.875rem;
+  color: var(--archived-text-primary);
+  min-width: 0;
+}
+
+.search-input::placeholder {
+  color: var(--archived-text-tertiary);
+  font-weight: 400;
+  font-style: italic;
+}
+
+.search-input:focus {
+  outline: none;
+}
+
+.search-button {
+  background: var(--archived-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  margin-left: 8px;
+  white-space: nowrap;
+  height: 32px;
+}
+
+.search-button:hover {
+  background: var(--archived-secondary);
+}
+
+/* Sort Controls */
+.sort-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--archived-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.sort-buttons {
+  display: flex;
+  background: var(--archived-bg-tertiary);
+  border: 1px solid var(--archived-border-light);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--archived-text-secondary);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.sort-btn:hover {
+  background: var(--archived-bg-secondary);
+  text-decoration: none;
+}
+
+.sort-btn.active {
+  background: var(--archived-primary);
+  color: white;
+  font-weight: 600;
+}
+
+.sort-btn i {
+  font-size: 0.625rem;
+}
+
+/* =====================================================
+   STATS SUMMARY FOR ARCHIVED
+===================================================== */
+.archived-stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+  background: var(--archived-bg-secondary);
+  border: 1px solid var(--archived-border-light);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.archived-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--archived-bg-primary);
+  border: 1px solid var(--archived-border-light);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.archived-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--archived-border-medium);
+  box-shadow: 0 4px 8px rgba(26, 26, 26, 0.08);
+  text-decoration: none;
+}
+
+.archived-stat-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: rgba(139, 0, 0, 0.1);
+  color: var(--archived-primary);
+  flex-shrink: 0;
+}
+
+.archived-stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.archived-stat-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--archived-text-primary);
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.archived-stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--archived-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+}
+
+/* =====================================================
+   ARCHIVED WORK ITEMS CONTENT AREA
+===================================================== */
+.archived-content {
+  min-height: 400px;
+}
+
+/* =====================================================
+   ARCHIVED WORK ITEMS CARDS (Override for archived)
+===================================================== */
+/* Add archived-specific styles to existing card system */
+.archived-content .wi-card {
+  background: var(--archived-bg-secondary);
+  border: 1px solid var(--archived-border-light);
+  border-left: 4px solid var(--archived-primary);
+}
+
+.archived-content .wi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(26, 26, 26, 0.1);
+  border-color: var(--archived-border-medium);
+}
+
+.archived-content .wi-card-inactive {
+  opacity: 1;
+  position: relative;
+}
+
+.archived-content .wi-card-inactive::before {
+  content: 'ARCHIVED';
+  position: absolute;
+  top: 10px;
+  right: -8px;
+  background: var(--archived-primary);
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transform: rotate(45deg);
+  transform-origin: top right;
+  z-index: 1;
+}
+
+/* Override lifecycle badge colors for archived */
+.archived-content .lifecycle-ongoing {
+  background: rgba(140, 140, 140, 0.15) !important;
+  color: #666666 !important;
+  border-color: rgba(140, 140, 140, 0.3) !important;
+}
+
+.archived-content .lifecycle-due_soon {
+  background: rgba(140, 140, 140, 0.15) !important;
+  color: #666666 !important;
+  border-color: rgba(140, 140, 140, 0.3) !important;
+}
+
+.archived-content .lifecycle-lapsed {
+  background: rgba(139, 0, 0, 0.15) !important;
+  color: var(--archived-primary) !important;
+  border-color: rgba(139, 0, 0, 0.3) !important;
+}
+
+/* Override work status badges for archived */
+.archived-content .status-not_started {
+  background: rgba(140, 140, 140, 0.15) !important;
+  color: #666666 !important;
+  border-color: rgba(140, 140, 140, 0.3) !important;
+}
+
+.archived-content .status-working_on_it {
+  background: rgba(139, 115, 85, 0.15) !important;
+  color: #6d5c45 !important;
+  border-color: rgba(139, 115, 85, 0.3) !important;
+}
+
+.archived-content .status-done {
+  background: rgba(95, 125, 95, 0.15) !important;
+  color: #4d664d !important;
+  border-color: rgba(95, 125, 95, 0.3) !important;
+}
+
+/* Override review badges for archived */
+.archived-content .review-pending {
+  background: rgba(125, 125, 156, 0.15) !important;
+  color: #5c5c74 !important;
+  border-color: rgba(125, 125, 156, 0.3) !important;
+}
+
+.archived-content .review-approved {
+  background: rgba(77, 125, 111, 0.15) !important;
+  color: #4a665c !important;
+  border-color: rgba(77, 125, 111, 0.3) !important;
+}
+
+.archived-content .review-revision {
+  background: rgba(140, 77, 77, 0.15) !important;
+  color: #704040 !important;
+  border-color: rgba(140, 77, 77, 0.3) !important;
+}
+
+/* Override action button for archived */
+.archived-content .wi-action-btn {
+  background: var(--archived-primary);
+  color: white;
+}
+
+.archived-content .wi-action-btn:hover {
+  background: var(--archived-secondary);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(139, 0, 0, 0.2);
+}
+
+/* Override inactive notice */
+.archived-content .wi-inactive-notice {
+  background: rgba(139, 0, 0, 0.1);
+  color: var(--archived-primary);
+  border: 1px solid rgba(139, 0, 0, 0.2);
+}
+
+/* =====================================================
+   ARCHIVED EMPTY STATE
+===================================================== */
+.archived-content .wi-empty-state {
+  background: var(--archived-bg-secondary);
+  border: 2px dashed var(--archived-border-medium);
+  border-radius: 16px;
+}
+
+.archived-content .wi-empty-icon {
+  color: var(--archived-border-dark);
+}
+
+.archived-content .wi-empty-title {
+  color: var(--archived-text-secondary);
+}
+
+.archived-content .wi-empty-text {
+  color: var(--archived-text-tertiary);
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN
+===================================================== */
+@media (max-width: 992px) {
+  .header-top-row {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .header-top-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .archived-stats-section {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .archived-header {
+    padding: 16px;
+  }
+  
+  .header-bottom-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .search-container {
+    min-width: 100%;
+  }
+  
+  .sort-container {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .archived-stats-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .header-top-controls {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .back-active-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .sort-buttons {
+    flex: 1;
+  }
+  
+  .sort-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .archived-content .wi-card-inactive::before {
+    font-size: 0.5rem;
+    padding: 1px 6px;
+    right: -6px;
+  }
+}
+</style>
+
+<div class="archived-header">
+  
+  <!-- TOP ROW: Title + Back to Active -->
+  <div class="header-top-row">
+    <div class="header-title-section">
+      <h1 class="header-main-title">
+        <i class="fas fa-archive"></i>
+        Archived Work Items
+      </h1>
+    </div>
+    
+    <div class="header-top-controls">
+      <!-- Back to Active Button -->
+      <a href="{% url 'user_app:work-items' %}" class="back-active-btn">
+        <i class="fas fa-arrow-left"></i>
+        Back to Active
+      </a>
+    </div>
+  </div>
+  
+  <!-- STATS SUMMARY -->
+  <div class="archived-stats-section">
+    <!-- Total Archived -->
+    <div class="archived-stat-card">
+      <div class="archived-stat-icon">
+        <i class="fas fa-box-archive"></i>
+      </div>
+      <div class="archived-stat-content">
+        <div class="archived-stat-number">{{ total_archived_count|default:"0" }}</div>
+        <div class="archived-stat-label">Total Archived</div>
+      </div>
+    </div>
+    
+    <!-- Completed Archived -->
+    <div class="archived-stat-card">
+      <div class="archived-stat-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="archived-stat-content">
+        <div class="archived-stat-number">{{ completed_count|default:"0" }}</div>
+        <div class="archived-stat-label">Completed</div>
+      </div>
+    </div>
+    
+    <!-- Lapsed Archived -->
+    <div class="archived-stat-card">
+      <div class="archived-stat-icon">
+        <i class="fas fa-exclamation-circle"></i>
+      </div>
+      <div class="archived-stat-content">
+        <div class="archived-stat-number">{{ lapsed_count|default:"0" }}</div>
+        <div class="archived-stat-label">Lapsed</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- BOTTOM ROW: Search + Sort -->
+  <div class="header-bottom-row">
+    <!-- Search -->
+    <div class="search-container">
+      <form method="get" class="search-form">
+        <div class="search-wrapper">
+          <i class="fas fa-search search-icon"></i>
+          <input
+            type="search"
+            name="q"
+            class="search-input"
+            placeholder="Search archived work items…"
+            value="{{ search_query }}"
+          >
+          
+          <!-- Hidden sort -->
+          {% if active_sort %}
+            <input type="hidden" name="sort" value="{{ active_sort }}">
+          {% endif %}
+          
+          <button type="submit" class="search-button">
+            Search
+          </button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Sort Controls -->
+    <div class="sort-container">
+      <div class="sort-label">Sort:</div>
+      <div class="sort-buttons">
+        <a href="?{% if search_query %}q={{ search_query }}&{% endif %}sort=due_asc"
+           class="sort-btn {% if active_sort == 'due_asc' %}active{% endif %}">
+          <i class="fas fa-arrow-up"></i>
+          Asc
+        </a>
+        <a href="?{% if search_query %}q={{ search_query }}&{% endif %}sort=due_desc"
+           class="sort-btn {% if active_sort == 'due_desc' %}active{% endif %}">
+          <i class="fas fa-arrow-down"></i>
+          Desc
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ARCHIVED WORK ITEMS CONTENT -->
+<div class="archived-content">
+  {% include "user/page/extend/inactive_work_items_content.html" %}
+</div>
+
+<script>
+// Highlight active sort button on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Update active sort button
+  const urlParams = new URLSearchParams(window.location.search);
+  const activeSort = urlParams.get('sort') || 'due_desc';
+  
+  // Remove any existing active classes from sort buttons
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Add active class to current sort
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    if (btn.getAttribute('href').includes(`sort=${activeSort}`)) {
+      btn.classList.add('active');
+    }
+  });
+  
+  // Add visual feedback for archive cards
+  document.querySelectorAll('.archived-content .wi-card').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      const badge = this.querySelector('.wi-lifecycle-badge');
+      if (badge && badge.classList.contains('lifecycle-lapsed')) {
+        badge.style.transform = 'scale(1.05)';
+      }
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      const badge = this.querySelector('.wi-lifecycle-badge');
+      if (badge && badge.classList.contains('lifecycle-lapsed')) {
+        badge.style.transform = '';
+      }
+    });
+  });
+});
+</script>
+
+{% endblock %}

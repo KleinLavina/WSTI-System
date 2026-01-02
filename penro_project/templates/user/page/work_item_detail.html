@@ -1,264 +1,335 @@
 {% extends "user/layout/base.html" %}
 
 {% block title %}
-Work Item Details boy
+{{ work_item.workcycle.title }} - Details
 {% endblock %}
 
 {% block content %}
 {% include "admin/page/modals/message_ui_modal.html" %}
+
 <style>
-
-/* HARD HIDE MODAL WHEN CLOSED */
-.qxdlg-modal-overlay[data-qxdlg-state="closed"] {
-  display: none;
-}
-
+/* =====================================================
+   SOFT COLOR PALETTE
+===================================================== */
 :root {
-  --navy-900: #0a1628;
-  --navy-800: #0f2744;
-  --navy-700: #1a3a5c;
-  --navy-600: #254d73;
-  --navy-500: #3a6ea5;
-  --slate-600: #475569;
-  --slate-500: #64748b;
-  --slate-400: #94a3b8;
-  --slate-200: #e2e8f0;
-  --slate-100: #f1f5f9;
-  --white: #ffffff;
+  /* Soft Neutrals */
+  --soft-white: #ffffff;
+  --soft-bg: #f8fafc;
+  --soft-border: #e2e8f0;
+  --soft-border-light: #f1f5f9;
   
-  --cyan-400: #22d3ee;
-  --cyan-500: #06b6d4;
-  --emerald-400: #34d399;
-  --emerald-500: #10b981;
-  --amber-400: #fbbf24;
-  --amber-500: #f59e0b;
-  --rose-400: #fb7185;
-  --rose-500: #f43f5e;
-  --violet-400: #a78bfa;
-  --violet-500: #8b5cf6;
+  /* Soft Text Colors */
+  --soft-text-primary: #1e293b;
+  --soft-text-secondary: #475569;
+  --soft-text-tertiary: #64748b;
+  --soft-text-muted: #94a3b8;
   
-  --shadow-sm: 0 1px 3px rgba(10,22,40,0.08);
-  --shadow-md: 0 4px 12px rgba(10,22,40,0.1);
-  --shadow-lg: 0 10px 30px rgba(10,22,40,0.15);
+  /* Soft Accents */
+  --soft-blue: #3b82f6;
+  --soft-blue-light: #dbeafe;
+  --soft-green: #10b981;
+  --soft-green-light: #d1fae5;
+  --soft-amber: #f59e0b;
+  --soft-amber-light: #fef3c7;
+  --soft-red: #ef4444;
+  --soft-red-light: #fee2e2;
+  --soft-violet: #8b5cf6;
+  --soft-violet-light: #ede9fe;
+  --soft-cyan: #06b6d4;
+  --soft-cyan-light: #cffafe;
+  
+  /* Soft Shadows */
+  --soft-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --soft-shadow-md: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --soft-shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
+/* =====================================================
+   COMPACT PAGE LAYOUT
+===================================================== */
 .work-item-page {
-  background: var(--slate-100);
+  background: var(--soft-bg);
   min-height: 100vh;
-  padding: .5rem 3rem;
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-/* Header Card */
-.header-card {
-  background: var(--navy-800);
-  border-radius: 16px;
-  padding: 1.75rem;
-  margin-bottom: 1.5rem;
-  box-shadow: var(--shadow-lg);
+/* =====================================================
+   COMPACT HEADER
+===================================================== */
+.header-compact {
+  background: var(--soft-white);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--soft-shadow-md);
+  border: 1px solid var(--soft-border);
+  position: relative;
+}
+
+.header-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--soft-border-light);
+}
+
+.header-title-section {
+  flex: 1;
+  padding-right: 1rem;
 }
 
 .header-title {
-  color: var(--white);
-  font-weight: 700;
-  font-size: 1.5rem;
+  color: var(--soft-text-primary);
+  font-weight: 600;
+  font-size: 1.25rem;
   margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.625rem;
+  line-height: 1.3;
 }
 
-.header-title i { color: var(--cyan-400); }
+.header-title i {
+  color: var(--soft-blue);
+  font-size: 1.125rem;
+}
 
-.header-meta {
-  color: var(--slate-400);
-  font-size: 0.875rem;
+.header-meta-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: var(--soft-text-secondary);
+  font-size: 0.8125rem;
 }
 
-.header-meta i { color: var(--amber-400); }
-
-.header-description {
-  color: var(--slate-400);
-  margin-top: 0.75rem;
+.header-meta-row i {
+  color: var(--soft-amber);
   font-size: 0.875rem;
-  line-height: 1.6;
 }
 
-.btn-action {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  color: var(--white);
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
+/* Right-side action buttons */
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
   text-decoration: none;
+  transition: all 0.15s ease;
+  border: 1px solid;
+  background: var(--soft-white);
 }
 
-.btn-action:hover {
-  background: rgba(255,255,255,0.2);
-  color: var(--cyan-400);
-  transform: translateY(-2px);
+.action-btn-primary {
+  border-color: var(--soft-blue-light);
+  color: var(--soft-blue);
+  background: var(--soft-blue-light);
 }
 
-/* Main Grid */
-.main-grid {
+.action-btn-primary:hover {
+  background: var(--soft-blue);
+  color: var(--soft-white);
+  border-color: var(--soft-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.action-btn-secondary {
+  border-color: var(--soft-border);
+  color: var(--soft-text-secondary);
+}
+
+.action-btn-secondary:hover {
+  border-color: var(--soft-text-muted);
+  background: var(--soft-bg);
+  color: var(--soft-text-primary);
+  transform: translateY(-1px);
+}
+
+.action-btn i {
+  font-size: 0.75rem;
+}
+
+/* Header bottom section */
+.header-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--soft-border-light);
+}
+
+.header-description {
+  color: var(--soft-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  flex: 1;
+  margin: 0;
+}
+
+.header-due {
+  font-size: 0.8125rem;
+  color: var(--soft-text-tertiary);
+  background: var(--soft-bg);
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--soft-border);
+  white-space: nowrap;
+  margin-left: 1rem;
+}
+
+/* =====================================================
+   COMPACT MAIN GRID
+===================================================== */
+.main-grid-compact {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-@media (max-width: 992px) {
-  .main-grid { grid-template-columns: 1fr; }
+@media (max-width: 768px) {
+  .main-grid-compact {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* Cards */
-.panel-card {
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: 16px;
+/* =====================================================
+   COMPACT PANEL CARDS
+===================================================== */
+.panel-compact {
+  background: var(--soft-white);
+  border: 1px solid var(--soft-border);
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--soft-shadow-sm);
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.panel-header {
-  background: var(--navy-800);
-  padding: 1rem 1.5rem;
+.panel-header-compact {
+  padding: 0.875rem 1rem;
+  background: var(--soft-bg);
+  border-bottom: 1px solid var(--soft-border);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   font-weight: 600;
-  color: var(--white);
+  color: var(--soft-text-primary);
+  font-size: 0.875rem;
 }
 
-.panel-header i { font-size: 1.1rem; }
-.panel-header .icon-cyan { color: var(--cyan-400); }
-.panel-header .icon-amber { color: var(--amber-400); }
+.panel-header-compact i {
+  font-size: 0.875rem;
+}
 
-.panel-body {
-  padding: 1.5rem;
+.panel-body-compact {
+  padding: 1rem;
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-/* Status Section with Floating Indicator */
-.status-section {
-  margin-bottom: 1.75rem;
+/* =====================================================
+   COMPACT STATUS SECTION
+===================================================== */
+.status-section-compact {
+  margin-bottom: 1.25rem;
 }
 
-.section-label {
-  color: var(--slate-500);
+.section-label-compact {
+  color: var(--soft-text-secondary);
   font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.625rem;
   font-weight: 600;
 }
 
-.status-hint {
+/* Status indicator */
+.status-indicator {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  background: linear-gradient(135deg, rgba(34,211,238,0.1), rgba(139,92,246,0.1));
-  border: 1px dashed var(--cyan-500);
+  padding: 0.625rem 0.75rem;
+  background: var(--soft-bg);
+  border: 1px solid var(--soft-border);
   border-radius: 8px;
-  animation: pulse-border 2s ease-in-out infinite;
+  margin-bottom: 0.875rem;
+  font-size: 0.8125rem;
 }
 
-@keyframes pulse-border {
-  0%, 100% { border-color: var(--cyan-500); }
-  50% { border-color: var(--violet-500); }
+.status-indicator i {
+  color: var(--soft-cyan);
+  font-size: 0.75rem;
 }
 
-.status-hint i {
-  color: var(--cyan-500);
-  font-size: 0.875rem;
-  animation: bounce 1.5s ease-in-out infinite;
+.status-indicator span {
+  color: var(--soft-text-secondary);
 }
 
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
-.status-hint span {
-  color: var(--navy-700);
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.status-toggle-group {
+/* Status buttons */
+.status-toggle-compact {
   display: flex;
-  gap: 0.75rem;
-}
-
-.status-btn {
-  flex: 1;
-  padding: 1rem 1.25rem;
-  border: 2px solid var(--slate-200);
-  background: var(--slate-100);
-  color: var(--slate-500);
-  border-radius: 12px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 0.5rem;
-  position: relative;
-  overflow: hidden;
+  margin-bottom: 0.5rem;
 }
 
-.status-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, transparent, rgba(255,255,255,0.5));
-  opacity: 0;
-  transition: opacity 0.25s ease;
+.status-btn-compact {
+  flex: 1;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid var(--soft-border);
+  background: var(--soft-white);
+  color: var(--soft-text-secondary);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: center;
 }
 
-.status-btn:hover {
-  border-color: var(--navy-500);
-  color: var(--navy-700);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.status-btn-compact:hover {
+  border-color: var(--soft-blue);
+  color: var(--soft-blue);
+  background: var(--soft-blue-light);
+  transform: translateY(-1px);
 }
 
-.status-btn:hover::before { opacity: 1; }
-
-.status-btn.active-not-started {
-  background: var(--navy-700);
-  border-color: var(--navy-600);
-  color: var(--white);
-  box-shadow: var(--shadow-md);
+.status-btn-compact.active-not-started {
+  background: var(--soft-bg);
+  border-color: var(--soft-text-tertiary);
+  color: var(--soft-text-primary);
 }
 
-.status-btn.active-progress {
-  background: linear-gradient(135deg, var(--amber-400), var(--amber-500));
-  border-color: var(--amber-500);
-  color: var(--navy-900);
-  box-shadow: 0 4px 20px rgba(251,191,36,0.4);
+.status-btn-compact.active-progress {
+  background: var(--soft-amber-light);
+  border-color: var(--soft-amber);
+  color: var(--soft-text-primary);
 }
 
-.status-btn i.spin {
+.status-btn-compact i {
+  font-size: 0.875rem;
+}
+
+.status-btn-compact i.spin {
   animation: spin 1.5s linear infinite;
 }
 
@@ -267,498 +338,469 @@ Work Item Details boy
   to { transform: rotate(360deg); }
 }
 
-/* Completed Alert */
-.completed-alert {
-  background: linear-gradient(135deg, var(--emerald-400), var(--emerald-500));
-  color: var(--white);
-  padding: 1rem 1.25rem;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-weight: 600;
-  box-shadow: 0 4px 20px rgba(52,211,153,0.3);
-}
-
-/* Meta Section - Improved spacing */
-.meta-section {
-  background: var(--slate-100);
-  border-radius: 12px;
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.meta-row {
+/* Completed alert */
+.completed-alert-compact {
+  background: var(--soft-green-light);
+  color: var(--soft-text-primary);
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--soft-green);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--slate-200);
-}
-
-.meta-row:last-child { border-bottom: none; }
-
-.meta-label {
-  color: var(--slate-500);
   font-size: 0.875rem;
   font-weight: 500;
 }
 
-.meta-value {
+.completed-alert-compact i {
+  color: var(--soft-green);
+  font-size: 0.875rem;
+}
+
+.btn-undo-compact {
+  background: var(--soft-red);
+  color: var(--soft-white);
+  border: none;
+  border-radius: 6px;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--navy-800);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-undo-compact:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.btn-undo-compact i {
+  font-size: 0.75rem;
+}
+
+/* =====================================================
+   COMPACT META SECTION
+===================================================== */
+.meta-section-compact {
+  background: var(--soft-bg);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.meta-row-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--soft-border-light);
+  font-size: 0.8125rem;
+}
+
+.meta-row-compact:last-child {
+  border-bottom: none;
+}
+
+.meta-label-compact {
+  color: var(--soft-text-tertiary);
+}
+
+.meta-value-compact {
+  font-weight: 500;
+  color: var(--soft-text-primary);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 
 /* Badges */
-.badge-status {
-  padding: 0.4rem 0.85rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 700;
+.badge-status-compact {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.6875rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .badge-approved {
-  background: var(--emerald-500);
-  color: var(--white);
+  background: var(--soft-green-light);
+  color: var(--soft-green);
+  border: 1px solid var(--soft-green);
 }
 
 .badge-revision {
-  background: var(--rose-500);
-  color: var(--white);
+  background: var(--soft-red-light);
+  color: var(--soft-red);
+  border: 1px solid var(--soft-red);
 }
 
 .badge-pending {
-  background: var(--cyan-500);
-  color: var(--white);
+  background: var(--soft-cyan-light);
+  color: var(--soft-cyan);
+  border: 1px solid var(--soft-cyan);
 }
 
-/* Submit Section */
-.submit-section {
+/* =====================================================
+   COMPACT SUBMIT SECTION
+===================================================== */
+.submit-section-compact {
   margin-top: auto;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--slate-200);
+  padding-top: 1rem;
+  border-top: 1px solid var(--soft-border);
 }
 
-.btn-submit {
+.btn-submit-compact {
   width: 100%;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, var(--emerald-400), var(--emerald-500));
+  padding: 0.75rem 1rem;
+  background: var(--soft-green);
   border: none;
-  border-radius: 12px;
-  color: var(--white);
-  font-weight: 700;
-  font-size: 1rem;
+  border-radius: 8px;
+  color: var(--soft-white);
+  font-weight: 600;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
 }
 
-.btn-submit:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(52,211,153,0.4);
+.btn-submit-compact:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
 }
 
-.btn-submit:disabled {
-  background: var(--slate-300);
-  color: var(--slate-500);
+.btn-submit-compact:disabled {
+  background: var(--soft-border);
+  color: var(--soft-text-muted);
   cursor: not-allowed;
 }
 
-.submit-hint {
-  color: var(--slate-500);
-  font-size: 0.8rem;
+.submit-hint-compact {
+  color: var(--soft-text-tertiary);
+  font-size: 0.75rem;
   text-align: center;
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
 }
 
-/* Notes Form */
-.form-group {
-  margin-bottom: 1.5rem;
+/* =====================================================
+   COMPACT NOTES FORM
+===================================================== */
+.form-group-compact {
+  margin-bottom: 1rem;
 }
 
-.form-label {
-  color: var(--slate-600);
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.5rem;
-  display: block;
+.form-label-compact {
+  color: var(--soft-text-secondary);
+  font-size: 0.75rem;
   font-weight: 600;
+  margin-bottom: 0.375rem;
+  display: block;
 }
 
-.form-input {
+.form-input-compact {
   width: 100%;
-  padding: 0.875rem 1rem;
-  background: var(--white);
-  border: 2px solid var(--slate-200);
-  border-radius: 10px;
-  color: var(--navy-800);
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  padding: 0.625rem 0.75rem;
+  background: var(--soft-white);
+  border: 1px solid var(--soft-border);
+  border-radius: 6px;
+  color: var(--soft-text-primary);
+  font-size: 0.8125rem;
+  transition: all 0.15s ease;
 }
 
-.form-input:focus {
+.form-input-compact:focus {
   outline: none;
-  border-color: var(--cyan-500);
-  box-shadow: 0 0 0 4px rgba(6,182,212,0.15);
+  border-color: var(--soft-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.form-input::placeholder { color: var(--slate-400); }
+.form-input-compact::placeholder {
+  color: var(--soft-text-muted);
+}
 
-textarea.form-input {
+textarea.form-input-compact {
   resize: vertical;
-  min-height: 120px;
+  min-height: 80px;
 }
 
-/* Status Chips */
-.chips-container {
+/* Status chips */
+.chips-container-compact {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
 }
 
-.status-chip {
-  padding: 0.45rem 0.85rem;
-  background: var(--white);
-  border: 1px solid var(--slate-300);
-  border-radius: 20px;
-  color: var(--slate-600);
-  font-size: 0.8rem;
+.status-chip-compact {
+  padding: 0.375rem 0.625rem;
+  background: var(--soft-white);
+  border: 1px solid var(--soft-border);
+  border-radius: 16px;
+  color: var(--soft-text-secondary);
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
-.status-chip:hover {
-  background: var(--navy-800);
-  border-color: var(--navy-800);
-  color: var(--white);
-  transform: translateY(-2px);
+.status-chip-compact:hover {
+  background: var(--soft-bg);
+  border-color: var(--soft-blue);
+  color: var(--soft-blue);
 }
 
-.btn-save {
-  padding: 0.75rem 1.5rem;
-  background: var(--navy-800);
+.btn-save-compact {
+  padding: 0.625rem 1rem;
+  background: var(--soft-blue);
   border: none;
-  border-radius: 10px;
-  color: var(--white);
+  border-radius: 6px;
+  color: var(--soft-white);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.8125rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 
-.btn-save:hover {
-  background: var(--navy-700);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.btn-save-compact:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
 }
 
-/* Attachments */
-.attachments-section {
-  margin-top: 2rem;
+/* =====================================================
+   COMPACT ATTACHMENTS
+===================================================== */
+.attachments-section-compact {
+  margin-top: 1.5rem;
 }
 
-.section-title {
-  color: var(--navy-800);
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
+.section-title-compact {
+  color: var(--soft-text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 
-.section-title i { color: var(--violet-500); }
+.section-title-compact i {
+  color: var(--soft-violet);
+  font-size: 0.875rem;
+}
 
-.attachments-grid {
+.attachments-grid-compact {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
 }
 
-@media (max-width: 768px) {
-  .attachments-grid { grid-template-columns: 1fr; }
+@media (max-width: 640px) {
+  .attachments-grid-compact {
+    grid-template-columns: 1fr;
+  }
 }
 
-.attachment-card {
-  background: var(--white);
-  border: 2px solid var(--slate-200);
-  border-radius: 14px;
-  padding: 1.5rem;
+.attachment-card-compact {
+  background: var(--soft-white);
+  border: 1px solid var(--soft-border);
+  border-radius: 8px;
+  padding: 1rem;
   text-align: center;
   text-decoration: none;
-  transition: all 0.25s ease;
+  transition: all 0.15s ease;
   display: block;
 }
 
-.attachment-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--navy-500);
-  box-shadow: var(--shadow-lg);
+.attachment-card-compact:hover {
+  border-color: var(--soft-blue);
+  transform: translateY(-2px);
+  box-shadow: var(--soft-shadow-md);
 }
 
-.attachment-icon {
-  font-size: 2.5rem;
-  margin-bottom: 0.75rem;
+.attachment-icon-compact {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.attachment-icon.uploaded { color: var(--emerald-500); }
-.attachment-icon.pending { color: var(--slate-400); }
+.attachment-icon-compact.uploaded {
+  color: var(--soft-green);
+}
 
-.attachment-title {
-  color: var(--navy-800);
+.attachment-icon-compact.pending {
+  color: var(--soft-text-muted);
+}
+
+.attachment-title-compact {
+  color: var(--soft-text-primary);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  margin-bottom: 0.5rem;
+}
+
+.badge-compact {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.6875rem;
   font-weight: 600;
-  font-size: 0.95rem;
-  margin-bottom: 0.75rem;
 }
 
-.badge-uploaded {
-  background: var(--emerald-500);
-  color: var(--white);
-  padding: 0.35rem 0.85rem;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
+.badge-uploaded-compact {
+  background: var(--soft-green-light);
+  color: var(--soft-green);
 }
 
-.badge-not-uploaded {
-  background: var(--slate-200);
-  color: var(--slate-500);
-  padding: 0.35rem 0.85rem;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-/* ===============================
-   USER ACTION BUTTONS (WHITE UI)
-================================ */
-.ux-btn{
-  background:#ffffff;
-  border:1px solid #dbe3f0;
-  border-radius:10px;
-  padding:6px 14px;
-  font-weight:600;
-  font-size:.8rem;
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  transition:all .2s ease;
-  box-shadow:0 1px 3px rgba(15,23,42,.04);
+.badge-not-uploaded-compact {
+  background: var(--soft-bg);
+  color: var(--soft-text-tertiary);
 }
 
-/* PRIMARY (Discussion) */
-.ux-btn-primary{
-  color:#1e3a8a; /* dark blue */
+/* =====================================================
+   MODAL HIDDEN STATE
+===================================================== */
+.qxdlg-modal-overlay[data-qxdlg-state="closed"] {
+  display: none;
 }
-
-.ux-btn-primary i{
-  color:#1e3a8a;
-}
-
-.ux-btn-primary:hover{
-  background:#f0f5ff;
-  border-color:#93c5fd;
-  color:#1d4ed8;
-  transform:translateY(-1px);
-  box-shadow:0 6px 14px rgba(29,78,216,.15);
-}
-
-/* SECONDARY (Home) */
-.ux-btn-secondary{
-  color:#334155;
-}
-
-.ux-btn-secondary i{
-  color:#475569;
-}
-
-.ux-btn-secondary:hover{
-  background:#f8fafc;
-  border-color:#cbd5e1;
-  transform:translateY(-1px);
-  box-shadow:0 4px 10px rgba(15,23,42,.1);
-}
-
-/* Focus (keyboard users) */
-.ux-btn:focus-visible{
-  outline:2px solid #93c5fd;
-  outline-offset:2px;
-}
-/* ===============================
-   UNDO SUBMISSION BUTTON
-================================ */
-.btn-undo{
-  background:#dc2626;          /* red-600 */
-  color:#ffffff;
-  border:none;
-  border-radius:10px;
-  padding:6px 14px;
-  font-size:.75rem;
-  font-weight:700;
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  cursor:pointer;
-  transition:
-    transform .15s ease,
-    box-shadow .15s ease,
-    background .15s ease;
-  box-shadow:0 4px 10px rgba(220,38,38,.35);
-}
-
-.btn-undo i{
-  font-size:.75rem;
-}
-
-/* Hover effect */
-.btn-undo:hover{
-  background:#b91c1c;          /* red-700 */
-  transform:scale(1.06);
-  box-shadow:0 8px 18px rgba(185,28,28,.45);
-}
-
-/* Active (click) */
-.btn-undo:active{
-  transform:scale(0.97);
-}
-
-/* Focus (keyboard accessibility) */
-.btn-undo:focus-visible{
-  outline:2px solid #fecaca;
-  outline-offset:2px;
-}
-
 </style>
 
 <div class="work-item-page">
-  <!-- Header -->
-  <div class="header-card">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-      <div class="flex-grow-1">
-        <h4 class="header-title">
+  <!-- Compact Header -->
+  <div class="header-compact">
+    <!-- Top Row: Title + Actions (right corner) -->
+    <div class="header-top-row">
+      <div class="header-title-section">
+        <h1 class="header-title">
           <i class="fas fa-layer-group"></i>
           {{ work_item.workcycle.title }}
-        </h4>
-       <div class="header-meta">
-  <i class="far fa-calendar-alt"></i>
-  Due {{ work_item.workcycle.due_at|date:"l, F j, Y · g:i A" }}
-</div>
-
-        {% if work_item.workcycle.description %}
-        <div class="header-description">{{ work_item.workcycle.description }}</div>
-        {% endif %}
+        </h1>
+        <div class="header-meta-row">
+          <i class="far fa-user-circle"></i>
+          <span>Assigned to {{ request.user.get_full_name|default:request.user.username }}</span>
+        </div>
       </div>
-             <div class="d-flex gap-2">
-                <a href="#"
-                  class="btn btn-sm ux-btn ux-btn-primary"
-                  data-qxdlg-trigger
-                  data-qxdlg-url="{% url 'user_app:work-item-discussion' work_item.id %}"
-                  data-qxdlg-title="{{ work_item.workcycle.title }}"
-                  data-qxdlg-subtitle="Assigned by: {{ work_item.workcycle.created_by|default:'System' }}">
-                  <i class="fas fa-comment-dots me-1"></i> Discussion
-                </a>
-
-                <a href="{% url 'user_app:work-items' %}"
-                  class="btn btn-sm ux-btn ux-btn-secondary">
-                  <i class="fas fa-home me-1"></i> Home
-                </a>
-            </div>
-
-
-
+      
+      <!-- Right-side action buttons -->
+      <div class="header-actions">
+        <a href="#"
+           class="action-btn action-btn-primary"
+           data-qxdlg-trigger
+           data-qxdlg-url="{% url 'user_app:work-item-discussion' work_item.id %}"
+           data-qxdlg-title="{{ work_item.workcycle.title }}"
+           data-qxdlg-subtitle="Discussion">
+          <i class="fas fa-comment-dots"></i>
+          <span>Discussion</span>
+        </a>
+        
+        <a href="{% url 'user_app:work-items' %}"
+           class="action-btn action-btn-secondary">
+          <i class="fas fa-home"></i>
+          <span>Home</span>
+        </a>
+      </div>
+    </div>
+    
+    <!-- Bottom Row: Description + Due Date -->
+    <div class="header-bottom-row">
+      {% if work_item.workcycle.description %}
+      <p class="header-description">{{ work_item.workcycle.description }}</p>
+      {% else %}
+      <p class="header-description" style="color: var(--soft-text-muted); font-style: italic;">No description provided</p>
+      {% endif %}
+      <div class="header-due">
+        <i class="far fa-calendar-alt"></i>
+        Due {{ work_item.workcycle.due_at|date:"M d, Y · g:i A" }}
+      </div>
     </div>
   </div>
 
-  <!-- Main Content -->
-  <div class="main-grid">
+  <!-- Compact Main Grid -->
+  <div class="main-grid-compact">
     <!-- Details Panel -->
-    <div class="panel-card">
-      <div class="panel-header">
-        <i class="fas fa-info-circle icon-cyan"></i>
+    <div class="panel-compact">
+      <div class="panel-header-compact">
+        <i class="fas fa-info-circle" style="color: var(--soft-cyan);"></i>
         Status & Details
       </div>
-      <div class="panel-body">
+      <div class="panel-body-compact">
         <!-- Status Section -->
-        <div class="status-section">
-          <div class="section-label">Current Status</div>
+        <div class="status-section-compact">
+          <div class="section-label-compact">Current Status</div>
           
           {% if work_item.status != "done" %}
-          <!-- Floating Indicator -->
-          <div class="status-hint">
+          <!-- Status Indicator -->
+          <div class="status-indicator">
             <i class="fas fa-hand-pointer"></i>
             <span>Click to update your work status</span>
           </div>
           
-          <div class="status-toggle-group">
-            <form method="post" class="flex-fill">
+          <!-- Status Buttons -->
+          <div class="status-toggle-compact">
+            <form method="post" style="flex: 1;">
               {% csrf_token %}
               <input type="hidden" name="action" value="update_status">
               <input type="hidden" name="status" value="not_started">
-              <button type="submit" class="status-btn {% if work_item.status == 'not_started' %}active-not-started{% endif %}">
-                <i class="fas fa-circle"></i> Not Started
+              <button type="submit" class="status-btn-compact {% if work_item.status == 'not_started' %}active-not-started{% endif %}">
+                <i class="fas fa-circle"></i>
+                <span>Not Started</span>
               </button>
             </form>
-            <form method="post" class="flex-fill">
+            <form method="post" style="flex: 1;">
               {% csrf_token %}
               <input type="hidden" name="action" value="update_status">
               <input type="hidden" name="status" value="working_on_it">
-              <button type="submit" class="status-btn {% if work_item.status == 'working_on_it' %}active-progress{% endif %}">
-                <i class="fas fa-spinner {% if work_item.status == 'working_on_it' %}spin{% endif %}"></i> In Progress
+              <button type="submit" class="status-btn-compact {% if work_item.status == 'working_on_it' %}active-progress{% endif %}">
+                <i class="fas fa-spinner {% if work_item.status == 'working_on_it' %}spin{% endif %}"></i>
+                <span>In Progress</span>
               </button>
             </form>
           </div>
           {% else %}
-<div class="completed-alert d-flex justify-content-between align-items-center">
-  <div>
-    <i class="fas fa-check-circle"></i> Completed
-  </div>
-
-  {% if work_item.review_decision == "pending" %}
-  <form method="post">
-  {% csrf_token %}
-  <input type="hidden" name="action" value="undo_submit">
-  <button type="submit" class="btn-undo">
-    <i class="fas fa-undo"></i> Undo Submission
-  </button>
-</form>
-
-  {% endif %}
-</div>
-{% endif %}
-
+          <!-- Completed State -->
+          <div class="completed-alert-compact">
+            <div>
+              <i class="fas fa-check-circle"></i>
+              <span>Completed</span>
+            </div>
+            
+            {% if work_item.review_decision == "pending" %}
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="undo_submit">
+              <button type="submit" class="btn-undo-compact">
+                <i class="fas fa-undo"></i>
+                Undo
+              </button>
+            </form>
+            {% endif %}
+          </div>
+          {% endif %}
         </div>
 
         <!-- Meta Info -->
-        <div class="meta-section">
-          <div class="meta-row">
-            <span class="meta-label">Review Status</span>
-            <span class="badge-status {% if work_item.review_decision == 'approved' %}badge-approved{% elif work_item.review_decision == 'revision' %}badge-revision{% else %}badge-pending{% endif %}">
+        <div class="meta-section-compact">
+          <div class="meta-row-compact">
+            <span class="meta-label-compact">Review Status</span>
+            <span class="badge-status-compact {% if work_item.review_decision == 'approved' %}badge-approved{% elif work_item.review_decision == 'revision' %}badge-revision{% else %}badge-pending{% endif %}">
               {{ work_item.get_review_decision_display }}
             </span>
           </div>
-          <div class="meta-row">
-            <span class="meta-label">Submitted</span>
-            <span class="meta-value">
+          <div class="meta-row-compact">
+            <span class="meta-label-compact">Submitted</span>
+            <span class="meta-value-compact">
               {% if work_item.submitted_at %}
-              <i class="fas fa-check-circle" style="color: var(--emerald-500);"></i>
+              <i class="fas fa-check-circle" style="color: var(--soft-green);"></i>
               {{ work_item.submitted_at|date:"M d, Y · H:i" }}
               {% else %}
-              <i class="fas fa-clock" style="color: var(--slate-400);"></i>
+              <i class="fas fa-clock" style="color: var(--soft-text-muted);"></i>
               Not yet
               {% endif %}
             </span>
@@ -767,16 +809,17 @@ textarea.form-input {
 
         <!-- Submit Button -->
         {% if work_item.status != "done" %}
-        <div class="submit-section">
+        <div class="submit-section-compact">
           <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="submit">
-            <button type="submit" class="btn-submit" {% if not attachments %}disabled{% endif %}>
-              <i class="fas fa-check-circle"></i> Mark as Done & Submit
+            <button type="submit" class="btn-submit-compact" {% if not attachments %}disabled{% endif %}>
+              <i class="fas fa-check-circle"></i>
+              Mark as Done & Submit
             </button>
           </form>
           {% if not attachments %}
-          <div class="submit-hint">Upload at least one attachment before submitting.</div>
+          <div class="submit-hint-compact">Upload at least one attachment before submitting.</div>
           {% endif %}
         </div>
         {% endif %}
@@ -784,49 +827,55 @@ textarea.form-input {
     </div>
 
     <!-- Notes Panel -->
-    <form method="post" class="panel-card">
+    <form method="post" class="panel-compact">
       {% csrf_token %}
       <input type="hidden" name="action" value="update_context">
-      <div class="panel-header">
-        <i class="fas fa-sticky-note icon-amber"></i>
+      <div class="panel-header-compact">
+        <i class="fas fa-sticky-note" style="color: var(--soft-amber);"></i>
         Notes
       </div>
-      <div class="panel-body">
-        <div class="form-group">
-          <label class="form-label">Status Label</label>
-          <input type="text" id="statusLabelInput" name="status_label" class="form-input" placeholder="e.g. Waiting for documents" value="{{ work_item.status_label }}">
-          <div class="chips-container">
-            <button type="button" class="status-chip" data-value="Waiting for approval">Waiting for approval</button>
-            <button type="button" class="status-chip" data-value="In review">In review</button>
-            <button type="button" class="status-chip" data-value="Needs revision">Needs revision</button>
-            <button type="button" class="status-chip" data-value="On hold">On hold</button>
-            <button type="button" class="status-chip" data-value="For validation">For validation</button>
-            <button type="button" class="status-chip" data-value="Pending documents">Pending documents</button>
+      <div class="panel-body-compact">
+        <div class="form-group-compact">
+          <label class="form-label-compact">Status Label</label>
+          <input type="text" id="statusLabelInput" name="status_label" class="form-input-compact" 
+                 placeholder="e.g. Waiting for documents" value="{{ work_item.status_label }}">
+          <div class="chips-container-compact">
+            <button type="button" class="status-chip-compact" data-value="Waiting for approval">Waiting for approval</button>
+            <button type="button" class="status-chip-compact" data-value="In review">In review</button>
+            <button type="button" class="status-chip-compact" data-value="Needs revision">Needs revision</button>
+            <button type="button" class="status-chip-compact" data-value="On hold">On hold</button>
+            <button type="button" class="status-chip-compact" data-value="For validation">For validation</button>
+            <button type="button" class="status-chip-compact" data-value="Pending documents">Pending documents</button>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Message</label>
-          <textarea name="message" class="form-input" rows="4" placeholder="Add notes or remarks here...">{{ work_item.message }}</textarea>
+        <div class="form-group-compact">
+          <label class="form-label-compact">Message</label>
+          <textarea name="message" class="form-input-compact" rows="4" 
+                    placeholder="Add notes or remarks here...">{{ work_item.message }}</textarea>
         </div>
-        <button type="submit" class="btn-save">
-          <i class="fas fa-save"></i> Save Notes
+        <button type="submit" class="btn-save-compact">
+          <i class="fas fa-save"></i>
+          Save Notes
         </button>
       </div>
     </form>
   </div>
 
-  <!-- Attachments -->
-  <div class="attachments-section">
-    <h5 class="section-title"><i class="fas fa-paperclip"></i> Attachments</h5>
-    <div class="attachments-grid">
+  <!-- Compact Attachments Section -->
+  <div class="attachments-section-compact">
+    <h5 class="section-title-compact">
+      <i class="fas fa-paperclip"></i>
+      Attachments
+    </h5>
+    <div class="attachments-grid-compact">
       {% for key, label in attachment_types %}
-      <a href="{% url 'user_app:work-item-attachments' work_item.id %}?type={{ key }}" class="attachment-card">
-        <i class="fas fa-folder-open attachment-icon {% if key in uploaded_types %}uploaded{% else %}pending{% endif %}"></i>
-        <div class="attachment-title">{{ label }}</div>
+      <a href="{% url 'user_app:work-item-attachments' work_item.id %}?type={{ key }}" class="attachment-card-compact">
+        <i class="fas fa-folder-open attachment-icon-compact {% if key in uploaded_types %}uploaded{% else %}pending{% endif %}"></i>
+        <div class="attachment-title-compact">{{ label }}</div>
         {% if key in uploaded_types %}
-        <span class="badge-uploaded">Uploaded</span>
+        <span class="badge-compact badge-uploaded-compact">Uploaded</span>
         {% else %}
-        <span class="badge-not-uploaded">Not Uploaded</span>
+        <span class="badge-compact badge-not-uploaded-compact">Not Uploaded</span>
         {% endif %}
       </a>
       {% endfor %}
@@ -837,10 +886,20 @@ textarea.form-input {
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("statusLabelInput");
-  document.querySelectorAll(".status-chip").forEach(chip => {
+  document.querySelectorAll(".status-chip-compact").forEach(chip => {
     chip.addEventListener("click", () => {
       input.value = chip.dataset.value;
       input.focus();
+    });
+  });
+  
+  // Add subtle hover effect to action buttons
+  document.querySelectorAll('.action-btn').forEach(btn => {
+    btn.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-1px)';
+    });
+    btn.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
     });
   });
 });

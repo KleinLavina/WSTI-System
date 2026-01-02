@@ -103,6 +103,16 @@ def review_work_item(request, item_id):
     )
 
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.views.decorators.clickjacking import xframe_options_exempt
+from django.utils import timezone
+from django.db import transaction
+
+from accounts.models import WorkItem, WorkItemMessage
+
+
 # ============================================================
 # WORK ITEM DISCUSSION (ADMIN)
 # ============================================================
@@ -116,7 +126,8 @@ def admin_work_item_discussion(request, item_id):
     Responsibilities:
     - Send messages
     - Prevent empty messages
-    - Mark other party's messages as read
+    - Sender messages start as READ
+    - Mark other party's messages as read when opened
     - Provide unread count
     - Allow template to hide UI if no messages exist
     """
@@ -135,16 +146,23 @@ def admin_work_item_discussion(request, item_id):
     if request.method == "POST":
         text = request.POST.get("message", "").strip()
 
-        if text:
-            WorkItemMessage.objects.create(
-                work_item=work_item,
-                sender=request.user,
-                sender_role=request.user.login_role,
-                message=text
-            )
-            messages.success(request, "Message sent.")
-        else:
+        if not text:
             messages.warning(request, "Message cannot be empty.")
+            return redirect(
+                "admin_app:work-item-discussion",
+                item_id=work_item.id
+            )
+
+        WorkItemMessage.objects.create(
+            work_item=work_item,
+            sender=request.user,
+            sender_role=request.user.login_role,
+            message=text,
+            is_read=True,                 # Sender has read it
+            read_at=timezone.now(),
+        )
+
+        messages.success(request, "Message sent.")
 
         return redirect(
             "admin_app:work-item-discussion",
@@ -152,13 +170,13 @@ def admin_work_item_discussion(request, item_id):
         )
 
     # --------------------------------------------------------
-    # MARK MESSAGES AS READ (OTHER PARTY ONLY)
+    # MARK OTHER PARTY'S MESSAGES AS READ (SAFE + CENTRALIZED)
     # --------------------------------------------------------
-    work_item.messages.filter(
-        is_read=False
-    ).exclude(
-        sender=request.user
-    ).update(is_read=True)
+    with transaction.atomic():
+        WorkItemMessage.mark_thread_as_read(
+            work_item=work_item,
+            reader=request.user
+        )
 
     # --------------------------------------------------------
     # LOAD DISCUSSION
@@ -176,7 +194,9 @@ def admin_work_item_discussion(request, item_id):
 
     unread_count = work_item.messages.filter(
         is_read=False
-    ).exclude(sender=request.user).count()
+    ).exclude(
+        sender=request.user
+    ).count()
 
     # --------------------------------------------------------
     # RENDER

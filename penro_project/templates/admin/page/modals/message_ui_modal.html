@@ -1,5 +1,5 @@
 <!-- ============================================
-     QXDLG MODAL - Floating Chat Panel
+     QXDLG MODAL - Floating Chat Panel (IMPROVED)
 ============================================ -->
 <div class="qxdlg-modal-overlay" id="qxdlgDiscussionModal" data-qxdlg-state="closed">
   <div class="qxdlg-modal-container">
@@ -7,9 +7,7 @@
     <div class="qxdlg-header-bar">
       <div class="qxdlg-header-left">
         <div class="qxdlg-icon-wrap">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
+          <i class="fas fa-comments"></i>
         </div>
 
         <div class="qxdlg-title-group">
@@ -23,15 +21,15 @@
 
       </div>
       <button type="button" class="qxdlg-close-btn" data-qxdlg-dismiss>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <i class="fas fa-times"></i>
       </button>
     </div>
 
     <div class="qxdlg-body-wrap">
       <div class="qxdlg-loader-spin" id="qxdlgLoader">
-        <div class="qxdlg-spinner"></div>
+        <div class="qxdlg-spinner">
+          <i class="fas fa-circle-notch fa-spin"></i>
+        </div>
         <span>Loading messages...</span>
       </div>
       <iframe
@@ -45,16 +43,27 @@
   </div>
 </div>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Montserrat Font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
 <style>
 /* ============================================
-   QXDLG MODAL STYLES
+   QXDLG MODAL STYLES (IMPROVED) - MONTESSRAT FONT
 ============================================ */
+* {
+  box-sizing: border-box;
+  font-family: "Montserrat", sans-serif !important;
+}
+
 .qxdlg-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 9999;
   pointer-events: none;
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .qxdlg-modal-overlay[data-qxdlg-state="open"] {
@@ -65,31 +74,32 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(4px);
-  animation: qxdlg-fadein 0.25s ease;
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(6px);
+  animation: qxdlg-fadein 0.3s ease;
 }
 
 .qxdlg-modal-container {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 420px;
+  width: 440px;
   max-width: calc(100vw - 48px);
-  height: 600px;
+  height: 640px;
   max-height: calc(100vh - 48px);
   background: #ffffff;
-  border-radius: 20px;
+  border-radius: 24px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   box-shadow: 
     0 25px 50px -12px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(0, 0, 0, 0.05);
-  transform: translateY(100%) scale(0.95);
+    0 0 0 1px rgba(203, 213, 225, 0.3);
+  transform: translateY(100%) scale(0.92);
   opacity: 0;
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: auto;
+  font-family: "Montserrat", sans-serif;
 }
 
 .qxdlg-modal-overlay[data-qxdlg-state="open"] .qxdlg-modal-container {
@@ -101,66 +111,78 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #8b5cf6 100%);
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #8fa6c5 0%, #7ba3c4 50%, #6a92b3 100%);
   color: #ffffff;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(91, 141, 179, 0.15);
+  font-family: "Montserrat", sans-serif;
 }
 
 .qxdlg-header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  font-family: "Montserrat", sans-serif;
 }
 
 .qxdlg-icon-wrap {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.qxdlg-icon-wrap svg {
-  width: 22px;
-  height: 22px;
+.qxdlg-icon-wrap i {
+  font-size: 20px;
+  color: #ffffff;
 }
 
 .qxdlg-title-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  font-family: "Montserrat", sans-serif;
 }
 
 .qxdlg-title-text {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   margin: 0;
+  color:#dcdcdc;
   letter-spacing: -0.02em;
+  font-family: "Montserrat", sans-serif;
 }
 
-
-
-@keyframes qxdlg-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.2); }
+.qxdlg-subtitle-text {
+  font-size: 12px;
+  opacity: 0.9;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: "Montserrat", sans-serif;
 }
 
 .qxdlg-close-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border: none;
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+  font-size: 16px;
+  font-family: "Montserrat", sans-serif;
 }
 
 .qxdlg-close-btn:hover {
@@ -168,21 +190,12 @@
   transform: rotate(90deg);
 }
 
-.qxdlg-close-btn svg {
-  width: 18px;
-  height: 18px;
-}
-.qxdlg-subtitle-text {
-  font-size: 12px;
-  opacity: 0.9;
-  font-weight: 500;
-}
-
 .qxdlg-body-wrap {
   flex: 1;
   position: relative;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f0f4f8 0%, #e6eef5 100%);
   overflow: hidden;
+  font-family: "Montserrat", sans-serif;
 }
 
 .qxdlg-loader-spin {
@@ -192,12 +205,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  background: #f8fafc;
+  gap: 18px;
+  background: linear-gradient(135deg, #f0f4f8 0%, #e6eef5 100%);
   z-index: 10;
   color: #64748b;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: "Montserrat", sans-serif;
 }
 
 .qxdlg-loader-spin[data-qxdlg-hidden="true"] {
@@ -205,25 +219,27 @@
 }
 
 .qxdlg-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #6366f1;
-  border-radius: 50%;
-  animation: qxdlg-spin 0.8s linear infinite;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7ba3c4;
+  font-family: "Montserrat", sans-serif;
 }
 
-@keyframes qxdlg-spin {
-  to { transform: rotate(360deg); }
+.qxdlg-spinner i {
+  font-size: 40px;
 }
 
 .qxdlg-iframe-embed {
   width: 100%;
   height: 100%;
   border: none;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f0f4f8 0%, #e6eef5 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
+  font-family: "Montserrat", sans-serif;
 }
 
 .qxdlg-iframe-embed[data-qxdlg-loaded="true"] {
@@ -233,6 +249,23 @@
 @keyframes qxdlg-fadein {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* Ensure Font Awesome icons maintain their font */
+.fa,
+.fas,
+.far,
+.fab,
+.fal {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+}
+
+/* Ensure all text elements use Montserrat */
+h1, h2, h3, h4, h5, h6,
+p, span, div,
+input, textarea, button,
+a, label, select, option {
+  font-family: "Montserrat", sans-serif !important;
 }
 
 @media (max-width: 480px) {
@@ -288,14 +321,18 @@
   /* ===============================
      CLOSE MODAL
   =============================== */
-  function closeModal() {
-    modal.setAttribute('data-qxdlg-state', 'closed');
-    document.body.style.overflow = '';
+ function closeModal() {
+  modal.setAttribute('data-qxdlg-state', 'closed');
+  document.body.style.overflow = '';
 
-    setTimeout(function () {
-      iframe.src = '';
-    }, 350);
-  }
+  setTimeout(function () {
+    iframe.src = '';
+
+    // 🔥 REFRESH PARENT PAGE
+    window.location.reload();
+  }, 400);
+}
+
 
   /* ===============================
      IFRAME LOAD HANDLER

@@ -1,20 +1,78 @@
-from django.db.models import Count, Max
-from accounts.models import WorkItem, WorkItemMessage
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
+from django.db.models import Count, Max, Q
+from django.shortcuts import render
+
+from accounts.models import WorkItem
+
 
 @login_required
 def user_work_item_threads(request):
+    """
+    User inbox view for WorkItem conversations.
+
+    Guarantees:
+    - Only ACTIVE work items owned by the user
+    - Only work items WITH messages appear
+    - Only UNREAD messages from ADMIN are counted
+    - Correct ordering by last message activity
+    - No duplicate rows or inflated counts
+    """
+
     work_items = (
         WorkItem.objects
-        .filter(owner=request.user, is_active=True)
+        # ----------------------------------------------------
+        # USER SCOPE
+        # ----------------------------------------------------
+        .filter(
+            owner=request.user,
+            is_active=True
+        )
+
+        # ----------------------------------------------------
+        # BASIC RELATION OPTIMIZATION
+        # ----------------------------------------------------
+        .select_related("workcycle")
+
+        # ----------------------------------------------------
+        # REQUIRE AT LEAST ONE MESSAGE
+        # ----------------------------------------------------
         .annotate(
-            message_count=Count("messages"),
+            has_messages=Count(
+                "messages",
+                distinct=True
+            )
+        )
+        .filter(has_messages__gt=0)
+
+        # ----------------------------------------------------
+        # UNREAD COUNT (ADMIN ONLY)
+        # ----------------------------------------------------
+        .annotate(
+            unread_count=Count(
+                "messages",
+                filter=Q(
+                    messages__is_read=False
+                ) & ~Q(
+                    messages__sender=request.user
+                ),
+                distinct=True,
+            )
+        )
+
+        # ----------------------------------------------------
+        # LAST MESSAGE TIMESTAMP
+        # ----------------------------------------------------
+        .annotate(
             last_message_at=Max("messages__created_at")
         )
-        .select_related("workcycle")
-        .order_by("-last_message_at", "workcycle__due_at")
+
+        # ----------------------------------------------------
+        # ORDER BY RECENT ACTIVITY
+        # ----------------------------------------------------
+        .order_by(
+            "-last_message_at",
+            "workcycle__due_at"
+        )
     )
 
     return render(
