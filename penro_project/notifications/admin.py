@@ -8,22 +8,25 @@ from .models import Notification
 class NotificationAdmin(admin.ModelAdmin):
     """
     Admin configuration for system notifications
+    (aligned with updated Notification model)
     """
 
-    # ==========================
+    # =====================================================
     # LIST VIEW
-    # ==========================
+    # =====================================================
     list_display = (
         "id",
         "recipient",
-        "notif_type",
+        "category",
+        "priority",
         "colored_title",
         "is_read",
         "created_at",
     )
 
     list_filter = (
-        "notif_type",
+        "category",
+        "priority",
         "is_read",
         "created_at",
     )
@@ -37,49 +40,60 @@ class NotificationAdmin(admin.ModelAdmin):
     )
 
     ordering = ("-created_at",)
-
     list_per_page = 25
 
-    # ==========================
-    # FIELDSETS
-    # ==========================
+    # =====================================================
+    # FIELDSETS (DETAIL VIEW)
+    # =====================================================
     fieldsets = (
         ("Recipient", {
             "fields": ("recipient",),
         }),
-        ("Notification", {
-            "fields": ("notif_type", "title", "message"),
+        ("Classification", {
+            "fields": ("category", "priority"),
+        }),
+        ("Content", {
+            "fields": ("title", "message"),
         }),
         ("Context", {
-            "fields": ("work_item",),
+            "fields": ("workcycle", "work_item", "action_url"),
         }),
         ("Status", {
-            "fields": ("is_read", "created_at"),
+            "fields": ("is_read", "read_at", "created_at"),
         }),
     )
 
-    readonly_fields = ("created_at",)
+    readonly_fields = (
+        "created_at",
+        "read_at",
+    )
 
-    # ==========================
+    # =====================================================
     # ACTIONS
-    # ==========================
+    # =====================================================
     actions = (
         "mark_as_read",
         "mark_as_unread",
     )
 
-    # ==========================
-    # CUSTOM DISPLAY
-    # ==========================
+    # =====================================================
+    # CUSTOM DISPLAY HELPERS
+    # =====================================================
     def colored_title(self, obj):
+        """
+        Color the title based on category for fast scanning.
+        """
         color_map = {
-            "chat": "#2563eb",     # blue
-            "review": "#7c3aed",   # purple
-            "status": "#16a34a",   # green
-            "reminder": "#f59e0b", # orange
-            "system": "#6b7280",   # gray
+            Notification.Category.REMINDER: "#f59e0b",    # orange
+            Notification.Category.STATUS: "#16a34a",      # green
+            Notification.Category.REVIEW: "#7c3aed",      # purple
+            Notification.Category.ASSIGNMENT: "#2563eb",  # blue
+            Notification.Category.MESSAGE: "#0ea5e9",     # sky
+            Notification.Category.SYSTEM: "#6b7280",      # gray
         }
-        color = color_map.get(obj.notif_type, "#000")
+
+        color = color_map.get(obj.category, "#000000")
+
         return format_html(
             '<span style="color:{}; font-weight:600;">{}</span>',
             color,
@@ -88,9 +102,9 @@ class NotificationAdmin(admin.ModelAdmin):
 
     colored_title.short_description = "Title"
 
-    # ==========================
+    # =====================================================
     # ADMIN ACTIONS
-    # ==========================
+    # =====================================================
     @admin.action(description="Mark selected notifications as READ")
     def mark_as_read(self, request, queryset):
         queryset.update(is_read=True)

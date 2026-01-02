@@ -18,7 +18,7 @@ def done_workers_by_workcycle(request, workcycle_id):
             workcycle=workcycle,
             is_active=True,   # ✅ exclude archived items
         )
-        .select_related("owner")
+        .select_related("owner", "workcycle")
     )
 
     # =========================
@@ -43,6 +43,40 @@ def done_workers_by_workcycle(request, workcycle_id):
     ongoing_items = base_qs.filter(
         status__in=["working_on_it", "not_started"],
     ).order_by("status", "created_at")
+
+    # ======================================================
+    # APPLY SUBMISSION STATUS (ON TIME / LATE)
+    # ======================================================
+    def apply_submission_meta(items):
+        for item in items:
+            if not item.submitted_at:
+                item.submission_status = None
+                item.submission_delta = None
+                continue
+
+            due_at = item.workcycle.due_at
+            submitted_at = item.submitted_at
+
+            if submitted_at > due_at:
+                # ❌ LATE
+                item.submission_status = "late"
+
+                delta = submitted_at - due_at
+                days = delta.days
+                hours = delta.seconds // 3600
+
+                if days > 0:
+                    item.submission_delta = f"{days}d {hours}h"
+                else:
+                    item.submission_delta = f"{hours}h"
+            else:
+                # ✅ ON TIME
+                item.submission_status = "on_time"
+                item.submission_delta = None
+
+    # Apply logic
+    apply_submission_meta(approved_items)
+    apply_submission_meta(submitted_items)
 
     context = {
         "workcycle": workcycle,

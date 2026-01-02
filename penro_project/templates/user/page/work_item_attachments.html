@@ -6,58 +6,546 @@
 
 {% block content %}
 
-{% if messages %}
-<div class="error-container" style="position: fixed; top: 80px; right: 20px; z-index: 2000; max-width: 400px; width: 90%;">
-  {% for message in messages %}
-    {% if message.tags == 'error' %}
-    <div class="error-alert" style="background-color: #ef4444; color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; animation: slideIn 0.3s ease-out; position: relative;">
-      <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
-        <i class="fas fa-exclamation-circle" style="font-size: 1.25rem; flex-shrink: 0;"></i>
-        <span style="word-break: break-word;">{{ message }}</span>
-      </div>
-      <button onclick="this.closest('.error-alert').remove()" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.1rem; padding: 0 0.5rem; flex-shrink: 0; margin-left: 0.5rem;">
-        <i class="fas fa-times"></i>
-      </button>
-      <div class="progress-bar" style="position: absolute; bottom: 0; left: 0; height: 3px; background: rgba(255, 255, 255, 0.5); width: 100%; border-radius: 0 0 8px 8px; overflow: hidden;">
-        <div class="progress" style="height: 100%; background: white; width: 100%; animation: progress 5s linear forwards;"></div>
-      </div>
-    </div>
-    {% endif %}
-  {% endfor %}
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Auto-dismiss after 5 seconds
-  const alerts = document.querySelectorAll('.error-alert');
-  alerts.forEach(alert => {
-    setTimeout(() => {
-      alert.style.animation = 'fadeOut 0.3s ease-out forwards';
-      setTimeout(() => alert.remove(), 300);
-    }, 5000);
-    
-    // Pause on hover
-    alert.addEventListener('mouseenter', function() {
-      const progress = this.querySelector('.progress');
-      if (progress) {
-        progress.style.animationPlayState = 'paused';
-      }
-    });
-    
-    // Resume on mouse leave
-    alert.addEventListener('mouseleave', function() {
-      const progress = this.querySelector('.progress');
-      if (progress) {
-        progress.style.animationPlayState = 'running';
-      }
-    });
-  });
-});
-</script>
-{% endif %}
-
 <style>
-@keyframes slideIn {
+/* =====================================================
+   SOFT COLOR PALETTE
+===================================================== */
+:root {
+  /* Soft Neutrals */
+  --soft-white: #ffffff;
+  --soft-bg: #f8fafc;
+  --soft-bg-alt: #f1f5f9;
+  --soft-border: #e2e8f0;
+  --soft-border-light: #e2e8f0;
+  
+  /* Soft Text Colors */
+  --soft-text-primary: #1e293b;
+  --soft-text-secondary: #475569;
+  --soft-text-tertiary: #64748b;
+  --soft-text-muted: #94a3b8;
+  
+  /* Soft Accents */
+  --soft-blue: #3b82f6;
+  --soft-blue-light: #dbeafe;
+  --soft-green: #10b981;
+  --soft-green-light: #d1fae5;
+  --soft-amber: #f59e0b;
+  --soft-amber-light: #fef3c7;
+  --soft-red: #ef4444;
+  --soft-red-light: #fee2e2;
+  --soft-violet: #8b5cf6;
+  --soft-violet-light: #ede9fe;
+  
+  /* Soft Shadows */
+  --soft-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --soft-shadow-md: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --soft-shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* =====================================================
+   PAGE CONTAINER
+===================================================== */
+.attachments-page {
+  background: var(--soft-bg);
+  min-height: 100vh;
+  padding: 1rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* =====================================================
+   BACK LINK
+===================================================== */
+.back-link-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--soft-text-secondary);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  margin-bottom: 1.5rem;
+  background: var(--soft-white);
+  border: 1px solid var(--soft-border);
+  box-shadow: var(--soft-shadow-sm);
+}
+
+.back-link-soft:hover {
+  background: var(--soft-bg-alt);
+  color: var(--soft-blue);
+  border-color: var(--soft-blue);
+  transform: translateX(-2px);
+  text-decoration: none;
+}
+
+.back-link-soft i {
+  font-size: 0.85rem;
+}
+
+/* =====================================================
+   PAGE HEADER
+===================================================== */
+.page-header-soft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--soft-white);
+  border-radius: 12px;
+  border: 1px solid var(--soft-border);
+  box-shadow: var(--soft-shadow-md);
+}
+
+.page-header-soft i {
+  font-size: 1.5rem;
+  color: var(--soft-blue);
+}
+
+.page-header-soft h5 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--soft-text-primary);
+}
+
+/* =====================================================
+   CARD DESIGN
+===================================================== */
+.card-soft {
+  background: var(--soft-white);
+  border: 1px solid var(--soft-border);
+  border-radius: 12px;
+  box-shadow: var(--soft-shadow-sm);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.card-soft:hover {
+  box-shadow: var(--soft-shadow-md);
+}
+
+.card-header-soft {
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, var(--soft-bg-alt), var(--soft-bg));
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.card-header-title-soft {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--soft-text-primary);
+}
+
+.card-header-title-soft i {
+  font-size: 1.1rem;
+  color: var(--soft-blue);
+}
+
+.card-body-soft {
+  padding: 1.5rem;
+  background: var(--soft-white);
+}
+
+/* =====================================================
+   ATTACHMENT GROUPS
+===================================================== */
+.attachment-group-soft {
+  margin-bottom: 1.5rem;
+}
+
+.attachment-group-soft:last-child {
+  margin-bottom: 0;
+}
+
+.attachment-group-title-soft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--soft-text-primary);
+  background: var(--soft-bg-alt);
+  border-radius: 8px;
+  border-left: 3px solid var(--soft-blue);
+}
+
+.attachment-group-title-soft i {
+  color: var(--soft-blue);
+  font-size: 0.9rem;
+}
+
+/* =====================================================
+   FILE LIST
+===================================================== */
+.file-list-soft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.file-item-soft {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.1rem;
+  background: var(--soft-white);
+  border: 1px solid var(--soft-border);
+  border-radius: 10px;
+  transition: all 0.15s ease;
+}
+
+.file-item-soft:hover {
+  background: var(--soft-bg-alt);
+  border-color: var(--soft-blue);
+  transform: translateY(-1px);
+  box-shadow: var(--soft-shadow-sm);
+}
+
+.file-link-soft {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.875rem;
+  color: var(--soft-text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.file-link-soft:hover {
+  color: var(--soft-blue);
+  text-decoration: none;
+}
+
+.file-link-soft i {
+  font-size: 1rem;
+  color: var(--soft-blue);
+}
+
+.file-date-soft {
+  font-size: 0.8rem;
+  color: var(--soft-text-tertiary);
+  font-weight: 500;
+}
+
+/* =====================================================
+   DELETE BUTTON
+===================================================== */
+.btn-delete-soft {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--soft-red);
+  background: var(--soft-white);
+  border: 1px solid var(--soft-red-light);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-delete-soft:hover {
+  background: var(--soft-red-light);
+  color: #dc2626;
+}
+
+.btn-delete-soft i {
+  font-size: 0.75rem;
+}
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+.empty-state-soft {
+  padding: 2rem;
+  text-align: center;
+  color: var(--soft-text-tertiary);
+  font-style: italic;
+  background: var(--soft-bg);
+  border: 2px dashed var(--soft-border);
+  border-radius: 10px;
+}
+
+.empty-state-soft i {
+  font-size: 2.5rem;
+  color: var(--soft-text-muted);
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+/* =====================================================
+   DROPZONE
+===================================================== */
+.dropzone-soft {
+  position: relative;
+  border: 2px dashed var(--soft-border);
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--soft-white);
+  text-align: center;
+}
+
+.dropzone-soft:hover {
+  background: var(--soft-blue-light);
+  border-color: var(--soft-blue);
+}
+
+.dropzone-soft.dragover {
+  background: var(--soft-blue-light);
+  border-color: var(--soft-blue);
+  border-width: 2px;
+  transform: scale(1.01);
+}
+
+.dropzone-icon-soft {
+  font-size: 2.5rem;
+  color: var(--soft-blue);
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.dropzone-title-soft {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--soft-text-primary);
+  margin-bottom: 0.4rem;
+}
+
+.dropzone-subtitle-soft {
+  font-size: 0.875rem;
+  color: var(--soft-text-secondary);
+  margin-bottom: 1.25rem;
+}
+
+.choose-files-btn-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--soft-white);
+  background: var(--soft-blue);
+  border: none;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.2);
+}
+
+.choose-files-btn-soft:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.choose-files-btn-soft i {
+  font-size: 0.9rem;
+}
+
+/* =====================================================
+   SELECTED FILES LIST
+===================================================== */
+.selected-files-container-soft {
+  margin: 1.25rem 0;
+}
+
+.selected-files-header-soft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--soft-text-primary);
+  background: var(--soft-bg-alt);
+  border-radius: 8px;
+  border-left: 3px solid var(--soft-blue);
+}
+
+.selected-files-header-soft i {
+  color: var(--soft-blue);
+  font-size: 0.95rem;
+}
+
+.selected-files-list-soft {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.selected-file-item-soft {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  background: var(--soft-white);
+  border: 1px solid var(--soft-border);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.selected-file-item-soft:hover {
+  background: var(--soft-bg-alt);
+  border-color: var(--soft-border-light);
+}
+
+.selected-file-info-soft {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.875rem;
+  color: var(--soft-text-primary);
+}
+
+.selected-file-info-soft i {
+  color: var(--soft-blue);
+  font-size: 1rem;
+}
+
+.file-size-soft {
+  color: var(--soft-text-tertiary);
+  font-size: 0.8rem;
+}
+
+.remove-file-btn-soft {
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--soft-text-muted);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.remove-file-btn-soft:hover {
+  color: var(--soft-red);
+  background: var(--soft-red-light);
+}
+
+/* =====================================================
+   UPLOAD BUTTON
+===================================================== */
+.upload-btn-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--soft-white);
+  background: var(--soft-green);
+  border: none;
+  border-radius: 10px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
+}
+
+.upload-btn-soft:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.upload-btn-soft i {
+  font-size: 0.95rem;
+}
+
+.upload-btn-soft:disabled {
+  background: var(--soft-border);
+  color: var(--soft-text-muted);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* =====================================================
+   ERROR MESSAGES
+===================================================== */
+.error-container-soft {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 2000;
+  max-width: 400px;
+  width: 90%;
+}
+
+.error-alert-soft {
+  background: var(--soft-red);
+  color: var(--soft-white);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: var(--soft-shadow-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  animation: slideInSoft 0.3s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.error-alert-soft i.fa-exclamation-circle {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.error-alert-soft span {
+  word-break: break-word;
+}
+
+.error-alert-soft button {
+  background: none;
+  border: none;
+  color: var(--soft-white);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0 0.5rem;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+.progress-bar-soft {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.3);
+  width: 100%;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+.progress-soft {
+  height: 100%;
+  background: var(--soft-white);
+  width: 100%;
+  animation: progressSoft 5s linear forwards;
+}
+
+@keyframes slideInSoft {
   from {
     transform: translateY(-20px);
     opacity: 0;
@@ -68,560 +556,231 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 }
 
-@keyframes fadeOut {
+@keyframes fadeOutSoft {
   to {
     opacity: 0;
     transform: translateY(-20px);
   }
 }
 
-@keyframes progress {
+@keyframes progressSoft {
   from { width: 100%; }
   to { width: 0%; }
 }
 
-.error-alert {
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-</style>
-
-<style>
-/* NAVY BLUE PALETTE - BRIGHTER VERSION */
-:root {
-  --navy-900: #0a1628;
-  --navy-800: #0f2744;
-  --navy-700: #1a3a5c;
-  --navy-600: #254d73;
-  --navy-500: #3a6ea5;
-  --slate-600: #475569;
-  --slate-500: #64748b;
-  --slate-400: #94a3b8;
-  --slate-200: #e2e8f0;
-  --slate-100: #f1f5f9;
-  --slate-50: #f8fafc;
-  --white: #ffffff;
-  --cyan-400: #22d3ee;
-  --cyan-500: #06b6d4;
-  --cyan-50: #ecfeff;
-}
-
-/* BACK LINK */
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--navy-600);
-  text-decoration: none;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  margin-bottom: 1.5rem;
-}
-
-.back-link:hover {
-  background: var(--slate-100);
-  color: var(--navy-700);
-  transform: translateX(-2px);
-}
-
-.back-link i {
-  font-size: 0.85rem;
-}
-
-/* PAGE HEADER */
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  padding: 1.25rem 1.5rem;
-  background: linear-gradient(135deg, var(--slate-50) 0%, var(--white) 100%);
-  border-radius: 12px;
-  border: 1px solid var(--slate-200);
-}
-
-.page-header i {
-  font-size: 1.5rem;
-  color: var(--cyan-500);
-}
-
-.page-header h5 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--navy-800);
-}
-
-/* CARD IMPROVEMENTS */
-.custom-card {
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  margin-bottom: 1.5rem;
-  overflow: hidden;
-  transition: box-shadow 0.2s ease;
-}
-
-.custom-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.custom-card-header {
-  padding: 1.25rem 1.5rem;
-  background: linear-gradient(135deg, var(--navy-800) 0%, var(--navy-700) 100%);
-  border-bottom: none;
-}
-
-.custom-card-header-title {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--white);
-}
-
-.custom-card-header-title i {
-  font-size: 1.1rem;
-  color: var(--cyan-400);
-}
-
-.custom-card-body {
-  padding: 1.75rem 1.5rem;
-  background: var(--slate-50);
-}
-
-/* ATTACHMENT GROUPS */
-.attachment-group {
-  margin-bottom: 1.75rem;
-}
-
-.attachment-group:last-child {
-  margin-bottom: 0;
-}
-
-.attachment-group-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--navy-700);
-  background: var(--white);
-  border-radius: 8px;
-  border-left: 3px solid var(--cyan-500);
-}
-
-/* FILE LIST */
-.file-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.file-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.9rem 1.1rem;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: 10px;
-  transition: all 0.2s ease;
-}
-
-.file-item:hover {
-  background: var(--slate-50);
-  border-color: var(--cyan-400);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(34, 211, 238, 0.15);
-}
-
-.file-link {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  font-size: 0.875rem;
-  color: var(--navy-700);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.file-link:hover {
-  color: var(--cyan-500);
-}
-
-.file-link i {
-  font-size: 1rem;
-  color: var(--cyan-500);
-}
-
-.file-date {
-  font-size: 0.8rem;
-  color: var(--slate-500);
-  font-weight: 500;
-}
-
-.empty-state {
-  padding: 2rem;
-  text-align: center;
-  color: var(--slate-500);
-  font-style: italic;
-  background: var(--white);
-  border: 2px dashed var(--slate-200);
-  border-radius: 10px;
-}
-
-/* DROPZONE */
-.dropzone {
-  position: relative;
-  border: 3px dashed var(--slate-300);
-  border-radius: 14px;
-  padding: 2.5rem 2rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: var(--white);
-  text-align: center;
-}
-
-.dropzone::before {
-  content: '';
-  position: absolute;
-  inset: 8px;
-  border: 2px dotted var(--slate-200);
-  border-radius: 10px;
-  pointer-events: none;
-  transition: all 0.3s ease;
-}
-
-.dropzone:hover {
-  background: var(--cyan-50);
-  border-color: var(--cyan-400);
-}
-
-.dropzone:hover::before {
-  border-color: var(--cyan-300);
-}
-
-.dropzone.dragover {
-  background: var(--cyan-50);
-  border-color: var(--cyan-500);
-  border-width: 3px;
-  transform: scale(1.01);
-}
-
-.dropzone.dragover::before {
-  border-color: var(--cyan-400);
-  border-width: 2px;
-}
-
-.dropzone-icon {
-  font-size: 2.5rem;
-  color: var(--cyan-500);
-  margin-bottom: 1rem;
-  display: block;
-}
-
-.dropzone-title {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--navy-700);
-  margin-bottom: 0.4rem;
-}
-
-.dropzone-subtitle {
-  font-size: 0.875rem;
-  color: var(--slate-500);
-  margin-bottom: 1.25rem;
-}
-
-.choose-files-btn {
-  padding: 0.6rem 1.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--white);
-  background: linear-gradient(135deg, var(--cyan-500), var(--cyan-400));
-  border: none;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(34, 211, 238, 0.25);
-}
-
-.choose-files-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.35);
-}
-
-/* SELECTED FILES LIST */
-.selected-files-list {
-  list-style: none;
-  padding: 0;
-  margin: 1.25rem 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.selected-files-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--navy-700);
-  background: var(--slate-100);
-  border-radius: 8px;
-  border-left: 3px solid var(--cyan-500);
-}
-
-.selected-files-header i {
-  color: var(--cyan-500);
-  font-size: 0.95rem;
-}
-
-.selected-file-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.85rem 1rem;
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.selected-file-item:hover {
-  background: var(--slate-50);
-  border-color: var(--slate-300);
-}
-
-.selected-file-info {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  font-size: 0.875rem;
-  color: var(--navy-700);
-}
-
-.selected-file-info i {
-  color: var(--cyan-500);
-  font-size: 1rem;
-}
-
-.file-size {
-  color: var(--slate-500);
-  font-size: 0.8rem;
-}
-
-.remove-file-btn {
-  padding: 0.25rem 0.5rem;
-  font-size: 1rem;
-  line-height: 1;
-  color: var(--slate-400);
-  background: none;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.remove-file-btn:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
-}
-
-/* UPLOAD BUTTON */
-.upload-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.75rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--white);
-  background: linear-gradient(135deg, var(--navy-700), var(--navy-600));
-  border: none;
-  border-radius: 10px;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(15, 39, 68, 0.25);
-}
-
-.upload-btn:hover {
-  background: linear-gradient(135deg, var(--navy-600), var(--navy-500));
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(15, 39, 68, 0.35);
-}
-
-.upload-btn i {
-  font-size: 0.95rem;
-}
-
-/* RESPONSIVE */
+/* =====================================================
+   RESPONSIVE DESIGN
+===================================================== */
 @media (max-width: 768px) {
-  .page-header {
+  .attachments-page {
+    padding: 0.75rem;
+  }
+  
+  .page-header-soft {
     padding: 1rem 1.25rem;
   }
   
-  .custom-card-header,
-  .custom-card-body {
+  .card-header-soft,
+  .card-body-soft {
     padding: 1rem 1.25rem;
   }
   
-  .dropzone {
+  .dropzone-soft {
     padding: 2rem 1.5rem;
   }
   
-  .file-item {
+  .file-item-soft {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
+  
+  .error-container-soft {
+    right: 10px;
+    left: 10px;
+    max-width: none;
+    width: auto;
+  }
 }
 </style>
 
-<!-- ================= BACK LINK ================= -->
-<a href="{% url 'user_app:work-item-detail' work_item.id %}" class="back-link">
-  <i class="fas fa-arrow-left"></i>
-  <span>Back to Work Item</span>
-</a>
-
-<!-- ================= PAGE HEADER ================= -->
-<div class="page-header">
-  <i class="fas fa-paperclip"></i>
-  <h5>{{ attachment_label }}</h5>
-</div>
-
-<!-- ================= ATTACHMENTS ================= -->
-<div class="custom-card">
-  <!-- HEADER -->
-  <div class="custom-card-header">
-    <div class="custom-card-header-title">
-      <i class="fas fa-file-archive"></i>
-      <span>Uploaded Files</span>
-    </div>
-  </div>
-
-  <!-- BODY -->
-  <div class="custom-card-body">
-    {% if attachments %}
-      {% regroup attachments by attachment_type as grouped_attachments %}
-
-      {% for group in grouped_attachments %}
-        <div class="attachment-group">
-          <div class="attachment-group-title">
-            {% if group.grouper == "matrix_a" %}
-              <i class="fas fa-table"></i>
-              Monthly Report Form – Matrix A
-            {% elif group.grouper == "matrix_b" %}
-              <i class="fas fa-table"></i>
-              Monthly Report Form – Matrix B
-            {% elif group.grouper == "mov" %}
-              <i class="fas fa-check-circle"></i>
-              Means of Verification (MOV)
-            {% endif %}
-          </div>
-
-          <ul class="file-list">
-            {% for f in group.list %}
-              <li class="file-item d-flex justify-content-between align-items-center">
-                <a href="{{ f.file.url }}" download class="file-link">
-                  <i class="far fa-file"></i>
-                  <span>{{ f.file.name|slice:"-35:" }}</span>
-                </a>
-
-                <div class="d-flex align-items-center gap-2">
-                  <span class="file-date">
-                    {{ f.uploaded_at|date:"M d, Y · h:i A" }}
-                  </span>
-
-                  {% if work_item.review_decision != "approved" %}
-                  <form method="post"
-                        action="{% url 'user_app:delete-attachment' f.id %}"
-                        onsubmit="return confirm('Delete this file?');">
-                    {% csrf_token %}
-                    <button type="submit"
-                            class="btn btn-sm btn-outline-danger">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </form>
-                  {% endif %}
-                </div>
-              </li>
-
-            {% endfor %}
-          </ul>
+<div class="attachments-page">
+  {% if messages %}
+  <div class="error-container-soft">
+    {% for message in messages %}
+      {% if message.tags == 'error' %}
+      <div class="error-alert-soft">
+        <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>{{ message }}</span>
         </div>
-      {% endfor %}
-
-    {% else %}
-      <div class="empty-state">
-        <i class="fas fa-folder-open" style="font-size: 2.5rem; color: var(--slate-400); margin-bottom: 0.75rem; display: block;"></i>
-        <div>No attachments uploaded yet.</div>
-      </div>
-    {% endif %}
-  </div>
-</div>
-
-<!-- ================= UPLOAD ================= -->
-<div class="custom-card">
-  <div class="custom-card-header">
-    <div class="custom-card-header-title">
-      <i class="fas fa-cloud-upload-alt"></i>
-      <span>Upload Files</span>
-    </div>
-  </div>
-
-  <div class="custom-card-body">
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="add_attachment">
-      <input type="hidden" name="attachment_type" value="{{ attachment_type }}">
-
-      <input type="file"
-             id="attachmentInput"
-             name="attachments"
-             multiple
-             hidden>
-
-      <div id="dropArea" class="dropzone">
-        <i class="fas fa-cloud-upload-alt dropzone-icon"></i>
-        <p class="dropzone-title">Drag & drop files here</p>
-        <p class="dropzone-subtitle">or click the button below to choose files</p>
-        <button type="button"
-                id="chooseFilesBtn"
-                class="choose-files-btn">
-          <i class="fas fa-folder-open"></i>
-          Choose Files
+        <button onclick="this.closest('.error-alert-soft').remove()">
+          <i class="fas fa-times"></i>
         </button>
-      </div>
-
-      <div id="fileListContainer" style="display: none;">
-        <div class="selected-files-header">
-          <i class="fas fa-folder"></i>
-          <span>Files ready to upload (<span id="fileCount">0</span>)</span>
+        <div class="progress-bar-soft">
+          <div class="progress-soft"></div>
         </div>
-        <ul id="fileList" class="selected-files-list"></ul>
       </div>
+      {% endif %}
+    {% endfor %}
+  </div>
 
-      <button type="submit" class="upload-btn">
-        <i class="fas fa-upload"></i>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.error-alert-soft');
+    alerts.forEach(alert => {
+      setTimeout(() => {
+        alert.style.animation = 'fadeOutSoft 0.3s ease-out forwards';
+        setTimeout(() => alert.remove(), 300);
+      }, 5000);
+      
+      alert.addEventListener('mouseenter', function() {
+        const progress = this.querySelector('.progress-soft');
+        if (progress) {
+          progress.style.animationPlayState = 'paused';
+        }
+      });
+      
+      alert.addEventListener('mouseleave', function() {
+        const progress = this.querySelector('.progress-soft');
+        if (progress) {
+          progress.style.animationPlayState = 'running';
+        }
+      });
+    });
+  });
+  </script>
+  {% endif %}
+
+  <!-- ================= BACK LINK ================= -->
+  <a href="{% url 'user_app:work-item-detail' work_item.id %}" class="back-link-soft">
+    <i class="fas fa-arrow-left"></i>
+    <span>Back to Work Item</span>
+  </a>
+
+  <!-- ================= PAGE HEADER ================= -->
+  <div class="page-header-soft">
+    <i class="fas fa-paperclip"></i>
+    <h5>{{ attachment_label }}</h5>
+  </div>
+
+  <!-- ================= ATTACHMENTS CARD ================= -->
+  <div class="card-soft">
+    <!-- HEADER -->
+    <div class="card-header-soft">
+      <div class="card-header-title-soft">
+        <i class="fas fa-file-archive"></i>
+        <span>Uploaded Files</span>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="card-body-soft">
+      {% if attachments %}
+        {% regroup attachments by attachment_type as grouped_attachments %}
+
+        {% for group in grouped_attachments %}
+          <div class="attachment-group-soft">
+            <div class="attachment-group-title-soft">
+              {% if group.grouper == "matrix_a" %}
+                <i class="fas fa-table"></i>
+                Monthly Report Form – Matrix A
+              {% elif group.grouper == "matrix_b" %}
+                <i class="fas fa-table"></i>
+                Monthly Report Form – Matrix B
+              {% elif group.grouper == "mov" %}
+                <i class="fas fa-check-circle"></i>
+                Means of Verification (MOV)
+              {% endif %}
+            </div>
+
+            <ul class="file-list-soft">
+              {% for f in group.list %}
+                <li class="file-item-soft">
+                  <a href="{{ f.file.url }}" download class="file-link-soft">
+                    <i class="far fa-file"></i>
+                    <span>{{ f.file.name|slice:"-35:" }}</span>
+                  </a>
+
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="file-date-soft">
+                      {{ f.uploaded_at|date:"M d, Y · h:i A" }}
+                    </span>
+
+                    {% if work_item.review_decision != "approved" %}
+                    <form method="post"
+                          action="{% url 'user_app:delete-attachment' f.id %}"
+                          onsubmit="return confirm('Delete this file?');">
+                      {% csrf_token %}
+                      <button type="submit"
+                              class="btn-delete-soft">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endfor %}
+
+      {% else %}
+        <div class="empty-state-soft">
+          <i class="fas fa-folder-open"></i>
+          <div>No attachments uploaded yet.</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ================= UPLOAD CARD ================= -->
+  <div class="card-soft">
+    <div class="card-header-soft">
+      <div class="card-header-title-soft">
+        <i class="fas fa-cloud-upload-alt"></i>
         <span>Upload Files</span>
-      </button>
-    </form>
+      </div>
+    </div>
+
+    <div class="card-body-soft">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_attachment">
+        <input type="hidden" name="attachment_type" value="{{ attachment_type }}">
+
+        <input type="file"
+               id="attachmentInput"
+               name="attachments"
+               multiple
+               hidden>
+
+        <div id="dropArea" class="dropzone-soft">
+          <i class="fas fa-cloud-upload-alt dropzone-icon-soft"></i>
+          <p class="dropzone-title-soft">Drag & drop files here</p>
+          <p class="dropzone-subtitle-soft">or click the button below to choose files</p>
+          <button type="button"
+                  id="chooseFilesBtn"
+                  class="choose-files-btn-soft">
+            <i class="fas fa-folder-open"></i>
+            Choose Files
+          </button>
+        </div>
+
+        <div id="fileListContainer" class="selected-files-container-soft" style="display: none;">
+          <div class="selected-files-header-soft">
+            <i class="fas fa-folder"></i>
+            <span>Files ready to upload (<span id="fileCount">0</span>)</span>
+          </div>
+          <ul id="fileList" class="selected-files-list-soft"></ul>
+        </div>
+
+        <button type="submit" class="upload-btn-soft" disabled>
+          <i class="fas fa-upload"></i>
+          <span>Upload Files</span>
+        </button>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -634,7 +793,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const fileListContainer = document.getElementById("fileListContainer");
   const fileCount = document.getElementById("fileCount");
   const chooseBtn = document.getElementById("chooseFilesBtn");
-  const uploadBtn = document.querySelector(".upload-btn");
+  const uploadBtn = document.querySelector(".upload-btn-soft");
 
   const dataTransfer = new DataTransfer();
 
@@ -705,24 +864,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     [...dataTransfer.files].forEach((file, index) => {
       const li = document.createElement("li");
-      li.className = "selected-file-item";
+      li.className = "selected-file-item-soft";
 
       li.innerHTML = `
-        <span class="selected-file-info">
+        <span class="selected-file-info-soft">
           <i class="far fa-file"></i>
           <span>${file.name}</span>
-          <span class="file-size">
+          <span class="file-size-soft">
             (${(file.size / 1024 / 1024).toFixed(2)} MB)
           </span>
         </span>
         <button type="button"
-                class="remove-file-btn"
+                class="remove-file-btn-soft"
                 title="Remove file">
           <i class="fas fa-times"></i>
         </button>
       `;
 
-      li.querySelector(".remove-file-btn")
+      li.querySelector(".remove-file-btn-soft")
         .addEventListener("click", () => removeFile(index));
 
       fileList.appendChild(li);
@@ -746,4 +905,4 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-{% endblock %}  
+{% endblock %}

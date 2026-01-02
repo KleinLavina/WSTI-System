@@ -92,15 +92,27 @@
           </div>
         </div>
 
-        <div class="wi-countdown-card">
-          <div class="wi-info-header">
-            <i class="fas fa-hourglass-half"></i>
-            <span>Time Remaining</span>
-          </div>
-          <div class="wi-countdown-content lifecycle-{{ item.workcycle.lifecycle_state }}">
-            {{ item.time_remaining }}
-          </div>
-        </div>
+            <div class="wi-countdown-card">
+            <div class="wi-info-header">
+                {% if item.status == "done" %}
+                <i class="fas fa-flag-checkered"></i>
+                <span>Submission Result</span>
+                {% else %}
+                <i class="fas fa-hourglass-half"></i>
+                <span>Time Remaining</span>
+                {% endif %}
+            </div>
+
+            <div class="wi-countdown-content
+                        {% if item.status == 'done' %}
+                            status-done
+                        {% else %}
+                            lifecycle-{{ item.workcycle.lifecycle_state }}
+                        {% endif %}">
+                {{ item.time_remaining }}
+            </div>
+            </div>
+
       </div>
 
     </section>
@@ -202,6 +214,11 @@
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(15, 23, 42, 0.1);
   border-color: #cbd5e1;
+}
+.wi-countdown-content.status-done {
+  background: rgba(111, 179, 77, 0.15);
+  border-color: rgba(111, 179, 77, 0.35);
+  color: #4a7d35;
 }
 
 .wi-card-inactive {

@@ -423,6 +423,32 @@ def workcycle_assignments(request, pk):
         workcycle=workcycle,
         is_active=False,
     )
+
+    # ----------------------------------
+    # SUBMISSION STATUS CALCULATION
+    # ----------------------------------
+    for item in list(active_items) + list(archived_items):
+        if item.submitted_at:
+            delta = item.workcycle.due_at - item.submitted_at
+
+            if delta.total_seconds() >= 0:
+                item.submission_status = "on_time"
+                item.submission_delta = None
+            else:
+                late = abs(delta)
+                days = late.days
+                hours = late.seconds // 3600
+
+                if days > 0:
+                    item.submission_delta = f"{days}d {hours}h"
+                else:
+                    item.submission_delta = f"{hours}h"
+
+                item.submission_status = "late"
+        else:
+            item.submission_status = None
+            item.submission_delta = None
+
     status_counts = {
         "done": active_items.filter(status="done").count(),
         "working_on_it": active_items.filter(status="working_on_it").count(),
@@ -434,6 +460,7 @@ def workcycle_assignments(request, pk):
         "approved": active_items.filter(review_decision="approved").count(),
         "revision": active_items.filter(review_decision="revision").count(),
     }
+
     return render(
         request,
         "admin/page/workcycle_assignments.html",
@@ -442,10 +469,11 @@ def workcycle_assignments(request, pk):
             "assignments": assignments,
             "active_items": active_items,
             "archived_items": archived_items,
-            "status_counts": status_counts,   # 👈 new
+            "status_counts": status_counts,
             "review_counts": review_counts,
         },
     )
+
 
 from django.views.decorators.http import require_POST
 

@@ -9,39 +9,48 @@
 
 <style>
 /* =====================================================
-   SOFT COLOR PALETTE
+   UPDATED COLOR PALETTE
 ===================================================== */
 :root {
-  /* Soft Neutrals */
-  --soft-white: #ffffff;
-  --soft-bg: #f8fafc;
-  --soft-border: #e2e8f0;
-  --soft-border-light: #f1f5f9;
+  /* Softer Neutrals with subtle warmth */
+  --soft-white: #fefefe;
+  --soft-bg: #f9fafb;
+  --soft-bg-alt: #f3f4f6;
+  --soft-border: #e5e7eb;
+  --soft-border-light: #f0f2f5;
   
   /* Soft Text Colors */
-  --soft-text-primary: #1e293b;
-  --soft-text-secondary: #475569;
-  --soft-text-tertiary: #64748b;
-  --soft-text-muted: #94a3b8;
+  --soft-text-primary: #1f2937;
+  --soft-text-secondary: #4b5563;
+  --soft-text-tertiary: #6b7280;
+  --soft-text-muted: #9ca3af;
   
-  /* Soft Accents */
-  --soft-blue: #3b82f6;
-  --soft-blue-light: #dbeafe;
-  --soft-green: #10b981;
-  --soft-green-light: #d1fae5;
-  --soft-amber: #f59e0b;
-  --soft-amber-light: #fef3c7;
-  --soft-red: #ef4444;
-  --soft-red-light: #fee2e2;
-  --soft-violet: #8b5cf6;
-  --soft-violet-light: #ede9fe;
-  --soft-cyan: #06b6d4;
-  --soft-cyan-light: #cffafe;
+  /* UPDATED: Review Colors */
+  --review-pending: #8b6fd6;       /* Muted violet */
+  --review-approved: #3fa38c;      /* Muted teal green */
+  --review-revision: #c0545e;      /* Muted crimson */
+  
+  /* UPDATED: Work Status Colors */
+  --status-not-started: #7b8794;   /* Muted slate */
+  --status-working: #b7791f;       /* Muted amber/brown */
+  --status-done: #6fb34d;          /* Muted green */
+  
+  /* Light versions for backgrounds */
+  --review-pending-light: #f5f3ff;
+  --review-approved-light: #f0fdfa;
+  --review-revision-light: #fef2f2;
+  --status-not-started-light: #f8fafc;
+  --status-working-light: #fef3c7;
+  --status-done-light: #f0fdf4;
   
   /* Soft Shadows */
-  --soft-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --soft-shadow-md: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --soft-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --soft-shadow-md: 0 1px 3px rgba(0, 0, 0, 0.08);
   --soft-shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.05);
+  
+  /* Subtle gradients */
+  --gradient-subtle: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  --gradient-card: linear-gradient(135deg, #ffffff 0%, #fefefe 100%);
 }
 
 /* =====================================================
@@ -56,16 +65,37 @@
 }
 
 /* =====================================================
-   COMPACT HEADER
+   COMPACT HEADER WITH SUBTLE BACKGROUND
 ===================================================== */
 .header-compact {
-  background: var(--soft-white);
+  background: var(--gradient-card);
   border-radius: 12px;
   padding: 1.25rem;
   margin-bottom: 1.25rem;
   box-shadow: var(--soft-shadow-md);
   border: 1px solid var(--soft-border);
   position: relative;
+  overflow: hidden;
+}
+
+/* Subtle background pattern */
+.header-compact::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(139, 111, 214, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 90% 80%, rgba(111, 179, 77, 0.02) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.header-compact > * {
+  position: relative;
+  z-index: 1;
 }
 
 .header-top-row {
@@ -74,7 +104,7 @@
   align-items: flex-start;
   margin-bottom: 0.75rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--soft-border-light);
+  border-bottom: 1px solid black;
 }
 
 .header-title-section {
@@ -94,7 +124,7 @@
 }
 
 .header-title i {
-  color: var(--soft-blue);
+  color: var(--review-pending);
   font-size: 1.125rem;
 }
 
@@ -107,7 +137,7 @@
 }
 
 .header-meta-row i {
-  color: var(--soft-amber);
+  color: var(--status-working);
   font-size: 0.875rem;
 }
 
@@ -129,33 +159,54 @@
   text-decoration: none;
   transition: all 0.15s ease;
   border: 1px solid;
-  background: var(--soft-white);
+  background: var(--gradient-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.action-btn:hover::before {
+  opacity: 1;
 }
 
 .action-btn-primary {
-  border-color: var(--soft-blue-light);
-  color: var(--soft-blue);
-  background: var(--soft-blue-light);
+  border-color: rgba(139, 111, 214, 0.3);
+  color: var(--review-pending);
+  background: linear-gradient(135deg, rgba(139, 111, 214, 0.1), rgba(139, 111, 214, 0.05));
+  box-shadow: 0 1px 2px rgba(139, 111, 214, 0.1);
 }
 
 .action-btn-primary:hover {
-  background: var(--soft-blue);
+  border-color: var(--review-pending);
+  background: var(--review-pending);
   color: var(--soft-white);
-  border-color: var(--soft-blue);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 2px 8px rgba(139, 111, 214, 0.2);
 }
 
 .action-btn-secondary {
-  border-color: var(--soft-border);
+  border-color: rgba(229, 231, 235, 0.5);
   color: var(--soft-text-secondary);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.8));
 }
 
 .action-btn-secondary:hover {
   border-color: var(--soft-text-muted);
-  background: var(--soft-bg);
+  background: var(--soft-bg-alt);
   color: var(--soft-text-primary);
   transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .action-btn i {
@@ -177,17 +228,29 @@
   line-height: 1.5;
   flex: 1;
   margin: 0;
+  padding: 0.5rem;
+  background: rgba(249, 250, 251, 0.5);
+  border-radius: 6px;
+  border-left: 3px solid var(--soft-border);
 }
 
 .header-due {
   font-size: 0.8125rem;
   color: var(--soft-text-tertiary);
-  background: var(--soft-bg);
+  background: var(--soft-bg-alt);
   padding: 0.375rem 0.75rem;
   border-radius: 6px;
   border: 1px solid var(--soft-border);
   white-space: nowrap;
   margin-left: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.header-due i {
+  color: var(--status-working);
+  font-size: 0.75rem;
 }
 
 /* =====================================================
@@ -207,10 +270,10 @@
 }
 
 /* =====================================================
-   COMPACT PANEL CARDS
+   COMPACT PANEL CARDS WITH SOFTER BACKGROUNDS
 ===================================================== */
 .panel-compact {
-  background: var(--soft-white);
+  background: var(--gradient-card);
   border: 1px solid var(--soft-border);
   border-radius: 10px;
   overflow: hidden;
@@ -218,11 +281,22 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.panel-compact::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--soft-border-light), transparent);
 }
 
 .panel-header-compact {
   padding: 0.875rem 1rem;
-  background: var(--soft-bg);
+  background: linear-gradient(135deg, var(--soft-bg), var(--soft-bg-alt));
   border-bottom: 1px solid var(--soft-border);
   display: flex;
   align-items: center;
@@ -241,6 +315,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(249, 250, 251, 0.8));
 }
 
 /* =====================================================
@@ -257,6 +332,8 @@
   letter-spacing: 0.05em;
   margin-bottom: 0.625rem;
   font-weight: 600;
+  padding-left: 0.25rem;
+  border-left: 2px solid var(--review-pending);
 }
 
 /* Status indicator */
@@ -265,15 +342,16 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 0.75rem;
-  background: var(--soft-bg);
+  background: linear-gradient(135deg, var(--soft-bg), var(--soft-bg-alt));
   border: 1px solid var(--soft-border);
   border-radius: 8px;
   margin-bottom: 0.875rem;
   font-size: 0.8125rem;
+  border-left: 3px solid var(--status-working);
 }
 
 .status-indicator i {
-  color: var(--soft-cyan);
+  color: var(--status-working);
   font-size: 0.75rem;
 }
 
@@ -292,7 +370,7 @@
   flex: 1;
   padding: 0.75rem 0.5rem;
   border: 1px solid var(--soft-border);
-  background: var(--soft-white);
+  background: var(--gradient-card);
   color: var(--soft-text-secondary);
   border-radius: 8px;
   font-size: 0.8125rem;
@@ -304,24 +382,43 @@
   align-items: center;
   gap: 0.25rem;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.status-btn-compact::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.status-btn-compact:hover::before {
+  opacity: 1;
 }
 
 .status-btn-compact:hover {
-  border-color: var(--soft-blue);
-  color: var(--soft-blue);
-  background: var(--soft-blue-light);
+  border-color: var(--review-pending);
+  color: var(--review-pending);
+  background: linear-gradient(135deg, var(--review-pending-light), rgba(245, 243, 255, 0.5));
   transform: translateY(-1px);
+  box-shadow: var(--soft-shadow-sm);
 }
 
 .status-btn-compact.active-not-started {
-  background: var(--soft-bg);
-  border-color: var(--soft-text-tertiary);
+  background: linear-gradient(135deg, var(--status-not-started-light), rgba(248, 250, 252, 0.7));
+  border-color: var(--status-not-started);
   color: var(--soft-text-primary);
 }
 
 .status-btn-compact.active-progress {
-  background: var(--soft-amber-light);
-  border-color: var(--soft-amber);
+  background: linear-gradient(135deg, var(--status-working-light), rgba(254, 243, 199, 0.7));
+  border-color: var(--status-working);
   color: var(--soft-text-primary);
 }
 
@@ -340,11 +437,11 @@
 
 /* Completed alert */
 .completed-alert-compact {
-  background: var(--soft-green-light);
+  background: linear-gradient(135deg, var(--status-done-light), rgba(240, 253, 244, 0.7));
   color: var(--soft-text-primary);
   padding: 0.875rem 1rem;
   border-radius: 8px;
-  border: 1px solid var(--soft-green);
+  border: 1px solid var(--status-done);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -353,12 +450,12 @@
 }
 
 .completed-alert-compact i {
-  color: var(--soft-green);
+  color: var(--status-done);
   font-size: 0.875rem;
 }
 
 .btn-undo-compact {
-  background: var(--soft-red);
+  background: linear-gradient(135deg, var(--review-revision), #b1454f);
   color: var(--soft-white);
   border: none;
   border-radius: 6px;
@@ -370,11 +467,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  box-shadow: 0 1px 2px rgba(192, 84, 94, 0.2);
 }
 
 .btn-undo-compact:hover {
-  background: #dc2626;
+  background: linear-gradient(135deg, #b1454f, #a03a44);
   transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(192, 84, 94, 0.3);
 }
 
 .btn-undo-compact i {
@@ -385,10 +484,11 @@
    COMPACT META SECTION
 ===================================================== */
 .meta-section-compact {
-  background: var(--soft-bg);
+  background: linear-gradient(135deg, var(--soft-bg), var(--soft-bg-alt));
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1.25rem;
+  border: 1px solid var(--soft-border);
 }
 
 .meta-row-compact {
@@ -416,7 +516,7 @@
   gap: 0.375rem;
 }
 
-/* Badges */
+/* UPDATED Badges with new colors */
 .badge-status-compact {
   padding: 0.25rem 0.5rem;
   border-radius: 12px;
@@ -424,24 +524,26 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  background: var(--gradient-card);
+  border: 1px solid;
 }
 
 .badge-approved {
-  background: var(--soft-green-light);
-  color: var(--soft-green);
-  border: 1px solid var(--soft-green);
+  background: linear-gradient(135deg, var(--review-approved-light), rgba(240, 253, 250, 0.7));
+  color: var(--review-approved);
+  border-color: var(--review-approved);
 }
 
 .badge-revision {
-  background: var(--soft-red-light);
-  color: var(--soft-red);
-  border: 1px solid var(--soft-red);
+  background: linear-gradient(135deg, var(--review-revision-light), rgba(254, 242, 242, 0.7));
+  color: var(--review-revision);
+  border-color: var(--review-revision);
 }
 
 .badge-pending {
-  background: var(--soft-cyan-light);
-  color: var(--soft-cyan);
-  border: 1px solid var(--soft-cyan);
+  background: linear-gradient(135deg, var(--review-pending-light), rgba(245, 243, 255, 0.7));
+  color: var(--review-pending);
+  border-color: var(--review-pending);
 }
 
 /* =====================================================
@@ -456,7 +558,7 @@
 .btn-submit-compact {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: var(--soft-green);
+  background: linear-gradient(135deg, var(--status-done), #5da041);
   border: none;
   border-radius: 8px;
   color: var(--soft-white);
@@ -468,12 +570,13 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  box-shadow: 0 1px 2px rgba(111, 179, 77, 0.2);
 }
 
 .btn-submit-compact:hover:not(:disabled) {
-  background: #059669;
+  background: linear-gradient(135deg, #5da041, #4d8a34);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+  box-shadow: 0 2px 8px rgba(111, 179, 77, 0.3);
 }
 
 .btn-submit-compact:disabled {
@@ -487,6 +590,10 @@
   font-size: 0.75rem;
   text-align: center;
   margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--soft-bg-alt);
+  border-radius: 4px;
+  border-left: 2px solid var(--soft-border);
 }
 
 /* =====================================================
@@ -502,12 +609,14 @@
   font-weight: 600;
   margin-bottom: 0.375rem;
   display: block;
+  padding-left: 0.25rem;
+  border-left: 2px solid var(--status-working);
 }
 
 .form-input-compact {
   width: 100%;
   padding: 0.625rem 0.75rem;
-  background: var(--soft-white);
+  background: var(--gradient-card);
   border: 1px solid var(--soft-border);
   border-radius: 6px;
   color: var(--soft-text-primary);
@@ -517,8 +626,9 @@
 
 .form-input-compact:focus {
   outline: none;
-  border-color: var(--soft-blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--review-pending);
+  background: var(--soft-white);
+  box-shadow: 0 0 0 3px rgba(139, 111, 214, 0.1);
 }
 
 .form-input-compact::placeholder {
@@ -540,7 +650,7 @@ textarea.form-input-compact {
 
 .status-chip-compact {
   padding: 0.375rem 0.625rem;
-  background: var(--soft-white);
+  background: var(--gradient-card);
   border: 1px solid var(--soft-border);
   border-radius: 16px;
   color: var(--soft-text-secondary);
@@ -551,14 +661,15 @@ textarea.form-input-compact {
 }
 
 .status-chip-compact:hover {
-  background: var(--soft-bg);
-  border-color: var(--soft-blue);
-  color: var(--soft-blue);
+  background: linear-gradient(135deg, var(--review-pending-light), rgba(245, 243, 255, 0.5));
+  border-color: var(--review-pending);
+  color: var(--review-pending);
+  transform: translateY(-1px);
 }
 
 .btn-save-compact {
   padding: 0.625rem 1rem;
-  background: var(--soft-blue);
+  background: linear-gradient(135deg, var(--review-pending), #7a5bd6);
   border: none;
   border-radius: 6px;
   color: var(--soft-white);
@@ -569,11 +680,13 @@ textarea.form-input-compact {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  box-shadow: 0 1px 2px rgba(139, 111, 214, 0.2);
 }
 
 .btn-save-compact:hover {
-  background: #2563eb;
+  background: linear-gradient(135deg, #7a5bd6, #6b4bc7);
   transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(139, 111, 214, 0.3);
 }
 
 /* =====================================================
@@ -581,6 +694,10 @@ textarea.form-input-compact {
 ===================================================== */
 .attachments-section-compact {
   margin-top: 1.5rem;
+  background: var(--gradient-card);
+  border-radius: 10px;
+  padding: 1.25rem;
+  border: 1px solid var(--soft-border);
 }
 
 .section-title-compact {
@@ -591,10 +708,12 @@ textarea.form-input-compact {
   display: flex;
   align-items: center;
   gap: 0.375rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--soft-border-light);
 }
 
 .section-title-compact i {
-  color: var(--soft-violet);
+  color: var(--review-pending);
   font-size: 0.875rem;
 }
 
@@ -611,7 +730,7 @@ textarea.form-input-compact {
 }
 
 .attachment-card-compact {
-  background: var(--soft-white);
+  background: linear-gradient(135deg, var(--soft-white), var(--soft-bg));
   border: 1px solid var(--soft-border);
   border-radius: 8px;
   padding: 1rem;
@@ -619,10 +738,29 @@ textarea.form-input-compact {
   text-decoration: none;
   transition: all 0.15s ease;
   display: block;
+  position: relative;
+  overflow: hidden;
+}
+
+.attachment-card-compact::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.attachment-card-compact:hover::before {
+  opacity: 1;
 }
 
 .attachment-card-compact:hover {
-  border-color: var(--soft-blue);
+  border-color: var(--review-pending);
+  background: linear-gradient(135deg, var(--review-pending-light), var(--soft-white));
   transform: translateY(-2px);
   box-shadow: var(--soft-shadow-md);
 }
@@ -630,10 +768,12 @@ textarea.form-input-compact {
 .attachment-icon-compact {
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 .attachment-icon-compact.uploaded {
-  color: var(--soft-green);
+  color: var(--status-done);
 }
 
 .attachment-icon-compact.pending {
@@ -645,6 +785,8 @@ textarea.form-input-compact {
   font-weight: 500;
   font-size: 0.8125rem;
   margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 .badge-compact {
@@ -652,16 +794,20 @@ textarea.form-input-compact {
   border-radius: 12px;
   font-size: 0.6875rem;
   font-weight: 600;
+  position: relative;
+  z-index: 1;
 }
 
 .badge-uploaded-compact {
-  background: var(--soft-green-light);
-  color: var(--soft-green);
+  background: linear-gradient(135deg, var(--status-done-light), rgba(240, 253, 244, 0.7));
+  color: var(--status-done);
+  border: 1px solid rgba(111, 179, 77, 0.2);
 }
 
 .badge-not-uploaded-compact {
-  background: var(--soft-bg);
+  background: linear-gradient(135deg, var(--soft-bg-alt), var(--soft-bg));
   color: var(--soft-text-tertiary);
+  border: 1px solid var(--soft-border);
 }
 
 /* =====================================================
@@ -670,6 +816,20 @@ textarea.form-input-compact {
 .qxdlg-modal-overlay[data-qxdlg-state="closed"] {
   display: none;
 }
+.submission-indicator {
+  margin-left: 6px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.submission-indicator.on-time {
+  color: var(--status-done);
+}
+
+.submission-indicator.late {
+  color: var(--lifecycle-lapsed);
+}
+
 </style>
 
 <div class="work-item-page">
@@ -684,7 +844,12 @@ textarea.form-input-compact {
         </h1>
         <div class="header-meta-row">
           <i class="far fa-user-circle"></i>
-          <span>Assigned to {{ request.user.get_full_name|default:request.user.username }}</span>
+          <span>Assigned to {{ request.user.get_full_name|default:request.user.username }}</span><br>
+          <div class="wi-countdown">
+  <i class="fas fa-hourglass-half"></i>
+  {{ work_item.time_remaining }}
+</div>
+
         </div>
       </div>
       
@@ -700,10 +865,11 @@ textarea.form-input-compact {
           <span>Discussion</span>
         </a>
         
+        <!-- Changed from Home to Return -->
         <a href="{% url 'user_app:work-items' %}"
            class="action-btn action-btn-secondary">
-          <i class="fas fa-home"></i>
-          <span>Home</span>
+          <i class="fas fa-arrow-left"></i>
+          <span>Return</span>
         </a>
       </div>
     </div>
@@ -717,8 +883,29 @@ textarea.form-input-compact {
       {% endif %}
       <div class="header-due">
         <i class="far fa-calendar-alt"></i>
-        Due {{ work_item.workcycle.due_at|date:"M d, Y · g:i A" }}
+        <span>Due {{ work_item.workcycle.due_at|date:"M d, Y · g:i A" }}</span>
       </div>
+    </div>
+  </div>
+
+  <!-- Compact Attachments Section -->
+  <div class="attachments-section-compact">
+    <h5 class="section-title-compact">
+      <i class="fas fa-paperclip"></i>
+      Attachments
+    </h5>
+    <div class="attachments-grid-compact">
+      {% for key, label in attachment_types %}
+      <a href="{% url 'user_app:work-item-attachments' work_item.id %}?type={{ key }}" class="attachment-card-compact">
+        <i class="fas fa-folder-open attachment-icon-compact {% if key in uploaded_types %}uploaded{% else %}pending{% endif %}"></i>
+        <div class="attachment-title-compact">{{ label }}</div>
+        {% if key in uploaded_types %}
+        <span class="badge-compact badge-uploaded-compact">Uploaded</span>
+        {% else %}
+        <span class="badge-compact badge-not-uploaded-compact">Not Uploaded</span>
+        {% endif %}
+      </a>
+      {% endfor %}
     </div>
   </div>
 
@@ -727,7 +914,7 @@ textarea.form-input-compact {
     <!-- Details Panel -->
     <div class="panel-compact">
       <div class="panel-header-compact">
-        <i class="fas fa-info-circle" style="color: var(--soft-cyan);"></i>
+        <i class="fas fa-info-circle" style="color: var(--review-pending);"></i>
         Status & Details
       </div>
       <div class="panel-body-compact">
@@ -759,7 +946,7 @@ textarea.form-input-compact {
               <input type="hidden" name="status" value="working_on_it">
               <button type="submit" class="status-btn-compact {% if work_item.status == 'working_on_it' %}active-progress{% endif %}">
                 <i class="fas fa-spinner {% if work_item.status == 'working_on_it' %}spin{% endif %}"></i>
-                <span>In Progress</span>
+                <span>Working On It</span> <!-- CHANGED: In Progress → Working On It -->
               </button>
             </form>
           </div>
@@ -793,18 +980,39 @@ textarea.form-input-compact {
               {{ work_item.get_review_decision_display }}
             </span>
           </div>
-          <div class="meta-row-compact">
-            <span class="meta-label-compact">Submitted</span>
-            <span class="meta-value-compact">
-              {% if work_item.submitted_at %}
-              <i class="fas fa-check-circle" style="color: var(--soft-green);"></i>
-              {{ work_item.submitted_at|date:"M d, Y · H:i" }}
-              {% else %}
-              <i class="fas fa-clock" style="color: var(--soft-text-muted);"></i>
-              Not yet
-              {% endif %}
-            </span>
-          </div>
+            <div class="meta-row-compact">
+              <span class="meta-label-compact">Submitted</span>
+
+              <span class="meta-value-compact">
+                {% if work_item.submitted_at %}
+
+                  <!-- icon -->
+                  {% if submission_status == "on_time" %}
+                    <i class="fas fa-check-circle" style="color: var(--status-done);"></i>
+                  {% else %}
+                    <i class="fas fa-exclamation-circle" style="color: var(--lifecycle-lapsed);"></i>
+                  {% endif %}
+
+                  <!-- full date -->
+                  {{ work_item.submitted_at|date:"l, F d, Y · h:i A" }}
+
+                  <!-- indicator -->
+                  <span class="submission-indicator
+                        {% if submission_status == 'on_time' %}on-time{% else %}late{% endif %}">
+                    {% if submission_status == "on_time" %}
+                      — On time
+                    {% else %}
+                      — Late by {{ submission_delta }}
+                    {% endif %}
+                  </span>
+
+                {% else %}
+                  <i class="fas fa-clock" style="color: var(--soft-text-muted);"></i>
+                  Not yet submitted
+                {% endif %}
+              </span>
+            </div>
+
         </div>
 
         <!-- Submit Button -->
@@ -831,7 +1039,7 @@ textarea.form-input-compact {
       {% csrf_token %}
       <input type="hidden" name="action" value="update_context">
       <div class="panel-header-compact">
-        <i class="fas fa-sticky-note" style="color: var(--soft-amber);"></i>
+        <i class="fas fa-sticky-note" style="color: var(--status-working);"></i>
         Notes
       </div>
       <div class="panel-body-compact">
@@ -861,26 +1069,7 @@ textarea.form-input-compact {
     </form>
   </div>
 
-  <!-- Compact Attachments Section -->
-  <div class="attachments-section-compact">
-    <h5 class="section-title-compact">
-      <i class="fas fa-paperclip"></i>
-      Attachments
-    </h5>
-    <div class="attachments-grid-compact">
-      {% for key, label in attachment_types %}
-      <a href="{% url 'user_app:work-item-attachments' work_item.id %}?type={{ key }}" class="attachment-card-compact">
-        <i class="fas fa-folder-open attachment-icon-compact {% if key in uploaded_types %}uploaded{% else %}pending{% endif %}"></i>
-        <div class="attachment-title-compact">{{ label }}</div>
-        {% if key in uploaded_types %}
-        <span class="badge-compact badge-uploaded-compact">Uploaded</span>
-        {% else %}
-        <span class="badge-compact badge-not-uploaded-compact">Not Uploaded</span>
-        {% endif %}
-      </a>
-      {% endfor %}
-    </div>
-  </div>
+
 </div>
 
 <script>
@@ -901,7 +1090,7 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener('mouseleave', function() {
       this.style.transform = 'translateY(0)';
     });
-  });
+  }); 
 });
 </script>
 

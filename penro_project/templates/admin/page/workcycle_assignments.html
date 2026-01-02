@@ -22,6 +22,11 @@
   --gray-300: #d1d5db;
   --gray-600: #4b5563;
   --gray-700: #374151;
+    --submission-on-time: #10b981;   /* same as --success */
+  --submission-late: #ef4444;      /* same as --danger */
+
+  --submission-on-time-bg: #ecfdf5;
+  --submission-late-bg: #fef2f2;
 }
 
 /* COMPACT LAYOUT */
@@ -431,6 +436,43 @@
   align-items: center;
   gap: 6px;
 }
+/* ===============================
+   SUBMISSION TIMING INDICATOR
+================================ */
+.submission-indicator {
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ON TIME */
+.submission-indicator.on-time {
+  color: var(--submission-on-time);
+  background: var(--submission-on-time-bg);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* LATE */
+.submission-indicator.late {
+  color: var(--submission-late);
+  background: var(--submission-late-bg);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ICON COLORS */
+.wc-date .icon-on-time {
+  color: var(--submission-on-time);
+}
+
+.wc-date .icon-late {
+  color: var(--submission-late);
+}
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
@@ -471,6 +513,20 @@
     gap: 8px;
   }
 }
+.submission-indicator {
+  margin-left: 6px;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.submission-indicator.on-time {
+  color: var(--status-done);
+}
+
+.submission-indicator.late {
+  color: var(--lifecycle-lapsed);
+}
+
 </style>
 
 <!-- HEADER (KEPT SPACIOUS) -->
@@ -649,8 +705,22 @@
         <div>
 {% if item.submitted_at %}
   <div class="wc-date">
-    <i class="far fa-clock"></i>
+    {% if item.submission_status == "on_time" %}
+      <i class="fas fa-check-circle" style="color: var(--status-done);"></i>
+    {% else %}
+      <i class="fas fa-exclamation-circle" style="color: var(--lifecycle-lapsed);"></i>
+    {% endif %}
+
     {{ item.submitted_at|date:"l, F j, Y · g:i A" }}
+
+    <span class="submission-indicator
+          {% if item.submission_status == 'on_time' %}on-time{% else %}late{% endif %}">
+      {% if item.submission_status == "on_time" %}
+        — On time
+      {% else %}
+        — Late by {{ item.submission_delta }}
+      {% endif %}
+    </span>
   </div>
 {% else %}
   <span class="wc-badge" style="background: var(--gray-200); color: var(--gray-700);">
@@ -658,6 +728,7 @@
     Not Submitted
   </span>
 {% endif %}
+
 
         </div>
       </div>

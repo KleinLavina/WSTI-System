@@ -92,15 +92,18 @@
           </div>
         </div>
 
+        {% if item.is_active %}
         <div class="wi-countdown-card">
-          <div class="wi-info-header">
+        <div class="wi-info-header">
             <i class="fas fa-hourglass-half"></i>
             <span>Time Remaining</span>
-          </div>
-          <div class="wi-countdown-content lifecycle-{{ item.workcycle.lifecycle_state }}">
-            {{ item.time_remaining }}
-          </div>
         </div>
+        <div class="wi-countdown-content lifecycle-{{ item.workcycle.lifecycle_state }}">
+            {{ item.time_remaining }}
+        </div>
+        </div>
+        {% endif %}
+
       </div>
 
     </section>

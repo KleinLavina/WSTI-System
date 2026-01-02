@@ -1,3 +1,8 @@
-from .admin_notification_signals import *
-from .userActReq_notification_signals import *
-from .userInformational_notification_signals import *
+# notifications/signals/__init__.py
+
+from .reminder import *
+from .status import *
+from .review import *
+from .assignment import *
+from .message import *
+from .system import *

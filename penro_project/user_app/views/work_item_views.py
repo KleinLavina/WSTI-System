@@ -22,61 +22,108 @@ from ..services.work_item_service import (
 # ============================================================
 # TIME REMAINING LOGIC (STATUS-AWARE)
 # ============================================================
-def calculate_time_remaining(due_at, status):
+def calculate_time_remaining(due_at, status, submitted_at=None):
     """
     Human-readable time logic based on:
     - deadline
-    - work item status
+    - submission timestamp
 
-    Rules:
-    1. DONE before deadline  -> countdown continues (submitted)
-    2. NOT DONE past deadline -> overdue countdown continues
-    3. DONE past deadline -> countdown stops, show how late
+    RULES:
+    1. Not submitted → live countdown
+    2. Submitted → frozen at submitted_at
     """
-    now = timezone.now()
-    delta = due_at - now
 
-    # ---------------------------
-    # BEFORE DEADLINE
-    # ---------------------------
+    now = timezone.now()
+
+    # -------------------------------------------------
+    # NOT SUBMITTED → LIVE COUNTDOWN
+    # -------------------------------------------------
+    if status != "done" or not submitted_at:
+        delta = due_at - now
+
+        if delta.total_seconds() >= 0:
+            days = delta.days
+            hours = delta.seconds // 3600
+            minutes = (delta.seconds % 3600) // 60
+
+            if days > 0:
+                return f"{days}d remaining"
+            elif hours > 0:
+                return f"{hours}h remaining"
+            else:
+                return f"{minutes}m remaining"
+
+        # overdue & not submitted
+        overdue = abs(delta)
+        days = overdue.days
+        hours = overdue.seconds // 3600
+        minutes = (overdue.seconds % 3600) // 60
+
+        if days > 0:
+            return f"{days}d {hours}h overdue"
+        elif hours > 0:
+            return f"{hours}h {minutes}m overdue"
+        else:
+            return f"{minutes}m overdue"
+
+    # -------------------------------------------------
+    # SUBMITTED → FROZEN TIME
+    # -------------------------------------------------
+    delta = due_at - submitted_at
+
     if delta.total_seconds() >= 0:
         days = delta.days
         hours = delta.seconds // 3600
         minutes = (delta.seconds % 3600) // 60
 
         if days > 0:
-            remaining = f"{days}d remaining"
+            return f"Submitted {days}d early"
         elif hours > 0:
-            remaining = f"{hours}h remaining"
+            return f"Submitted {hours}h early"
         else:
-            remaining = f"{minutes}m remaining"
+            return f"Submitted {minutes}m early"
 
-        if status == "done":
-            return f"{remaining} (submitted)"
-
-        return remaining
-
-    # ---------------------------
-    # AFTER DEADLINE
-    # ---------------------------
-    overdue = abs(delta)
-    days = overdue.days
-    hours = overdue.seconds // 3600
-    minutes = (overdue.seconds % 3600) // 60
+    # submitted late
+    late = abs(delta)
+    days = late.days
+    hours = late.seconds // 3600
+    minutes = (late.seconds % 3600) // 60
 
     if days > 0:
-        overdue_str = f"{days}d {hours}h"
+        return f"Submitted {days}d {hours}h late"
     elif hours > 0:
-        overdue_str = f"{hours}h {minutes}m"
+        return f"Submitted {hours}h {minutes}m late"
     else:
-        overdue_str = f"{minutes}m"
+        return f"Submitted {minutes}m late"
 
-    # DONE but late → stop countdown
-    if status == "done":
-        return f"Submitted {overdue_str} late"
+def get_submission_indicator(due_at, submitted_at):
+    """
+    Returns:
+    - submission_status: 'on_time' | 'late' | None
+    - submission_delta: human-readable string
+    """
 
-    # NOT DONE → keep overdue countdown
-    return f"{overdue_str} overdue"
+    if not submitted_at:
+        return None, None
+
+    delta = due_at - submitted_at
+    seconds = abs(int(delta.total_seconds()))
+
+    days = seconds // 86400
+    hours = (seconds % 86400) // 3600
+    minutes = (seconds % 3600) // 60
+
+    if days > 0:
+        diff = f"{days}d {hours}h"
+    elif hours > 0:
+        diff = f"{hours}h {minutes}m"
+    else:
+        diff = f"{minutes}m"
+
+    if delta.total_seconds() >= 0:
+        return "on_time", diff
+    else:
+        return "late", diff
 
 
 # ============================================================
@@ -200,9 +247,11 @@ def user_work_items(request):
     work_items_list = list(qs)
     for item in work_items_list:
         item.time_remaining = calculate_time_remaining(
-            item.workcycle.due_at,
-            item.status
+            due_at=item.workcycle.due_at,
+            status=item.status,
+            submitted_at=item.submitted_at
         )
+
 
     total_active_count = base_qs.count()
 
@@ -237,6 +286,26 @@ def user_work_item_detail(request, item_id):
         is_active=True
     )
 
+    # -------------------------------------------------
+    # TIME REMAINING (FROZEN IF SUBMITTED)
+    # -------------------------------------------------
+    work_item.time_remaining = calculate_time_remaining(
+        due_at=work_item.workcycle.due_at,
+        status=work_item.status,
+        submitted_at=work_item.submitted_at
+    )
+
+    # -------------------------------------------------
+    # SUBMISSION STATUS (ON TIME / LATE)
+    # -------------------------------------------------
+    submission_status, submission_delta = get_submission_indicator(
+        due_at=work_item.workcycle.due_at,
+        submitted_at=work_item.submitted_at
+    )
+
+    # -------------------------------------------------
+    # HANDLE ACTIONS
+    # -------------------------------------------------
     if request.method == "POST":
         action = request.POST.get("action")
 
@@ -264,7 +333,10 @@ def user_work_item_detail(request, item_id):
                 messages.success(request, "Work item submitted successfully.")
 
             elif action == "undo_submit":
-                if work_item.status == "done" and work_item.review_decision == "pending":
+                if (
+                    work_item.status == "done"
+                    and work_item.review_decision == "pending"
+                ):
                     work_item.status = "working_on_it"
                     work_item.save(update_fields=["status"])
                     messages.info(request, "Submission reverted.")
@@ -279,6 +351,9 @@ def user_work_item_detail(request, item_id):
         except Exception as e:
             messages.error(request, str(e))
 
+    # -------------------------------------------------
+    # ATTACHMENTS
+    # -------------------------------------------------
     attachments = work_item.attachments.all()
 
     attachment_types = [
@@ -291,6 +366,9 @@ def user_work_item_detail(request, item_id):
         work_item.attachments.values_list("attachment_type", flat=True)
     )
 
+    # -------------------------------------------------
+    # RENDER
+    # -------------------------------------------------
     return render(
         request,
         "user/page/work_item_detail.html",
@@ -301,8 +379,14 @@ def user_work_item_detail(request, item_id):
             "status_choices": WorkItem._meta.get_field("status").choices,
             "attachment_types": attachment_types,
             "uploaded_types": uploaded_types,
+
+            # ✅ submission metadata for UI
+            "submission_status": submission_status,   # on_time | late | None
+            "submission_delta": submission_delta,     # "2h 15m"
         }
     )
+
+
 
 # ============================================================
 # INACTIVE WORK ITEMS (WITH FILTER COUNTS)
@@ -312,25 +396,29 @@ def user_inactive_work_items(request):
     """
     List INACTIVE (archived) work items with:
     - search
-    - filters
+    - work status filter
+    - review status filter
     - sorting
     - filter counts
     """
 
+    # -------------------------------------------------
+    # BASE QUERYSET (ARCHIVED ONLY)
+    # -------------------------------------------------
     base_qs = (
         WorkItem.objects
         .select_related("workcycle")
         .filter(
             owner=request.user,
-            is_active=False,  # WorkItem archived
+            is_active=False,  # Archived work items only
         )
     )
 
     qs = base_qs
 
-    # ==========================
+    # -------------------------------------------------
     # SEARCH
-    # ==========================
+    # -------------------------------------------------
     search = request.GET.get("q", "").strip()
     if search:
         qs = qs.filter(
@@ -339,9 +427,9 @@ def user_inactive_work_items(request):
             Q(inactive_note__icontains=search)
         )
 
-    # ==========================
-    # WORK ITEM FILTERS
-    # ==========================
+    # -------------------------------------------------
+    # WORK ITEM FILTERS (NO LIFECYCLE)
+    # -------------------------------------------------
     status = request.GET.get("status")
     if status in {"not_started", "working_on_it", "done"}:
         qs = qs.filter(status=status)
@@ -350,9 +438,9 @@ def user_inactive_work_items(request):
     if review in {"pending", "approved", "revision"}:
         qs = qs.filter(review_decision=review)
 
-    # ==========================
-    # CALCULATE FILTER COUNTS
-    # ==========================
+    # -------------------------------------------------
+    # FILTER COUNTS (FROM ARCHIVED BASE)
+    # -------------------------------------------------
     count_base = base_qs
     if search:
         count_base = count_base.filter(
@@ -361,30 +449,28 @@ def user_inactive_work_items(request):
             Q(inactive_note__icontains=search)
         )
 
-    # Work Status Counts
     status_counts = {
-        'not_started': count_base.filter(status='not_started').count(),
-        'working_on_it': count_base.filter(status='working_on_it').count(),
-        'done': count_base.filter(status='done').count(),
+        "not_started": count_base.filter(status="not_started").count(),
+        "working_on_it": count_base.filter(status="working_on_it").count(),
+        "done": count_base.filter(status="done").count(),
     }
 
-    # Review Status Counts
     review_counts = {
-        'pending': count_base.filter(review_decision='pending').count(),
-        'approved': count_base.filter(review_decision='approved').count(),
-        'revision': count_base.filter(review_decision='revision').count(),
+        "pending": count_base.filter(review_decision="pending").count(),
+        "approved": count_base.filter(review_decision="approved").count(),
+        "revision": count_base.filter(review_decision="revision").count(),
     }
 
-    # ==========================
-    # ADD TIME REMAINING
-    # ==========================
+    # -------------------------------------------------
+    # ARCHIVED ITEMS → NO TIME REMAINING
+    # -------------------------------------------------
     work_items_list = list(qs)
     for item in work_items_list:
-        item.time_remaining = calculate_time_remaining(item.workcycle.due_at)
+        item.time_remaining = None  # Explicitly disabled
 
-    # ==========================
-    # SORTING
-    # ==========================
+    # -------------------------------------------------
+    # SORTING (ARCHIVE-CENTRIC)
+    # -------------------------------------------------
     sort = request.GET.get("sort")
 
     if sort == "due_asc":
@@ -392,8 +478,12 @@ def user_inactive_work_items(request):
     elif sort == "due_desc":
         work_items_list.sort(key=lambda x: x.workcycle.due_at, reverse=True)
     else:
-        work_items_list.sort(key=lambda x: x.inactive_at, reverse=True)
+        # Default: most recently archived first
+        work_items_list.sort(key=lambda x: x.inactive_at or x.created_at, reverse=True)
 
+    # -------------------------------------------------
+    # RENDER
+    # -------------------------------------------------
     return render(
         request,
         "user/page/work_items_inactive.html",
@@ -438,89 +528,6 @@ def delete_work_item_attachment(request, attachment_id):
 
     return redirect(
         f"{reverse('user_app:work-item-attachments', args=[work_item.id])}?type={attachment_type}"
-    )
-
-
-# ============================================================
-# WORK ITEM DETAIL
-# ============================================================
-@login_required
-def user_work_item_detail(request, item_id):
-    work_item = get_object_or_404(
-        WorkItem,
-        id=item_id,
-        owner=request.user,
-        is_active=True
-    )
-
-    if request.method == "POST":
-        action = request.POST.get("action")
-
-        try:
-            if action == "update_status":
-                update_work_item_status(
-                    work_item,
-                    request.POST.get("status")
-                )
-                messages.success(request, "Status updated.")
-
-            elif action == "update_context":
-                update_work_item_context(
-                    work_item=work_item,
-                    label=request.POST.get("status_label", "").strip(),
-                    message=request.POST.get("message", "").strip(),
-                )
-                messages.success(request, "Notes updated.")
-
-            elif action == "submit":
-                submit_work_item(
-                    work_item=work_item,
-                    user=request.user
-                )
-                messages.success(request, "Work item submitted successfully.")
-
-            elif action == "undo_submit":
-                if work_item.status == "done" and work_item.review_decision == "pending":
-                    work_item.status = "working_on_it"
-                    work_item.save(update_fields=["status"])
-                    messages.info(request, "Submission reverted. You can edit again.")
-                else:
-                    messages.error(request, "Cannot undo after review.")
-
-            return redirect(
-                "user_app:work-item-detail",
-                item_id=work_item.id
-            )
-
-        except Exception as e:
-            messages.error(request, str(e))
-
-    attachments = work_item.attachments.all()
-
-    attachment_types = [
-        ("matrix_a", "Monthly Report Form – Matrix A"),
-        ("matrix_b", "Monthly Report Form – Matrix B"),
-        ("mov", "Means of Verification (MOV)"),
-    ]
-
-    uploaded_types = set(
-        work_item.attachments.values_list(
-            "attachment_type",
-            flat=True
-        )
-    )
-
-    return render(
-        request,
-        "user/page/work_item_detail.html",
-        {
-            "work_item": work_item,
-            "attachments": attachments,
-            "can_edit": work_item.status != "done",
-            "status_choices": WorkItem._meta.get_field("status").choices,
-            "attachment_types": attachment_types,
-            "uploaded_types": uploaded_types,
-        }
     )
 
 

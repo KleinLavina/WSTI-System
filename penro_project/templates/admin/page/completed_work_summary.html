@@ -89,25 +89,33 @@
         </div>
       </form>
 
-      <!-- SORT -->
-      <div class="wc-sort-wrapper">
-        <span class="wc-sort-label">
-          <i class="fas fa-sort-amount-down"></i>
-          Sort by due
-        </span>
-        <div class="wc-sort-buttons">
-          <a href="?sort=due_asc"
-             class="wc-sort-btn {% if request.GET.sort == 'due_asc' %}active{% endif %}">
-            <i class="fas fa-arrow-up"></i>
-            <span>Asc</span>
-          </a>
-          <a href="?sort=due_desc"
-             class="wc-sort-btn {% if request.GET.sort == 'due_desc' %}active{% endif %}">
-            <i class="fas fa-arrow-down"></i>
-            <span>Desc</span>
-          </a>
-        </div>
-      </div>
+<!-- SORT -->
+<div class="wc-sort-wrapper">
+  <span class="wc-sort-label">
+    <i class="fas fa-sort-amount-down"></i>
+    Sort by due
+  </span>
+
+  <div class="wc-sort-buttons">
+
+    <!-- ASC -->
+    <a href="?{% if request.GET.state %}state={{ request.GET.state }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}sort=due_asc"
+       class="wc-sort-btn {% if request.GET.sort == 'due_asc' %}active{% endif %}">
+      <i class="fas fa-arrow-up"></i>
+      <span>Asc</span>
+    </a>
+
+    <!-- DESC -->
+    <a href="?{% if request.GET.state %}state={{ request.GET.state }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}sort=due_desc"
+       class="wc-sort-btn {% if request.GET.sort == 'due_desc' %}active{% endif %}">
+      <i class="fas fa-arrow-down"></i>
+      <span>Desc</span>
+    </a>
+
+  </div>
+</div>
+
+
 
     </div>
 

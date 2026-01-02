@@ -174,12 +174,39 @@
           </span>
         </div>
 
-        <div class="cell small" style="color: var(--gray-600);">
-          <div class="d-flex align-items-center gap-2">
-            <i class="far fa-clock"></i>
-            {{ item.submitted_at|date:"M d, Y · H:i" }}
-          </div>
+        <div class="cell small">
+          {% if item.submitted_at %}
+            <div class="d-flex align-items-center gap-2 wc-date">
+
+              {% if item.submitted_at > workcycle.due_at %}
+                <i class="fas fa-exclamation-circle submission-icon late"></i>
+              {% else %}
+                <i class="fas fa-check-circle submission-icon on-time"></i>
+              {% endif %}
+
+              <span>
+                {{ item.submitted_at|date:"l, F j, Y · g:i A" }}
+              </span>
+            </div>
+
+            <div class="submission-text
+                {% if item.submitted_at > workcycle.due_at %}late{% else %}on-time{% endif %}">
+              {% if item.submitted_at > workcycle.due_at %}
+                Late submission
+              {% else %}
+                Submitted on time
+              {% endif %}
+            </div>
+
+          {% else %}
+            <span class="wc-badge not-submitted">
+              <i class="fas fa-clock"></i>
+              Not Submitted
+            </span>
+          {% endif %}
         </div>
+
+
 
         <div class="cell small" style="color: var(--gray-600);">
           {% if item.reviewed_at %}
@@ -289,18 +316,38 @@
           {% endif %}
         </div>
 
-        <div class="cell small" style="color: var(--gray-600);">
-          <div class="d-flex align-items-center gap-2">
-            <i class="far fa-clock"></i>
-            {{ item.submitted_at|date:"M d, Y · H:i" }}
-          </div>
-          {% if item.submitted_at > workcycle.due_at %}
-            <div class="text-danger smaller mt-1">
-              <i class="fas fa-exclamation-circle me-1"></i>
-              Late submission
+        <div class="cell small">
+          {% if item.submitted_at %}
+            <div class="d-flex align-items-center gap-2 wc-date">
+
+              {% if item.submitted_at > workcycle.due_at %}
+                <i class="fas fa-exclamation-circle text-danger"></i>
+              {% else %}
+                <i class="fas fa-check-circle text-success"></i>
+              {% endif %}
+
+              <span>
+                {{ item.submitted_at|date:"l, F j, Y · g:i A" }}
+              </span>
             </div>
+
+            <div class="smaller mt-1
+                {% if item.submitted_at > workcycle.due_at %}text-danger{% else %}text-success{% endif %}">
+              {% if item.submitted_at > workcycle.due_at %}
+                Late submission
+              {% else %}
+                Submitted on time
+              {% endif %}
+            </div>
+
+          {% else %}
+            <span class="wc-badge" style="background: var(--gray-200); color: var(--gray-700);">
+              <i class="fas fa-clock"></i>
+              Not Submitted
+            </span>
           {% endif %}
         </div>
+
 
         <div class="cell action text-end">
           <a href="{% url 'admin_app:work-item-review' item.id %}"
@@ -487,6 +534,44 @@
 
 .wc-title h3 i {
   color: var(--primary-accent);
+}
+/* ===============================
+   SUBMISSION TIMING (SIMPLE LOGIC)
+================================ */
+
+.submission-icon {
+  font-size: 0.9rem;
+}
+
+/* ON TIME */
+.submission-icon.on-time {
+  color: var(--success); /* #10b981 */
+}
+
+.submission-text.on-time {
+  color: var(--success);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* LATE */
+.submission-icon.late {
+  color: var(--danger); /* #ef4444 */
+}
+
+.submission-text.late {
+  color: var(--danger);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Not submitted badge */
+.wc-badge.not-submitted {
+  background: var(--gray-200);
+  color: var(--gray-700);
+  font-weight: 600;
 }
 
 .wc-meta {
