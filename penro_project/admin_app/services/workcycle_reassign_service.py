@@ -8,6 +8,11 @@ from accounts.models import (
     OrgAssignment,
 )
 
+from notifications.services.assignment import (
+    create_assignment_notifications,
+    create_removal_notifications,
+)
+
 
 @transaction.atomic
 def reassign_workcycle(
@@ -25,11 +30,12 @@ def reassign_workcycle(
     - Removed users' work items are archived
     - Added users receive new or reactivated work items
     - Work assignments are fully replaced
+    - Emits assignment-related notifications
     """
 
-    # ============================
+    # =====================================================
     # RESOLVE TARGET USERS
-    # ============================
+    # =====================================================
     target_user_ids = set()
 
     # Team → org users
@@ -51,20 +57,22 @@ def reassign_workcycle(
     if not target_user_ids and not team:
         raise ValueError("Must assign at least one user or a team.")
 
-    # ============================
+    # =====================================================
     # EXISTING WORK ITEMS
-    # ============================
+    # =====================================================
     existing_items = WorkItem.objects.filter(workcycle=workcycle)
+
     existing_user_ids = set(
         existing_items.values_list("owner_id", flat=True)
     )
 
-    # ============================
-    # USERS REMOVED
-    # ============================
+    # =====================================================
+    # USERS REMOVED FROM ASSIGNMENT
+    # =====================================================
     removed_user_ids = existing_user_ids - target_user_ids
 
     if removed_user_ids:
+        # Archive removed users' work items
         WorkItem.objects.filter(
             workcycle=workcycle,
             owner_id__in=removed_user_ids,
@@ -76,9 +84,16 @@ def reassign_workcycle(
             inactive_at=timezone.now()
         )
 
-    # ============================
+        # SYSTEM notifications for removed users
+        create_removal_notifications(
+            user_ids=removed_user_ids,
+            workcycle=workcycle,
+            reason=inactive_note or None,
+        )
+
+    # =====================================================
     # ADD / REACTIVATE USERS
-    # ============================
+    # =====================================================
     for user_id in target_user_ids:
         wi, created = WorkItem.objects.get_or_create(
             workcycle=workcycle,
@@ -103,19 +118,29 @@ def reassign_workcycle(
                 "status",
             ])
 
-    # ============================
-    # REPLACE ASSIGNMENTS
-    # ============================
+    # =====================================================
+    # ASSIGNMENT NOTIFICATIONS (NEW USERS ONLY)
+    # =====================================================
+    newly_assigned_user_ids = target_user_ids - existing_user_ids
+
+    if newly_assigned_user_ids:
+        create_assignment_notifications(
+            user_ids=newly_assigned_user_ids,
+            workcycle=workcycle,
+            assigned_by=performed_by,
+        )
+
+    # =====================================================
+    # REPLACE WORK ASSIGNMENTS
+    # =====================================================
     WorkAssignment.objects.filter(workcycle=workcycle).delete()
 
     if team:
-        # Team responsibility
         WorkAssignment.objects.create(
             workcycle=workcycle,
             assigned_team=team
         )
 
-    # Direct user responsibility
     WorkAssignment.objects.bulk_create([
         WorkAssignment(
             workcycle=workcycle,

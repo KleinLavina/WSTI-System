@@ -3,6 +3,9 @@ from django.contrib import messages
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+from django.views.decorators.http import require_POST
+from django.urls import reverse
 from accounts.models import (
     User,
     Team,
@@ -18,8 +21,6 @@ from admin_app.services.workcycle_service import (
 from admin_app.services.workcycle_reassign_service import (
     reassign_workcycle as reassign_workcycle_service,
 )
-
-
 # ============================================================
 # WORK CYCLE LIST
 # ============================================================
@@ -279,7 +280,22 @@ def create_workcycle(request):
     if request.method == "POST":
         title = request.POST.get("title")
         description = request.POST.get("description", "")
-        due_at = request.POST.get("due_at")
+
+        # -----------------------------
+        # DUE DATE (TIMEZONE-SAFE)
+        # -----------------------------
+        due_at_raw = request.POST.get("due_at")
+        due_at = parse_datetime(due_at_raw)
+
+        if not due_at:
+            messages.error(request, "Invalid due date.")
+            return redirect("admin_app:workcycles")
+
+        if timezone.is_naive(due_at):
+            due_at = timezone.make_aware(
+                due_at,
+                timezone.get_current_timezone()
+            )
 
         # -----------------------------
         # USERS (OPTIONAL)
@@ -310,7 +326,7 @@ def create_workcycle(request):
         create_workcycle_with_assignments(
             title=title,
             description=description,
-            due_at=due_at,
+            due_at=due_at,  # ✅ timezone-aware
             created_by=request.user,
             users=users,
             team=team,
@@ -330,10 +346,10 @@ def create_workcycle(request):
             "teams": Team.objects.all(),
         },
     )
+
 # ============================================================
 # EDIT WORK CYCLE
 # ============================================================
-
 def edit_workcycle(request):
     if request.method == "POST":
         wc_id = request.POST.get("workcycle_id")
@@ -341,17 +357,36 @@ def edit_workcycle(request):
 
         workcycle.title = request.POST.get("title")
         workcycle.description = request.POST.get("description", "")
-        workcycle.due_at = request.POST.get("due_at")
-        workcycle.save()
+
+        # -----------------------------
+        # DUE DATE (TIMEZONE-SAFE)
+        # -----------------------------
+        due_at_raw = request.POST.get("due_at")
+        due_at = parse_datetime(due_at_raw)
+
+        if not due_at:
+            messages.error(request, "Invalid due date.")
+            return redirect("admin_app:workcycles")
+
+        if timezone.is_naive(due_at):
+            due_at = timezone.make_aware(
+                due_at,
+                timezone.get_current_timezone()
+            )
+
+        workcycle.due_at = due_at
+        workcycle.save(update_fields=[
+            "title",
+            "description",
+            "due_at",
+        ])
 
         messages.success(request, "Work cycle updated successfully.")
         return redirect("admin_app:workcycles")
 
-
 # ============================================================
 # REASSIGN WORK CYCLE
 # ============================================================
-
 def reassign_workcycle(request):
     if request.method != "POST":
         return redirect("admin_app:workcycles")
@@ -359,27 +394,18 @@ def reassign_workcycle(request):
     wc_id = request.POST.get("workcycle_id")
     workcycle = get_object_or_404(WorkCycle, id=wc_id)
 
-    # -----------------------------
-    # USERS (OPTIONAL)
-    # -----------------------------
+    # USERS
     raw_user_ids = request.POST.getlist("users[]")
     user_ids = [uid for uid in raw_user_ids if uid.isdigit()]
     users = User.objects.filter(id__in=user_ids)
 
-    # -----------------------------
-    # TEAM (OPTIONAL)
-    # -----------------------------
+    # TEAM
     team_id = request.POST.get("team")
     team = Team.objects.filter(id=team_id).first() if team_id else None
 
-    # -----------------------------
-    # OPTIONAL NOTE
-    # -----------------------------
+    # NOTE
     inactive_note = request.POST.get("inactive_note", "").strip()
 
-    # -----------------------------
-    # SAFETY CHECK
-    # -----------------------------
     if not users.exists() and not team:
         messages.error(
             request,
@@ -387,15 +413,12 @@ def reassign_workcycle(request):
         )
         return redirect("admin_app:workcycles")
 
-    # -----------------------------
-    # REASSIGN
-    # -----------------------------
     reassign_workcycle_service(
         workcycle=workcycle,
         users=users,
         team=team,
         inactive_note=inactive_note,
-        performed_by=request.user,      
+        performed_by=request.user,
     )
 
     messages.success(request, "Work cycle reassigned successfully.")
@@ -473,29 +496,53 @@ def workcycle_assignments(request, pk):
             "review_counts": review_counts,
         },
     )
-
-
-from django.views.decorators.http import require_POST
+# ============================================================
+# TOGGLE WORK CYCLE ARCHIVE
+# ============================================================
 
 @require_POST
 def toggle_workcycle_archive(request, pk):
+    """
+    Toggle WorkCycle active / archived state.
+
+    - Active → Archived
+    - Archived → Restored
+
+    Reminder system automatically respects is_active flag.
+    """
+
     workcycle = get_object_or_404(WorkCycle, pk=pk)
 
     workcycle.is_active = not workcycle.is_active
     workcycle.save(update_fields=["is_active"])
 
     if workcycle.is_active:
-        messages.success(request, "Work cycle restored successfully.")
-        return redirect("admin_app:workcycles")
+        messages.success(
+            request,
+            "Work cycle restored successfully."
+        )
     else:
-        messages.success(request, "Work cycle archived successfully.")
-        return redirect("admin_app:workcycles")
+        messages.success(
+            request,
+            "Work cycle archived successfully."
+        )
+
+    return redirect("admin_app:workcycles")
 
 
-from django.urls import reverse
+# ============================================================
+# DELETE WORK CYCLE (HARD DELETE)
+# ============================================================
 
 @require_POST
 def delete_workcycle(request, pk):
+    """
+    Permanently delete a WorkCycle.
+
+    - If protected by related objects (folders, documents),
+      deletion is blocked and user is instructed to archive instead.
+    """
+
     workcycle = get_object_or_404(WorkCycle, pk=pk)
 
     redirect_to = request.META.get(
@@ -506,6 +553,7 @@ def delete_workcycle(request, pk):
     try:
         title = workcycle.title
         workcycle.delete()
+
         messages.success(
             request,
             f"Work cycle '{title}' was permanently deleted."

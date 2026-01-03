@@ -27,6 +27,7 @@ LOGOUT_REDIRECT_URL = "/auth/login/"
 # APPLICATIONS
 # -------------------------------------------------
 INSTALLED_APPS = [
+    # Django core
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -34,31 +35,18 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'django_crontab',
-
+    # Project apps
     'accounts.apps.AccountsConfig',
     'notifications.apps.NotificationsConfig',
-
-    'django_celery_beat',  # ✅ REGISTER ONCE
-
     'admin_app',
     'user_app',
     'structure',
-    
 ]
 
 # -------------------------------------------------
 # AUTH
 # -------------------------------------------------
 AUTH_USER_MODEL = 'accounts.User'
-
-# -------------------------------------------------
-# CELERY
-# -------------------------------------------------
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_TIMEZONE = "Asia/Manila"
 
 # -------------------------------------------------
 # MIDDLEWARE
@@ -139,7 +127,6 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -147,3 +134,16 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # DEFAULTS
 # -------------------------------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+import os
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = "notifypenrowstis@gmail.com"
+EMAIL_HOST_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
+
+DEFAULT_FROM_EMAIL = "PENRO WSTI Notifications <notifypenrowstis@gmail.com>"
