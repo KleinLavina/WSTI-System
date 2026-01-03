@@ -2,10 +2,13 @@ from collections import defaultdict
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.shortcuts import get_object_or_404, render, redirect
+from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_exempt
 
 from accounts.models import WorkItem, WorkItemMessage
+from notifications.services.review import notify_work_item_review_changed
 
 
 # ============================================================
@@ -17,11 +20,12 @@ def review_work_item(request, item_id):
     """
     Admin review page for a submitted WorkItem.
 
-    - Shows submission details
-    - Groups attachments by type
-    - Updates review_decision
-    - Posts system message to discussion
-    - Sends UI notification via Django messages
+    Responsibilities:
+    - Display submission details
+    - Group attachments by type
+    - Update review_decision
+    - Post persistent system message
+    - 🔔 Fire REVIEW notification (service layer)
     """
 
     work_item = get_object_or_404(
@@ -38,60 +42,63 @@ def review_work_item(request, item_id):
     if request.method == "POST" and request.POST.get("action") == "update_review":
         decision = request.POST.get("review_decision")
 
-        if decision in {"pending", "approved", "revision"}:
-            old_decision = work_item.review_decision
-            work_item.review_decision = decision
-            work_item.save()  # ensures reviewed_at is updated
-
-            # --------------------------------------------
-            # DISCUSSION MESSAGE (PERSISTENT)
-            # --------------------------------------------
-            if old_decision != decision:
-                decision_label = decision.replace("_", " ").title()
-
-                WorkItemMessage.objects.create(
-                    work_item=work_item,
-                    sender=request.user,
-                    sender_role=request.user.login_role,
-                    message=(
-                        f"📝 Review Update\n\n"
-                        f"This work item has been marked as "
-                        f"{decision_label}."
-                    )
-                )
-
-                # ----------------------------------------
-                # UI NOTIFICATION (TEMPORARY)
-                # ----------------------------------------
-                messages.success(
-                    request,
-                    f"Review decision updated to {decision_label}."
-                )
-            else:
-                messages.info(
-                    request,
-                    "Review decision was not changed."
-                )
-
-        else:
-            messages.error(
-                request,
-                "Invalid review decision submitted."
+        if decision not in {"pending", "approved", "revision"}:
+            messages.error(request, "Invalid review decision submitted.")
+            return redirect(
+                "admin_app:work-item-review",
+                item_id=work_item.id,
             )
+
+        old_decision = work_item.review_decision
+
+        if old_decision != decision:
+            work_item.review_decision = decision
+            work_item.save()  # reviewed_at handled in model.save()
+
+            decision_label = decision.replace("_", " ").title()
+
+            # --------------------------------------------
+            # SYSTEM MESSAGE (AUDIT / DISCUSSION)
+            # --------------------------------------------
+            WorkItemMessage.objects.create(
+                work_item=work_item,
+                sender=request.user,
+                sender_role=request.user.login_role,
+                message=(
+                    f"📝 Review Update\n\n"
+                    f"This work item has been marked as {decision_label}."
+                ),
+            )
+
+            # --------------------------------------------
+            # 🔔 REVIEW NOTIFICATION (SERVICE)
+            # --------------------------------------------
+            notify_work_item_review_changed(
+                work_item=work_item,
+                actor=request.user,
+                old_decision=old_decision,
+            )
+
+            messages.success(
+                request,
+                f"Review decision updated to {decision_label}."
+            )
+        else:
+            messages.info(request, "Review decision was not changed.")
 
         return redirect(
             "admin_app:work-item-review",
-            item_id=work_item.id
+            item_id=work_item.id,
         )
 
     # --------------------------------------------------------
     # GROUP ATTACHMENTS BY TYPE
     # --------------------------------------------------------
     attachments_by_type = defaultdict(list)
-
     for attachment in work_item.attachments.all():
-        label = attachment.get_attachment_type_display()
-        attachments_by_type[label].append(attachment)
+        attachments_by_type[
+            attachment.get_attachment_type_display()
+        ].append(attachment)
 
     return render(
         request,
@@ -99,18 +106,8 @@ def review_work_item(request, item_id):
         {
             "work_item": work_item,
             "attachments_by_type": dict(attachments_by_type),
-        }
+        },
     )
-
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
-from django.views.decorators.clickjacking import xframe_options_exempt
-from django.utils import timezone
-from django.db import transaction
-
-from accounts.models import WorkItem, WorkItemMessage
 
 
 # ============================================================
@@ -121,15 +118,13 @@ from accounts.models import WorkItem, WorkItemMessage
 def admin_work_item_discussion(request, item_id):
     """
     Admin discussion thread for a WorkItem.
-    Used inside modal / iframe.
 
     Responsibilities:
     - Send messages
     - Prevent empty messages
     - Sender messages start as READ
-    - Mark other party's messages as read when opened
+    - Mark other party's messages as read
     - Provide unread count
-    - Allow template to hide UI if no messages exist
     """
 
     # --------------------------------------------------------
@@ -137,7 +132,7 @@ def admin_work_item_discussion(request, item_id):
     # --------------------------------------------------------
     work_item = get_object_or_404(
         WorkItem.objects.select_related("owner", "workcycle"),
-        id=item_id
+        id=item_id,
     )
 
     # --------------------------------------------------------
@@ -150,7 +145,7 @@ def admin_work_item_discussion(request, item_id):
             messages.warning(request, "Message cannot be empty.")
             return redirect(
                 "admin_app:work-item-discussion",
-                item_id=work_item.id
+                item_id=work_item.id,
             )
 
         WorkItemMessage.objects.create(
@@ -158,7 +153,7 @@ def admin_work_item_discussion(request, item_id):
             sender=request.user,
             sender_role=request.user.login_role,
             message=text,
-            is_read=True,                 # Sender has read it
+            is_read=True,
             read_at=timezone.now(),
         )
 
@@ -166,16 +161,16 @@ def admin_work_item_discussion(request, item_id):
 
         return redirect(
             "admin_app:work-item-discussion",
-            item_id=work_item.id
+            item_id=work_item.id,
         )
 
     # --------------------------------------------------------
-    # MARK OTHER PARTY'S MESSAGES AS READ (SAFE + CENTRALIZED)
+    # MARK USER MESSAGES AS READ (ATOMIC)
     # --------------------------------------------------------
     with transaction.atomic():
         WorkItemMessage.mark_thread_as_read(
             work_item=work_item,
-            reader=request.user
+            reader=request.user,
         )
 
     # --------------------------------------------------------
@@ -187,27 +182,20 @@ def admin_work_item_discussion(request, item_id):
         .order_by("created_at")
     )
 
-    # --------------------------------------------------------
-    # DISCUSSION STATE
-    # --------------------------------------------------------
-    has_messages = messages_qs.exists()
+    unread_count = (
+        work_item.messages
+        .filter(is_read=False)
+        .exclude(sender=request.user)
+        .count()
+    )
 
-    unread_count = work_item.messages.filter(
-        is_read=False
-    ).exclude(
-        sender=request.user
-    ).count()
-
-    # --------------------------------------------------------
-    # RENDER
-    # --------------------------------------------------------
     return render(
         request,
         "admin/page/work_item_discussion.html",
         {
             "work_item": work_item,
             "messages": messages_qs,
-            "has_messages": has_messages,
+            "has_messages": messages_qs.exists(),
             "unread_count": unread_count,
-        }
+        },
     )

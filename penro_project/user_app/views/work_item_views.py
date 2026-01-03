@@ -12,6 +12,7 @@ from ..services.work_item_service import (
     add_attachment_to_work_item,
     update_work_item_context,
 )
+from notifications.services.status import notify_work_item_status_changed
 
 # ============================================================
 # HELPER: Calculate Time Remaining
@@ -310,11 +311,21 @@ def user_work_item_detail(request, item_id):
         action = request.POST.get("action")
 
         try:
+            # 🔥 Capture old status BEFORE any mutation
+            old_status = work_item.status
+
             if action == "update_status":
                 update_work_item_status(
                     work_item,
                     request.POST.get("status")
                 )
+
+                notify_work_item_status_changed(
+                    work_item=work_item,
+                    actor=request.user,
+                    old_status=old_status,
+                )
+
                 messages.success(request, "Status updated.")
 
             elif action == "update_context":
@@ -330,6 +341,13 @@ def user_work_item_detail(request, item_id):
                     work_item=work_item,
                     user=request.user
                 )
+
+                notify_work_item_status_changed(
+                    work_item=work_item,
+                    actor=request.user,
+                    old_status=old_status,
+                )
+
                 messages.success(request, "Work item submitted successfully.")
 
             elif action == "undo_submit":
@@ -337,8 +355,17 @@ def user_work_item_detail(request, item_id):
                     work_item.status == "done"
                     and work_item.review_decision == "pending"
                 ):
+                    # ✅ IMPORTANT FIX:
+                    # Do NOT use update_fields — allow model logic to clear submitted_at
                     work_item.status = "working_on_it"
-                    work_item.save(update_fields=["status"])
+                    work_item.save()
+
+                    notify_work_item_status_changed(
+                        work_item=work_item,
+                        actor=request.user,
+                        old_status=old_status,
+                    )
+
                     messages.info(request, "Submission reverted.")
                 else:
                     messages.error(request, "Cannot undo after review.")
@@ -381,13 +408,10 @@ def user_work_item_detail(request, item_id):
             "uploaded_types": uploaded_types,
 
             # ✅ submission metadata for UI
-            "submission_status": submission_status,   # on_time | late | None
-            "submission_delta": submission_delta,     # "2h 15m"
+            "submission_status": submission_status,
+            "submission_delta": submission_delta,
         }
     )
-
-
-
 # ============================================================
 # INACTIVE WORK ITEMS (WITH FILTER COUNTS)
 # ============================================================

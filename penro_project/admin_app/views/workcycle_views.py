@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_POST
 from django.urls import reverse
+from django.db.models.deletion import ProtectedError
 from accounts.models import (
     User,
     Team,
@@ -21,6 +22,12 @@ from admin_app.services.workcycle_service import (
 from admin_app.services.workcycle_reassign_service import (
     reassign_workcycle as reassign_workcycle_service,
 )
+from notifications.services.system import notify_workcycle_edited
+from notifications.services.system import (
+    notify_workcycle_archive_toggled,
+    
+)
+from notifications.services.system import notify_workcycle_deleted
 # ============================================================
 # WORK CYCLE LIST
 # ============================================================
@@ -355,12 +362,12 @@ def edit_workcycle(request):
         wc_id = request.POST.get("workcycle_id")
         workcycle = get_object_or_404(WorkCycle, id=wc_id)
 
+        # 🔥 capture old state BEFORE edit
+        old_due_at = workcycle.due_at
+
         workcycle.title = request.POST.get("title")
         workcycle.description = request.POST.get("description", "")
 
-        # -----------------------------
-        # DUE DATE (TIMEZONE-SAFE)
-        # -----------------------------
         due_at_raw = request.POST.get("due_at")
         due_at = parse_datetime(due_at_raw)
 
@@ -375,11 +382,14 @@ def edit_workcycle(request):
             )
 
         workcycle.due_at = due_at
-        workcycle.save(update_fields=[
-            "title",
-            "description",
-            "due_at",
-        ])
+        workcycle.save(update_fields=["title", "description", "due_at"])
+
+        # ✅ SYSTEM NOTIFICATION
+        notify_workcycle_edited(
+            workcycle=workcycle,
+            edited_by=request.user,
+            old_due_at=old_due_at,
+        )
 
         messages.success(request, "Work cycle updated successfully.")
         return redirect("admin_app:workcycles")
@@ -516,6 +526,12 @@ def toggle_workcycle_archive(request, pk):
     workcycle.is_active = not workcycle.is_active
     workcycle.save(update_fields=["is_active"])
 
+    # ✅ SYSTEM IN-APP NOTIFICATION
+    notify_workcycle_archive_toggled(
+        workcycle=workcycle,
+        actor=request.user,
+    )
+
     if workcycle.is_active:
         messages.success(
             request,
@@ -552,7 +568,23 @@ def delete_workcycle(request, pk):
 
     try:
         title = workcycle.title
+
+        # 🔥 capture affected users BEFORE delete
+        affected_user_ids = list(
+            workcycle.work_items
+            .values_list("owner_id", flat=True)
+            .distinct()
+        )
+
         workcycle.delete()
+
+        # ✅ SYSTEM IN-APP NOTIFICATION
+        if affected_user_ids:
+            notify_workcycle_deleted(
+                workcycle_title=title,
+                actor=request.user,
+                affected_user_ids=affected_user_ids,
+            )
 
         messages.success(
             request,
