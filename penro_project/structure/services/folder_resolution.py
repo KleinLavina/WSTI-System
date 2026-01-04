@@ -38,9 +38,14 @@ def get_or_create_folder(
 ):
     """
     Creates or retrieves a folder with the given parameters.
-    Uses get_or_create to avoid duplicates.
+
+    IMPORTANT:
+    - Uses (parent, name) uniqueness
+    - Does NOT alter hierarchy logic
+    - Ensures workcycle inheritance for org folders
     """
-    folder, _ = DocumentFolder.objects.get_or_create(
+
+    folder, created = DocumentFolder.objects.get_or_create(
         parent=parent,
         name=name,
         defaults={
@@ -50,6 +55,26 @@ def get_or_create_folder(
             "is_system_generated": system,
         },
     )
+
+    # --------------------------------------------------------
+    # HARDEN WORKCYCLE INHERITANCE (SAFE FIX)
+    # --------------------------------------------------------
+    # Org folders MUST belong to the same workcycle as parent
+    # This does NOT change resolution behavior — only correctness
+    if (
+        folder_type in {
+            DocumentFolder.FolderType.DIVISION,
+            DocumentFolder.FolderType.SECTION,
+            DocumentFolder.FolderType.SERVICE,
+            DocumentFolder.FolderType.UNIT,
+        }
+        and not folder.workcycle
+        and parent
+        and parent.workcycle
+    ):
+        folder.workcycle = parent.workcycle
+        folder.save(update_fields=["workcycle"])
+
     return folder
 
 
@@ -61,21 +86,24 @@ def get_or_create_folder(
 def resolve_attachment_folder(*, work_item, attachment_type, actor):
     """
     Resolves the attachment folder with flexible organizational structure.
-    
-    NEW STRUCTURE:
-    ROOT > YEAR > CATEGORY (attachment type) > WORKCYCLE > Org hierarchy
-    
-    FLEXIBILITY:
-    - No org assignment → creates "Unassigned" division
-    - Only division → file goes in division folder
-    - Division + section → file goes in section folder
-    - Full hierarchy → file goes in deepest available level
-    
-    Returns: The deepest folder where the file should be placed
+
+    STRUCTURE (FIXED):
+    ROOT
+      └─ YEAR
+          └─ CATEGORY (attachment type)
+              └─ WORKCYCLE
+                  └─ ORG STRUCTURE (flexible depth)
+
+    FLEXIBILITY (UNCHANGED):
+    - No org assignment → Unassigned division
+    - Only division → division folder
+    - Division + section → section folder
+    - Service optional
+    - Unit may belong to section OR service
     """
 
     # -------------------------------------------------
-    # 1️⃣ Permission Check
+    # 1️⃣ PERMISSION CHECK
     # -------------------------------------------------
     assert_can_upload(work_item=work_item, actor=actor)
 
@@ -89,7 +117,7 @@ def resolve_attachment_folder(*, work_item, attachment_type, actor):
     )
 
     # -------------------------------------------------
-    # 3️⃣ YEAR (from work cycle deadline)
+    # 3️⃣ YEAR (DERIVED FROM WORKCYCLE)
     # -------------------------------------------------
     year_folder = get_or_create_folder(
         name=str(work_item.workcycle.due_at.year),
@@ -98,7 +126,7 @@ def resolve_attachment_folder(*, work_item, attachment_type, actor):
     )
 
     # -------------------------------------------------
-    # 4️⃣ CATEGORY = Attachment Type Bucket
+    # 4️⃣ CATEGORY (ATTACHMENT TYPE BUCKET)
     # -------------------------------------------------
     attachment_type_folder = get_or_create_folder(
         name=attachment_type.upper(),  # MATRIX_A, MATRIX_B, MOV
@@ -119,24 +147,24 @@ def resolve_attachment_folder(*, work_item, attachment_type, actor):
     # -------------------------------------------------
     # 6️⃣ ORGANIZATIONAL STRUCTURE (FLEXIBLE)
     # -------------------------------------------------
-    
-    # Try to get user's org assignment
+
     try:
         org = actor.org_assignment
     except (OrgAssignment.DoesNotExist, AttributeError):
         org = None
 
-    # CASE 1: No org assignment → create "Unassigned" bucket
+    # -------------------------------------------------
+    # CASE 1: NO ORG ASSIGNMENT → UNASSIGNED
+    # -------------------------------------------------
     if not org:
-        unassigned_folder = get_or_create_folder(
+        return get_or_create_folder(
             name="Unassigned",
             folder_type=DocumentFolder.FolderType.DIVISION,
             parent=workcycle_folder,
         )
-        return unassigned_folder
 
     # -------------------------------------------------
-    # 7️⃣ DIVISION (always present if org exists)
+    # 7️⃣ DIVISION (ALWAYS PRESENT)
     # -------------------------------------------------
     division_folder = get_or_create_folder(
         name=org.division.name,
@@ -144,7 +172,7 @@ def resolve_attachment_folder(*, work_item, attachment_type, actor):
         parent=workcycle_folder,
     )
 
-    # CASE 2: Only division → file goes here
+    # CASE 2: ONLY DIVISION
     if not org.section:
         return division_folder
 
@@ -157,12 +185,12 @@ def resolve_attachment_folder(*, work_item, attachment_type, actor):
         parent=division_folder,
     )
 
-    # CASE 3: Division + section only → file goes here
+    # CASE 3: DIVISION + SECTION ONLY
     if not org.service and not org.unit:
         return section_folder
 
     # -------------------------------------------------
-    # 9️⃣ SERVICE (optional branch)
+    # 9️⃣ SERVICE (OPTIONAL)
     # -------------------------------------------------
     if org.service:
         service_folder = get_or_create_folder(
@@ -171,48 +199,126 @@ def resolve_attachment_folder(*, work_item, attachment_type, actor):
             parent=section_folder,
         )
 
-        # CASE 4: Division + section + service (no unit) → file goes here
+        # CASE 4: SERVICE WITHOUT UNIT
         if not org.unit:
             return service_folder
 
-        # CASE 5: Full hierarchy with service → unit under service
-        unit_folder = get_or_create_folder(
+        # CASE 5: UNIT UNDER SERVICE
+        return get_or_create_folder(
             name=org.unit.name,
             folder_type=DocumentFolder.FolderType.UNIT,
             parent=service_folder,
         )
-        return unit_folder
 
     # -------------------------------------------------
-    # 🔟 UNIT (belongs to section if no service)
+    # 🔟 UNIT UNDER SECTION (NO SERVICE)
     # -------------------------------------------------
     if org.unit:
-        # CASE 6: Division + section + unit (no service) → unit under section
-        unit_folder = get_or_create_folder(
+        return get_or_create_folder(
             name=org.unit.name,
             folder_type=DocumentFolder.FolderType.UNIT,
             parent=section_folder,
         )
-        return unit_folder
 
-    # Fallback (should never reach here based on logic above)
+    # Fallback (LOGICALLY UNREACHABLE)
     return section_folder
 
 
 # ============================================================
-# HELPER: Preview Upload Path
+# DISPLAY / CONTEXT HELPERS (READ-ONLY)
+# ============================================================
+
+def acronym(name: str | None) -> str | None:
+    """
+    Converts:
+    'Backend Development Unit' → 'BDU'
+    """
+    if not name:
+        return None
+    return "".join(word[0].upper() for word in name.split() if word)
+
+
+def resolve_folder_context(folder: DocumentFolder | None):
+    """
+    READ-ONLY helper.
+
+    Safely extracts workcycle + org structure
+    from ANY folder depth.
+
+    Returns:
+    {
+        workcycle,
+        division,
+        section,
+        service,
+        unit,
+        unassigned
+    }
+    """
+
+    context = {
+        "workcycle": None,
+        "division": None,
+        "section": None,
+        "service": None,
+        "unit": None,
+        "unassigned": False,
+    }
+
+    if not folder:
+        return context
+
+    context["workcycle"] = folder.workcycle
+
+    for f in folder.get_path():
+        if f.folder_type == DocumentFolder.FolderType.DIVISION:
+            context["division"] = f.name
+            if f.name.lower() == "unassigned":
+                context["unassigned"] = True
+
+        elif f.folder_type == DocumentFolder.FolderType.SECTION:
+            context["section"] = f.name
+
+        elif f.folder_type == DocumentFolder.FolderType.SERVICE:
+            context["service"] = f.name
+
+        elif f.folder_type == DocumentFolder.FolderType.UNIT:
+            context["unit"] = f.name
+
+    return context
+
+
+# ============================================================
+# HELPER: UI PREVIEW (ACRONYM-BASED)
 # ============================================================
 
 def get_upload_path_preview(*, work_item, attachment_type, actor):
     """
-    Returns a human-readable path string showing where files will be uploaded.
-    Useful for UI display before actual upload.
-    
-    Example: "ROOT / 2024 / MATRIX_A / Q1 Report / Engineering / Backend Team"
+    Returns a UI-friendly preview path using acronyms.
+
+    Example:
+    ROOT / 2024 / MATRIX_A / Q1 Report / ENG / BE / API / U1
     """
+
     folder = resolve_attachment_folder(
         work_item=work_item,
         attachment_type=attachment_type,
-        actor=actor
+        actor=actor,
     )
-    return folder.get_path_string()
+
+    ctx = resolve_folder_context(folder)
+
+    parts = [
+        "ROOT",
+        str(ctx["workcycle"].due_at.year) if ctx["workcycle"] else None,
+        attachment_type.upper(),
+        ctx["workcycle"].title if ctx["workcycle"] else None,
+        acronym(ctx["division"]),
+        acronym(ctx["section"]),
+        acronym(ctx["service"]),
+        acronym(ctx["unit"]) if ctx["unit"] else (
+            "UNASSIGNED" if ctx["unassigned"] else None
+        ),
+    ]
+
+    return " / ".join(p for p in parts if p)

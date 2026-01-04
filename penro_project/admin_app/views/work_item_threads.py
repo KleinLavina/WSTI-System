@@ -1,8 +1,11 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Max
 from django.shortcuts import render
 
-from accounts.models import WorkItem
+from accounts.models import (
+    WorkItem,
+    WorkItemReadState,
+)
 
 
 @login_required
@@ -10,62 +13,43 @@ def admin_work_item_threads(request):
     """
     Admin inbox view for WorkItem conversations.
 
-    Guarantees:
-    - Only work items WITH messages appear
-    - Only UNREAD messages from the other party are counted
-    - Unread count disappears when messages are read
-    - No duplicate rows or inflated counts
-    - Ordered by most recent message activity
+    - Returns REAL WorkItem objects
+    - Cursor-based unread counts
+    - Safe for multiple admins
     """
 
     work_items = (
         WorkItem.objects
-        # ----------------------------------------------------
-        # BASIC RELATION OPTIMIZATION
-        # ----------------------------------------------------
         .select_related("owner", "workcycle")
-
-        # ----------------------------------------------------
-        # REQUIRE AT LEAST ONE MESSAGE
-        # ----------------------------------------------------
+        .prefetch_related("messages", "read_states")
         .annotate(
-            has_messages=Count(
-                "messages",
-                distinct=True
-            )
+            message_count=Count("messages", distinct=True),
+            last_message_at=Max("messages__created_at"),
         )
-        .filter(has_messages__gt=0)
-
-        # ----------------------------------------------------
-        # UNREAD COUNT (OTHER PARTY ONLY)
-        # ----------------------------------------------------
-        .annotate(
-            unread_count=Count(
-                "messages",
-                filter=Q(
-                    messages__is_read=False
-                ) & ~Q(
-                    messages__sender=request.user
-                ),
-                distinct=True,
-            )
-        )
-
-        # ----------------------------------------------------
-        # LAST MESSAGE TIMESTAMP
-        # ----------------------------------------------------
-        .annotate(
-            last_message_at=Max("messages__created_at")
-        )
-
-        # ----------------------------------------------------
-        # ORDER BY RECENT ACTIVITY
-        # ----------------------------------------------------
-        .order_by(
-            "-last_message_at",
-            "-submitted_at"
-        )
+        .filter(message_count__gt=0)
+        .order_by("-last_message_at", "-submitted_at")
     )
+
+    # ----------------------------------------------------
+    # ATTACH UNREAD COUNT TO EACH WorkItem (NO DICTS)
+    # ----------------------------------------------------
+    for item in work_items:
+        read_state = next(
+            (
+                rs for rs in item.read_states.all()
+                if rs.user_id == request.user.id
+            ),
+            None,
+        )
+
+        last_read_id = read_state.last_read_message_id if read_state else 0
+
+        item.unread_count = (
+            item.messages
+            .filter(id__gt=last_read_id)
+            .exclude(sender=request.user)
+            .count()
+        )
 
     return render(
         request,

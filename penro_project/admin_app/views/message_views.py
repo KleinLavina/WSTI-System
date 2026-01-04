@@ -1,29 +1,21 @@
-from collections import defaultdict
-
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
 from django.shortcuts import get_object_or_404, render, redirect
-from django.utils import timezone
+from django.contrib import messages
 from django.views.decorators.clickjacking import xframe_options_exempt
 
-from accounts.models import WorkItem, WorkItemMessage
-from notifications.services.review import notify_work_item_review_changed
+from accounts.models import (
+    WorkItem,
+    WorkItemMessage,
+    WorkItemReadState,
+)
 
+
+# ============================================================
+# WORK ITEM DISCUSSION (ADMIN)
+# ============================================================
 @login_required
 @xframe_options_exempt
 def admin_work_item_discussion(request, item_id):
-    """
-    Admin discussion thread for a WorkItem.
-
-    Responsibilities:
-    - Send messages
-    - Prevent empty messages
-    - Sender messages start as READ
-    - Mark other party's messages as read
-    - Provide unread count
-    """
-
     # --------------------------------------------------------
     # LOAD WORK ITEM
     # --------------------------------------------------------
@@ -33,7 +25,7 @@ def admin_work_item_discussion(request, item_id):
     )
 
     # --------------------------------------------------------
-    # POST NEW MESSAGE
+    # POST MESSAGE (ADMIN → USER)
     # --------------------------------------------------------
     if request.method == "POST":
         text = request.POST.get("message", "").strip()
@@ -45,47 +37,60 @@ def admin_work_item_discussion(request, item_id):
                 item_id=work_item.id,
             )
 
+        # Create chat message (do NOT touch read cursor)
         WorkItemMessage.objects.create(
             work_item=work_item,
             sender=request.user,
-            sender_role=request.user.login_role,
             message=text,
-            is_read=True,
-            read_at=timezone.now(),
         )
 
+        # ✅ Flash notification for UI toast
         messages.success(request, "Message sent.")
 
+        # PRG pattern
         return redirect(
             "admin_app:work-item-discussion",
             item_id=work_item.id,
         )
 
     # --------------------------------------------------------
-    # MARK USER MESSAGES AS READ (ATOMIC)
+    # GET REQUEST → MARK THREAD AS READ (ADMIN VIEWING)
     # --------------------------------------------------------
-    with transaction.atomic():
-        WorkItemMessage.mark_thread_as_read(
-            work_item=work_item,
-            reader=request.user,
-        )
+    WorkItemMessage.mark_thread_as_read(
+        work_item=work_item,
+        reader=request.user,
+    )
 
     # --------------------------------------------------------
-    # LOAD DISCUSSION
+    # LOAD MESSAGES
     # --------------------------------------------------------
     messages_qs = (
         work_item.messages
         .select_related("sender")
-        .order_by("created_at")
+        .order_by("created_at", "id")
     )
 
-    unread_count = (
-        work_item.messages
-        .filter(is_read=False)
-        .exclude(sender=request.user)
-        .count()
+    # --------------------------------------------------------
+    # READ CURSOR (FOR READ RECEIPT UI)
+    # --------------------------------------------------------
+    read_state = (
+        WorkItemReadState.objects
+        .filter(
+            work_item=work_item,
+            user=request.user,
+        )
+        .first()
     )
 
+    last_read_message_id = (
+        read_state.last_read_message_id
+        if read_state and read_state.last_read_message_id
+        else 0
+    )
+
+    # --------------------------------------------------------
+    # RENDER
+    # --------------------------------------------------------
     return render(
         request,
         "admin/page/work_item_discussion.html",
@@ -93,6 +98,6 @@ def admin_work_item_discussion(request, item_id):
             "work_item": work_item,
             "messages": messages_qs,
             "has_messages": messages_qs.exists(),
-            "unread_count": unread_count,
+            "last_read_message_id": last_read_message_id,
         },
     )

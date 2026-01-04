@@ -463,17 +463,22 @@
               {{ m.message }}
             </div>
 
-            {% if m.sender == request.user %}
-              <div class="zxchat-read-indicator {% if m.is_read %}zxchat-read-indicator--read{% endif %}">
-                {% if m.is_read %}
-                  <i class="fas fa-check-double"></i>
-                  <span>Seen</span>
-                {% else %}
-                  <i class="fas fa-check"></i>
-                  <span>Sent</span>
-                {% endif %}
-              </div>
-            {% endif %}
+          {% if m.sender == request.user %}
+            <div class="zxchat-read-indicator
+                {% if m.id <= last_read_message_id %}
+                  zxchat-read-indicator--read
+                {% endif %}">
+                
+              {% if m.id <= last_read_message_id %}
+                <i class="fas fa-check-double"></i>
+                <span>Seen</span>
+              {% else %}
+                <i class="fas fa-check"></i>
+                <span>Sent</span>
+              {% endif %}
+            </div>
+          {% endif %}
+
           </div>
         </div>
       {% endfor %}

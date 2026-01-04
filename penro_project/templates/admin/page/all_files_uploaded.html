@@ -1,4 +1,5 @@
 {% extends "admin/layout/base.html" %}
+
 {% block title %}All Uploaded Files{% endblock %}
 {% block page_title %}All Uploaded Files{% endblock %}
 
@@ -118,18 +119,23 @@
           <th>Type</th>
           <th>Workcycle</th>
           <th>Division</th>
+          <th>Section</th>
+          <th>Service</th>
           <th>Unit</th>
           <th>Uploaded By</th>
           <th>Date Uploaded</th>
-          <th class="text-end">Action</th>
+          <th class="text-end">⋮</th>
         </tr>
       </thead>
 
       <tbody>
       {% for f in files %}
-        <tr>
-          <td class="fw-semibold">
-            {{ f.name }}
+        <tr onclick="window.location.href='{{ f.file_url }}'"
+            style="cursor: pointer;">
+
+          <!-- FILE NAME (TRUNCATED TO 20 CHARS) -->
+          <td class="fw-semibold" title="{{ f.name }}">
+            {{ f.name|truncatechars:20 }}
           </td>
 
           <td>
@@ -140,27 +146,28 @@
 
           <td>{{ f.workcycle|default:"—" }}</td>
           <td>{{ f.division|default:"—" }}</td>
+          <td>{{ f.section|default:"—" }}</td>
+          <td>{{ f.service|default:"—" }}</td>
           <td>{{ f.unit|default:"—" }}</td>
 
           <td>
             {{ f.uploaded_by|default:"System" }}
           </td>
 
+          <!-- ✅ FULL DATE FORMAT + 12-HOUR TIME -->
           <td>
-            {{ f.uploaded_at|date:"M d, Y · H:i" }}
+            {{ f.uploaded_at|date:"l, F j, Y · g:i A" }}
           </td>
 
-          <td class="text-end">
-            <a href="{{ f.file_url }}"
-               target="_blank"
-               class="btn btn-sm btn-outline-primary">
-              Open
-            </a>
+          <!-- STATIC THREE DOTS -->
+          <td class="text-end text-muted">
+            <i class="fas fa-ellipsis-v"></i>
           </td>
+
         </tr>
       {% empty %}
         <tr>
-          <td colspan="8" class="text-center text-muted py-4">
+          <td colspan="10" class="text-center text-muted py-4">
             No files found for the selected filters
           </td>
         </tr>

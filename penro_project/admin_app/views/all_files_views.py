@@ -1,22 +1,55 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
-from django.db.models import Q
+import re
 
-from accounts.models import (
-    WorkItemAttachment,
-    Team,
-    WorkCycle,
+from accounts.models import WorkItemAttachment, Team, WorkCycle
+from structure.services.folder_resolution import (
+    resolve_folder_context,
+    acronym,
 )
 
+
+# =====================================================
+# HELPER: WORKCYCLE ACRONYM (YEAR SAFE)
+# =====================================================
+def workcycle_acronym(title: str) -> str:
+    """
+    Acronymizes a WorkCycle title while preserving full years.
+
+    Example:
+      "Quarter 1 Operations Report 2026"
+      → "Q1OR 2026"
+    """
+    if not title:
+        return "—"
+
+    parts = []
+    for word in title.split():
+        if re.fullmatch(r"\d{4}", word):
+            parts.append(word)
+        else:
+            parts.append(acronym(word))
+
+    return " ".join(parts)
+
+
+# =====================================================
+# VIEW: ALL FILES (FLAT LIST – NOT FILE MANAGER)
+# =====================================================
 @staff_member_required
 def all_files_uploaded(request):
     """
-    Admin view: list all uploaded files with combined filters.
-    Year is derived from WorkCycle.due_at.year (NOT uploaded_at).
+    Admin view: list all uploaded files (FLAT VIEW).
+
+    GUARANTEES:
+    - Never redirects to File Manager
+    - File URLs point to ACTUAL files (not folders)
+    - Workcycle resolution is always correct
+    - Org resolution is folder-based but safe
     """
 
     # =====================================================
-    # BASE QUERYSET
+    # BASE QUERYSET (FILES ONLY)
     # =====================================================
     qs = (
         WorkItemAttachment.objects
@@ -25,125 +58,145 @@ def all_files_uploaded(request):
             "work_item",
             "work_item__workcycle",
             "folder",
+            "folder__workcycle",
         )
         .order_by("-uploaded_at")
     )
 
     # =====================================================
-    # ACTIVE FILTER VALUES
+    # FILTER PARAMS
     # =====================================================
     year = request.GET.get("year")
     attachment_type = request.GET.get("type")
     division = request.GET.get("division")
+    section = request.GET.get("section")
     service = request.GET.get("service")
     unit = request.GET.get("unit")
 
     # =====================================================
-    # APPLY FILTERS
+    # SAFE DB FILTERS (WORKCYCLE-BASED)
     # =====================================================
-
-    # ✅ YEAR — based on WorkCycle, NOT upload date
     if year:
-        qs = qs.filter(
-            work_item__workcycle__due_at__year=year
-        )
+        qs = qs.filter(work_item__workcycle__due_at__year=year)
 
     if attachment_type:
-        qs = qs.filter(
-            attachment_type=attachment_type
-        )
-
-    # Folder-based org filters
-    if division:
-        qs = qs.filter(
-            folder__parent__parent__name=division
-        )
-
-    if service:
-        qs = qs.filter(
-            folder__parent__name=service
-        )
-
-    if unit:
-        qs = qs.filter(
-            folder__name=unit
-        )
+        qs = qs.filter(attachment_type=attachment_type)
 
     # =====================================================
-    # TABLE DATA (flattened, template-friendly)
+    # FLATTEN FILES (NO NAVIGATION SIDE EFFECTS)
     # =====================================================
     files = []
 
-    for a in qs:
-        folder = a.folder
+    for attachment in qs:
+        ctx = resolve_folder_context(attachment.folder)
+
+        # -----------------------------
+        # SAFE WORKCYCLE RESOLUTION
+        # -----------------------------
+        workcycle = (
+            ctx["workcycle"]
+            or getattr(attachment.work_item, "workcycle", None)
+        )
+
+        # -----------------------------
+        # ORG FILTERS (POST-RESOLUTION)
+        # -----------------------------
+        if division and ctx["division"] != division:
+            continue
+        if section and ctx["section"] != section:
+            continue
+        if service and ctx["service"] != service:
+            continue
+        if unit:
+            if unit == "N/A":
+                if not ctx["unassigned"]:
+                    continue
+            elif ctx["unit"] != unit:
+                continue
 
         files.append({
-            "name": a.file.name.replace("work_items/", ""),
-            "type": a.get_attachment_type_display(),
+            # FILE (REAL FILE URL – NOT FILE MANAGER)
+            "name": attachment.file.name.rsplit("/", 1)[-1],
+            "file_url": attachment.file.url,  # ✅ MEDIA FILE URL
+
+            # TYPE
+            "type": attachment.get_attachment_type_display(),
+
+            # WORKCYCLE (ACRONYM + YEAR)
             "workcycle": (
-                a.work_item.workcycle.title
-                if a.work_item and a.work_item.workcycle
-                else None
+                workcycle_acronym(workcycle.title)
+                if workcycle else "—"
             ),
-            "division": folder.parent.parent.name if folder and folder.parent and folder.parent.parent else None,
-            "unit": folder.name if folder else None,
-            "uploaded_by": a.uploaded_by,
-            "uploaded_at": a.uploaded_at,
-            "file_url": a.file.url,
+
+            # ORG (ACRONYMS)
+            "division": acronym(ctx["division"]) if ctx["division"] else "—",
+            "section": acronym(ctx["section"]) if ctx["section"] else "—",
+            "service": acronym(ctx["service"]) if ctx["service"] else "—",
+            "unit": (
+                acronym(ctx["unit"])
+                if ctx["unit"]
+                else ("N/A" if ctx["unassigned"] else "—")
+            ),
+
+            # META
+            "uploaded_by": attachment.uploaded_by,
+            "uploaded_at": attachment.uploaded_at,
         })
 
     # =====================================================
-    # FILTER OPTIONS (DROPDOWNS)
+    # FILTER OPTIONS
     # =====================================================
-
     filters = {
-        # DISTINCT years from WorkCycle
         "years": (
             WorkCycle.objects
             .values_list("due_at__year", flat=True)
             .distinct()
             .order_by("-due_at__year")
         ),
-
         "attachment_types": WorkItemAttachment.ATTACHMENT_TYPE_CHOICES,
-
         "divisions": (
             Team.objects
             .filter(team_type=Team.TeamType.DIVISION)
             .values_list("name", flat=True)
             .order_by("name")
         ),
-
+        "sections": (
+            Team.objects
+            .filter(team_type=Team.TeamType.SECTION)
+            .values_list("name", flat=True)
+            .order_by("name")
+        ),
         "services": (
             Team.objects
             .filter(team_type=Team.TeamType.SERVICE)
             .values_list("name", flat=True)
             .order_by("name")
         ),
-
         "units": (
-            Team.objects
-            .filter(team_type=Team.TeamType.UNIT)
-            .values_list("name", flat=True)
-            .order_by("name")
+            list(
+                Team.objects
+                .filter(team_type=Team.TeamType.UNIT)
+                .values_list("name", flat=True)
+                .order_by("name")
+            ) + ["N/A"]
         ),
     }
 
     # =====================================================
-    # CONTEXT
+    # RENDER (FLAT VIEW ONLY)
     # =====================================================
     return render(
         request,
         "admin/page/all_files_uploaded.html",
         {
             "files": files,
-            "total_files": qs.count(),
-
+            "total_files": len(files),
             "filters": filters,
             "active": {
                 "year": year,
                 "type": attachment_type,
                 "division": division,
+                "section": section,
                 "service": service,
                 "unit": unit,
             },
