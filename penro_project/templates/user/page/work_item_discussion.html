@@ -8,17 +8,12 @@
   {% load static %}
 
   <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Montserrat Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 
   <style>
-    /* =========================================================
-       GLOBAL MONTESSRAT FONT SETUP
-    ========================================================= */
     * { 
       box-sizing: border-box;
       font-family: "Montserrat", sans-serif !important;
@@ -28,41 +23,33 @@
       height: 100%;
       margin: 0;
       padding: 0;
-      font-family: "Montserrat", sans-serif;
     }
 
     body.zxchat-iframe-wrap {
-      background: linear-gradient(135deg, #f0f4f8 0%, #e6eef5 100%);
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
       display: flex;
       flex-direction: column;
-      font-family: "Montserrat", sans-serif;
     }
 
-    /* Ensure all text elements use Montserrat */
-    h1, h2, h3, h4, h5, h6,
-    p, span, div,
-    input, textarea, button,
-    a, label, select, option {
+    h1, h2, h3, h4, h5, h6, p, span, div, input, textarea, button, a, label, select, option {
       font-family: "Montserrat", sans-serif !important;
     }
 
-    /* =========================================================
-       THREAD AREA - COMPACT SPACING
-    ========================================================= */
+    /* ============================================
+       THREAD AREA
+    ============================================ */
     .zxchat-thread-area {
       flex: 1;
-      padding: 20px 16px 120px;
+      padding: 24px 20px 130px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
       overflow-y: auto;
       scroll-behavior: smooth;
-      font-family: "Montserrat", sans-serif;
     }
 
-    /* Custom Scrollbar */
     .zxchat-thread-area::-webkit-scrollbar {
-      width: 6px;
+      width: 8px;
     }
 
     .zxchat-thread-area::-webkit-scrollbar-track {
@@ -71,16 +58,16 @@
 
     .zxchat-thread-area::-webkit-scrollbar-thumb {
       background: #cbd5e1;
-      border-radius: 3px;
+      border-radius: 4px;
     }
 
     .zxchat-thread-area::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
 
-    /* =========================================================
+    /* ============================================
        EMPTY STATE
-    ========================================================= */
+    ============================================ */
     .zxchat-empty-state {
       flex: 1;
       display: flex;
@@ -89,51 +76,49 @@
       justify-content: center;
       text-align: center;
       color: #64748b;
-      padding: 40px 20px;
-      font-family: "Montserrat", sans-serif;
+      padding: 60px 20px;
     }
 
     .zxchat-empty-icon {
-      width: 72px;
-      height: 72px;
+      width: 90px;
+      height: 90px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #dfe9f3 0%, #d0e1f0 100%);
+      background: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.1);
     }
 
     .zxchat-empty-icon i {
-      font-size: 28px;
-      color: #5b7a99;
+      font-size: 36px;
+      color: #6366f1;
     }
 
     .zxchat-empty-title {
       font-weight: 700;
-      font-size: 16px;
-      color: #475569;
-      margin-bottom: 8px;
-      font-family: "Montserrat", sans-serif;
+      font-size: 18px;
+      color: #334155;
+      margin-bottom: 10px;
     }
 
     .zxchat-empty-desc {
-      font-size: 13px;
+      font-size: 14px;
       color: #94a3b8;
       font-weight: 500;
-      font-family: "Montserrat", sans-serif;
+      max-width: 280px;
+      line-height: 1.5;
     }
 
-    /* =========================================================
-       MESSAGE ROWS - COMPACT DESIGN
-    ========================================================= */
+    /* ============================================
+       MESSAGE ROWS
+    ============================================ */
     .zxchat-bubble-row {
       display: flex;
-      gap: 10px;
-      max-width: 85%;
-      animation: zxchat-fadein .3s ease-out;
-      font-family: "Montserrat", sans-serif;
+      gap: 12px;
+      max-width: 88%;
+      animation: zxchat-slidein 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .zxchat-bubble-row--self {
@@ -141,244 +126,10 @@
       flex-direction: row-reverse;
     }
 
-    .zxchat-avatar-ring {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #7ba3c4 0%, #5b8db3 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 700;
-      font-size: 14px;
-      flex-shrink: 0;
-      box-shadow: 0 2px 6px rgba(91, 141, 179, 0.2);
-      border: 2px solid #ffffff;
-      font-family: "Montserrat", sans-serif;
-      margin-top: 4px;
-    }
-
-    .zxchat-bubble-row--self .zxchat-avatar-ring {
-      background: linear-gradient(135deg, #a3b8cc 0%, #8ea7be 100%);
-      box-shadow: 0 2px 6px rgba(142, 167, 190, 0.2);
-    }
-
-    .zxchat-bubble-content {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      flex: 1;
-      font-family: "Montserrat", sans-serif;
-      min-width: 0;
-    }
-
-    .zxchat-bubble-meta {
-      display: flex;
-      gap: 6px;
-      font-size: 11px;
-      color: #64748b;
-      align-items: center;
-      font-weight: 500;
-      font-family: "Montserrat", sans-serif;
-      flex-wrap: wrap;
-      margin-bottom: 2px;
-    }
-
-    .zxchat-bubble-row--self .zxchat-bubble-meta {
-      justify-content: flex-end;
-    }
-
-    .zxchat-sender-name {
-      font-weight: 600;
-      color: #475569;
-      font-family: "Montserrat", sans-serif;
-      white-space: nowrap;
-    }
-
-    .zxchat-sender-role {
-      background: linear-gradient(135deg, #e8f0f7 0%, #d9e6f2 100%);
-      color: #5b7a99;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 9px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.2px;
-      font-family: "Montserrat", sans-serif;
-      white-space: nowrap;
-    }
-
-    .zxchat-timestamp {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      font-size: 10px;
-      color: #94a3b8;
-      font-family: "Montserrat", sans-serif;
-      white-space: nowrap;
-    }
-
-    .zxchat-timestamp i {
-      font-size: 9px;
-    }
-
-    /* =========================================================
-       MESSAGE BUBBLE - IMPROVED FOR MULTI-LINE
-    ========================================================= */
-    .zxchat-bubble-box {
-      background: #ffffff;
-      border-radius: 16px;
-      border-top-left-radius: 8px;
-      padding: 12px 14px;
-      font-size: 14px;
-      line-height: 1.5;
-      color: #334155;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
-      border: 1px solid rgba(203, 213, 225, 0.25);
-      word-wrap: break-word;
-      word-break: break-word;
-      overflow-wrap: break-word;
-      white-space: pre-wrap;
-      font-family: "Montserrat", sans-serif;
-      max-width: 100%;
-      min-width: 60px;
-    }
-
-    /* Long message specific styling */
-    .zxchat-bubble-box:has(> :nth-child(1)) {
-      max-width: 100%;
-    }
-
-    /* Self message bubble */
-    .zxchat-bubble-row--self .zxchat-bubble-box {
-      background: linear-gradient(135deg, #a8bedb 0%, #8fa6c5 100%);
-      color: #ffffff;
-      border-top-right-radius: 8px;
-      border-top-left-radius: 16px;
-      border: none;
-      box-shadow: 0 2px 8px rgba(142, 167, 190, 0.15);
-      font-family: "Montserrat", sans-serif;
-    }
-
-    /* Compact message styling */
-    .zxchat-bubble-box.compact {
-      padding: 8px 12px;
-      font-size: 13.5px;
-      line-height: 1.4;
-    }
-
-    .zxchat-bubble-box.long {
-      padding: 14px 16px;
-      line-height: 1.6;
-    }
-
-    .zxchat-read-indicator {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 10px;
-      margin-top: 2px;
-      text-align: right;
-      color: #94a3b8;
-      font-weight: 500;
-      font-family: "Montserrat", sans-serif;
-    }
-
-    .zxchat-read-indicator i {
-      font-size: 11px;
-    }
-
-    .zxchat-read-indicator--read {
-      color: #5b8db3;
-    }
-
-    /* =========================================================
-       COMPOSER - COMPACT
-    ========================================================= */
-    .zxchat-composer-dock {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 14px 16px 18px;
-      background: linear-gradient(to top, #ffffff 0%, rgba(255, 255, 255, 0.98) 100%);
-      border-top: 1px solid #e2e8f0;
-      box-shadow: 0 -3px 16px rgba(15, 23, 42, 0.04);
-      backdrop-filter: blur(10px);
-      font-family: "Montserrat", sans-serif;
-    }
-
-    .zxchat-composer-inner {
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
-      font-family: "Montserrat", sans-serif;
-    }
-
-    .zxchat-textarea-field {
-      width: 100%;
-      resize: none;
-      border-radius: 14px;
-      border: 1px solid #e2e8f0;
-      padding: 10px 14px;
-      font-size: 14px;
-      background: #f8fafc;
-      transition: all 0.2s ease;
-      line-height: 1.5;
-      font-family: "Montserrat", sans-serif !important;
-      min-height: 44px;
-      max-height: 100px;
-    }
-
-    .zxchat-textarea-field:focus {
-      outline: none;
-      border-color: #8fa6c5;
-      background: #fff;
-      box-shadow: 0 0 0 3px rgba(143, 166, 197, 0.1);
-    }
-
-    .zxchat-textarea-field::placeholder {
-      color: #94a3b8;
-      font-family: "Montserrat", sans-serif;
-      font-size: 13.5px;
-    }
-
-    .zxchat-send-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      border: none;
-      background: linear-gradient(135deg, #8fa6c5 0%, #7ba3c4 100%);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 3px 10px rgba(123, 163, 196, 0.25);
-      font-family: "Montserrat", sans-serif;
-      flex-shrink: 0;
-    }
-
-    .zxchat-send-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 5px 14px rgba(123, 163, 196, 0.3);
-      background: linear-gradient(135deg, #7ba3c4 0%, #6a92b3 100%);
-    }
-
-    .zxchat-send-btn:active {
-      transform: translateY(0);
-    }
-
-    .zxchat-send-btn i {
-      font-size: 16px;
-    }
-
-    @keyframes zxchat-fadein {
+    @keyframes zxchat-slidein {
       from { 
         opacity: 0; 
-        transform: translateY(8px); 
+        transform: translateY(12px); 
       }
       to { 
         opacity: 1; 
@@ -386,50 +137,300 @@
       }
     }
 
-    /* Ensure Font Awesome icons maintain their font */
-    .fa,
-    .fas,
-    .far,
-    .fab,
-    .fal {
+    /* ============================================
+       AVATAR
+    ============================================ */
+    .zxchat-avatar-ring {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+      border: 3px solid #ffffff;
+      margin-top: 6px;
+    }
+
+    .zxchat-bubble-row--self .zxchat-avatar-ring {
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+    }
+
+    /* ============================================
+       MESSAGE CONTENT
+    ============================================ */
+    .zxchat-bubble-content {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .zxchat-bubble-meta {
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      color: #64748b;
+      align-items: center;
+      font-weight: 600;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+
+    .zxchat-bubble-row--self .zxchat-bubble-meta {
+      justify-content: flex-end;
+    }
+
+    .zxchat-sender-name {
+      font-weight: 700;
+      color: #334155;
+      white-space: nowrap;
+    }
+
+    .zxchat-sender-role {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      color: #1e40af;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .zxchat-timestamp {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+
+    .zxchat-timestamp i {
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    /* ============================================
+       MESSAGE BUBBLE
+    ============================================ */
+    .zxchat-bubble-box {
+      background: #ffffff;
+      border-radius: 18px;
+      border-top-left-radius: 6px;
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1e293b;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.1);
+      border: 1px solid rgba(203, 213, 225, 0.3);
+      word-wrap: break-word;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+      max-width: 100%;
+      min-width: 80px;
+      position: relative;
+    }
+
+    .zxchat-bubble-row--self .zxchat-bubble-box {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff;
+      border-top-right-radius: 6px;
+      border-top-left-radius: 18px;
+      border: none;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2), 0 2px 6px rgba(99, 102, 241, 0.15);
+    }
+
+    .zxchat-bubble-box.compact {
+      padding: 10px 14px;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+
+    .zxchat-bubble-box.long {
+      padding: 16px 18px;
+      line-height: 1.7;
+      font-size: 14.5px;
+    }
+
+    /* ============================================
+       READ INDICATOR
+    ============================================ */
+    .zxchat-read-indicator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      margin-top: 4px;
+      text-align: right;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .zxchat-read-indicator i {
+      font-size: 12px;
+    }
+
+    .zxchat-read-indicator--read {
+      color: #6366f1;
+    }
+
+    .zxchat-read-indicator--read i {
+      animation: check-bounce 0.6s ease;
+    }
+
+    @keyframes check-bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    /* ============================================
+       COMPOSER
+    ============================================ */
+    .zxchat-composer-dock {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px 20px 20px;
+      background: linear-gradient(to top, #ffffff 0%, rgba(255, 255, 255, 0.98) 100%);
+      border-top: 1px solid #e2e8f0;
+      box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.05);
+      backdrop-filter: blur(12px);
+    }
+
+    .zxchat-composer-inner {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      max-width: 100%;
+    }
+
+    .zxchat-textarea-field {
+      width: 100%;
+      resize: none;
+      border-radius: 16px;
+      border: 2px solid #e2e8f0;
+      padding: 12px 16px;
+      font-size: 14px;
+      background: #f8fafc;
+      transition: all 0.2s ease;
+      line-height: 1.5;
+      font-family: "Montserrat", sans-serif !important;
+      min-height: 48px;
+      max-height: 120px;
+    }
+
+    .zxchat-textarea-field:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .zxchat-textarea-field::placeholder {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .zxchat-send-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      flex-shrink: 0;
+    }
+
+    .zxchat-send-btn:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 6px 18px rgba(99, 102, 241, 0.4);
+      background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    }
+
+    .zxchat-send-btn:active {
+      transform: translateY(0) scale(1);
+    }
+
+    .zxchat-send-btn i {
+      font-size: 17px;
+    }
+
+    /* ============================================
+       FONT AWESOME OVERRIDE
+    ============================================ */
+    .fa, .fas, .far, .fab, .fal {
       font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
     }
 
-    /* Responsive adjustments */
+    /* ============================================
+       RESPONSIVE
+    ============================================ */
     @media (max-width: 480px) {
       .zxchat-bubble-row {
-        max-width: 90%;
-        gap: 8px;
+        max-width: 92%;
+        gap: 10px;
       }
 
       .zxchat-thread-area {
-        padding: 14px 12px 110px;
-        gap: 14px;
+        padding: 18px 14px 120px;
+        gap: 16px;
       }
 
       .zxchat-bubble-box {
-        padding: 10px 12px;
+        padding: 12px 14px;
         font-size: 13.5px;
       }
 
       .zxchat-avatar-ring {
-        width: 32px;
-        height: 32px;
-        font-size: 13px;
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
       }
 
       .zxchat-composer-dock {
-        padding: 12px 12px 16px;
+        padding: 14px 14px 18px;
       }
       
       .zxchat-textarea-field {
-        padding: 9px 12px;
+        padding: 10px 14px;
         font-size: 13.5px;
+        min-height: 44px;
       }
       
       .zxchat-send-btn {
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
+      }
+
+      .zxchat-empty-state {
+        padding: 40px 20px;
+      }
+
+      .zxchat-empty-icon {
+        width: 70px;
+        height: 70px;
+      }
+
+      .zxchat-empty-icon i {
+        font-size: 30px;
       }
     }
   </style>
@@ -437,9 +438,6 @@
 
 <body class="zxchat-iframe-wrap">
 
-  <!-- =======================================================
-       THREAD
-  ======================================================== -->
   <div class="zxchat-thread-area" id="zxchatThreadArea">
 
     {% if has_messages %}
@@ -480,17 +478,14 @@
     {% else %}
       <div class="zxchat-empty-state">
         <div class="zxchat-empty-icon">
-          <i class="far fa-comments"></i>
+          <i class="fas fa-comments"></i>
         </div>
         <div class="zxchat-empty-title">No messages yet</div>
-        <div class="zxchat-empty-desc">Start the conversation below</div>
+        <div class="zxchat-empty-desc">Start the conversation by sending your first message below</div>
       </div>
     {% endif %}
   </div>
 
-  <!-- =======================================================
-       COMPOSER
-  ======================================================== -->
   <form method="post" class="zxchat-composer-dock">
     {% csrf_token %}
     <div class="zxchat-composer-inner">
@@ -501,16 +496,14 @@
         rows="1"
         required></textarea>
 
-      <button type="submit" class="zxchat-send-btn">
+      <button type="submit" class="zxchat-send-btn" title="Send message">
         <i class="fas fa-paper-plane"></i>
       </button>
     </div>
   </form>
 
-  <!-- =======================================================
-       JS
-  ======================================================== -->
   <script>
+    // Auto-scroll to bottom on load
     const thread = document.getElementById('zxchatThreadArea');
     if (thread) {
       thread.scrollTop = thread.scrollHeight;
@@ -521,7 +514,7 @@
     if (textarea) {
       textarea.addEventListener('input', function() {
         this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
       });
 
       // Reset on form submit
@@ -531,24 +524,29 @@
           textarea.value = '';
         }, 10);
       });
+
+      // Submit on Cmd/Ctrl + Enter
+      textarea.addEventListener('keydown', function(e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          e.preventDefault();
+          this.closest('form').submit();
+        }
+      });
     }
 
-    // Dynamic bubble sizing based on content length
+    // Dynamic bubble sizing
     document.querySelectorAll('.zxchat-bubble-box').forEach(bubble => {
       const text = bubble.textContent.trim();
       const length = text.length;
       
-      // Remove any existing size classes
       bubble.classList.remove('compact', 'long');
       
-      // Add appropriate size class
       if (length < 50) {
         bubble.classList.add('compact');
       } else if (length > 200) {
         bubble.classList.add('long');
       }
       
-      // Ensure proper text wrapping
       if (text.includes('\n') || length > 100) {
         bubble.style.whiteSpace = 'pre-wrap';
       }

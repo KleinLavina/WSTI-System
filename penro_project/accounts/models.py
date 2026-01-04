@@ -720,18 +720,19 @@ class WorkItemMessage(models.Model):
     )
 
     # ============================================================
-    # READ / SEEN STATE
+    # ⚠️ LEGACY READ FIELDS (DEPRECATED)
+    # DO NOT USE THESE FOR CHAT LOGIC
     # ============================================================
     is_read = models.BooleanField(
         default=False,
         db_index=True,
-        help_text="Whether this message has been read by the other party"
+        help_text="LEGACY: do not use for chat read logic"
     )
 
     read_at = models.DateTimeField(
         null=True,
         blank=True,
-        help_text="Timestamp when the message was read"
+        help_text="LEGACY: do not use for chat read logic"
     )
 
     # ============================================================
@@ -743,22 +744,17 @@ class WorkItemMessage(models.Model):
     # MODEL CONFIG
     # ============================================================
     class Meta:
-        ordering = ["created_at", "id"]  # Stable ordering
+        ordering = ["created_at", "id"]
         indexes = [
             models.Index(fields=["sender_role"]),
             models.Index(fields=["created_at"]),
-            models.Index(fields=["is_read"]),
-            models.Index(fields=["work_item", "is_read"]),
+            models.Index(fields=["work_item", "created_at"]),
         ]
 
     # ============================================================
     # SAVE OVERRIDE (LOCK ROLE AT CREATION)
     # ============================================================
     def save(self, *args, **kwargs):
-        """
-        Lock sender_role at creation time to prevent
-        historical inconsistencies if user role changes.
-        """
         if not self.pk and not self.sender_role:
             self.sender_role = getattr(self.sender, "login_role", "user")
         super().save(*args, **kwargs)
@@ -769,39 +765,92 @@ class WorkItemMessage(models.Model):
     def __str__(self):
         return (
             f"[{self.created_at:%Y-%m-%d %H:%M}] "
-            f"{self.sender} → WorkItem#{self.work_item_id} "
-            f"({'read' if self.is_read else 'unread'})"
+            f"{self.sender} → WorkItem#{self.work_item_id}"
         )
 
     # ============================================================
-    # INSTANCE HELPERS
+    # HELPERS
     # ============================================================
-    def mark_as_read(self):
-        """Mark this message as read safely."""
-        if not self.is_read:
-            self.is_read = True
-            self.read_at = timezone.now()
-            self.save(update_fields=["is_read", "read_at"])
-
     def is_system_message(self):
-        """Detect system-generated messages (status/review updates)."""
         return bool(self.related_status or self.related_review)
 
     # ============================================================
-    # BULK HELPERS (VERY IMPORTANT FOR INBOX UX)
+    # ✅ FACEBOOK-STYLE READ RECEIPT (CORE LOGIC)
     # ============================================================
     @classmethod
-    def mark_thread_as_read(cls, work_item, reader):
+    def mark_thread_as_read(cls, *, work_item, reader):
         """
-        Mark all unread messages in a work item thread
-        as read for the given reader.
+        Mark a discussion thread as read for a specific user
+        using a per-user read cursor (Facebook-style).
         """
+
+        # Get the last message NOT sent by the reader
+        last_message = (
+            cls.objects
+            .filter(work_item=work_item)
+            .exclude(sender=reader)
+            .order_by("-id")
+            .first()
+        )
+
+        if not last_message:
+            return 0
+
+        read_state, _ = WorkItemReadState.objects.update_or_create(
+            work_item=work_item,
+            user=reader,
+            defaults={
+                "last_read_message": last_message,
+                "last_read_at": timezone.now(),
+            }
+        )
+
+        # Return number of messages that were unread before marking
         return cls.objects.filter(
             work_item=work_item,
-            is_read=False
-        ).exclude(
-            sender=reader
-        ).update(
-            is_read=True,
-            read_at=timezone.now()
+            id__gt=read_state.last_read_message_id
+        ).exclude(sender=reader).count()
+    
+class WorkItemReadState(models.Model):
+    """
+    Per-user read cursor for a WorkItem discussion.
+    This is the correct Facebook-style read receipt model.
+    """
+
+    work_item = models.ForeignKey(
+        WorkItem,
+        on_delete=models.CASCADE,
+        related_name="read_states"
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="work_item_read_states"
+    )
+
+    last_read_message = models.ForeignKey(
+        WorkItemMessage,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+"
+    )
+
+    last_read_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        unique_together = ("work_item", "user")
+        indexes = [
+            models.Index(fields=["work_item", "user"]),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.user} read up to "
+            f"message {self.last_read_message_id or 'None'} "
+            f"in WorkItem#{self.work_item_id}"
         )
