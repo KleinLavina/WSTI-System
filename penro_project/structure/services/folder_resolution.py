@@ -36,6 +36,10 @@ def get_or_create_folder(
     created_by=None,
     system=True,
 ):
+    """
+    Creates or retrieves a folder with the given parameters.
+    Uses get_or_create to avoid duplicates.
+    """
     folder, _ = DocumentFolder.objects.get_or_create(
         parent=parent,
         name=name,
@@ -50,33 +54,33 @@ def get_or_create_folder(
 
 
 # ============================================================
-# MAIN RESOLUTION SERVICE (ORGASSIGNMENT ONLY)
+# MAIN RESOLUTION SERVICE (FLEXIBLE & GRACEFUL)
 # ============================================================
 
 @transaction.atomic
 def resolve_attachment_folder(*, work_item, attachment_type, actor):
     """
-    Resolves the default attachment folder using OrgAssignment
-    as the single source of truth.
+    Resolves the attachment folder with flexible organizational structure.
+    
+    NEW STRUCTURE:
+    ROOT > YEAR > CATEGORY (attachment type) > WORKCYCLE > Org hierarchy
+    
+    FLEXIBILITY:
+    - No org assignment → creates "Unassigned" division
+    - Only division → file goes in division folder
+    - Division + section → file goes in section folder
+    - Full hierarchy → file goes in deepest available level
+    
+    Returns: The deepest folder where the file should be placed
     """
 
     # -------------------------------------------------
-    # 1️⃣ Permission
+    # 1️⃣ Permission Check
     # -------------------------------------------------
     assert_can_upload(work_item=work_item, actor=actor)
 
     # -------------------------------------------------
-    # 2️⃣ OrgAssignment (REQUIRED)
-    # -------------------------------------------------
-    try:
-        org = actor.org_assignment
-    except (OrgAssignment.DoesNotExist, AttributeError):
-        raise ValidationError(
-            f"User '{actor}' has no organizational assignment."
-        )
-
-    # -------------------------------------------------
-    # 3️⃣ ROOT
+    # 2️⃣ ROOT
     # -------------------------------------------------
     root = get_or_create_folder(
         name="ROOT",
@@ -85,7 +89,7 @@ def resolve_attachment_folder(*, work_item, attachment_type, actor):
     )
 
     # -------------------------------------------------
-    # 4️⃣ YEAR
+    # 3️⃣ YEAR (from work cycle deadline)
     # -------------------------------------------------
     year_folder = get_or_create_folder(
         name=str(work_item.workcycle.due_at.year),
@@ -94,32 +98,55 @@ def resolve_attachment_folder(*, work_item, attachment_type, actor):
     )
 
     # -------------------------------------------------
-    # 5️⃣ CATEGORY (attachment bucket)
+    # 4️⃣ CATEGORY = Attachment Type Bucket
     # -------------------------------------------------
-    category_folder = get_or_create_folder(
-        name="Workcycles",
+    attachment_type_folder = get_or_create_folder(
+        name=attachment_type.upper(),  # MATRIX_A, MATRIX_B, MOV
         folder_type=DocumentFolder.FolderType.CATEGORY,
         parent=year_folder,
     )
 
     # -------------------------------------------------
-    # 6️⃣ WORKCYCLE
+    # 5️⃣ WORKCYCLE
     # -------------------------------------------------
     workcycle_folder = get_or_create_folder(
         name=work_item.workcycle.title,
         folder_type=DocumentFolder.FolderType.WORKCYCLE,
-        parent=category_folder,
+        parent=attachment_type_folder,
         workcycle=work_item.workcycle,
     )
 
     # -------------------------------------------------
-    # 7️⃣ DIVISION
+    # 6️⃣ ORGANIZATIONAL STRUCTURE (FLEXIBLE)
+    # -------------------------------------------------
+    
+    # Try to get user's org assignment
+    try:
+        org = actor.org_assignment
+    except (OrgAssignment.DoesNotExist, AttributeError):
+        org = None
+
+    # CASE 1: No org assignment → create "Unassigned" bucket
+    if not org:
+        unassigned_folder = get_or_create_folder(
+            name="Unassigned",
+            folder_type=DocumentFolder.FolderType.DIVISION,
+            parent=workcycle_folder,
+        )
+        return unassigned_folder
+
+    # -------------------------------------------------
+    # 7️⃣ DIVISION (always present if org exists)
     # -------------------------------------------------
     division_folder = get_or_create_folder(
         name=org.division.name,
         folder_type=DocumentFolder.FolderType.DIVISION,
         parent=workcycle_folder,
     )
+
+    # CASE 2: Only division → file goes here
+    if not org.section:
+        return division_folder
 
     # -------------------------------------------------
     # 8️⃣ SECTION
@@ -130,39 +157,62 @@ def resolve_attachment_folder(*, work_item, attachment_type, actor):
         parent=division_folder,
     )
 
-    # -------------------------------------------------
-    # 9️⃣ SERVICE (optional)
-    # -------------------------------------------------
-    parent_for_unit = section_folder
+    # CASE 3: Division + section only → file goes here
+    if not org.service and not org.unit:
+        return section_folder
 
+    # -------------------------------------------------
+    # 9️⃣ SERVICE (optional branch)
+    # -------------------------------------------------
     if org.service:
         service_folder = get_or_create_folder(
             name=org.service.name,
             folder_type=DocumentFolder.FolderType.SERVICE,
             parent=section_folder,
         )
-        parent_for_unit = service_folder
 
-    # -------------------------------------------------
-    # 🔟 UNIT (optional)
-    # -------------------------------------------------
-    parent_for_attachment = parent_for_unit
+        # CASE 4: Division + section + service (no unit) → file goes here
+        if not org.unit:
+            return service_folder
 
-    if org.unit:
+        # CASE 5: Full hierarchy with service → unit under service
         unit_folder = get_or_create_folder(
             name=org.unit.name,
             folder_type=DocumentFolder.FolderType.UNIT,
-            parent=parent_for_unit,
+            parent=service_folder,
         )
-        parent_for_attachment = unit_folder
+        return unit_folder
 
     # -------------------------------------------------
-    # 1️⃣1️⃣ ATTACHMENT TYPE (FINAL)
+    # 🔟 UNIT (belongs to section if no service)
     # -------------------------------------------------
-    attachment_folder = get_or_create_folder(
-        name=attachment_type.upper(),
-        folder_type=DocumentFolder.FolderType.ATTACHMENT,
-        parent=parent_for_attachment,
+    if org.unit:
+        # CASE 6: Division + section + unit (no service) → unit under section
+        unit_folder = get_or_create_folder(
+            name=org.unit.name,
+            folder_type=DocumentFolder.FolderType.UNIT,
+            parent=section_folder,
+        )
+        return unit_folder
+
+    # Fallback (should never reach here based on logic above)
+    return section_folder
+
+
+# ============================================================
+# HELPER: Preview Upload Path
+# ============================================================
+
+def get_upload_path_preview(*, work_item, attachment_type, actor):
+    """
+    Returns a human-readable path string showing where files will be uploaded.
+    Useful for UI display before actual upload.
+    
+    Example: "ROOT / 2024 / MATRIX_A / Q1 Report / Engineering / Backend Team"
+    """
+    folder = resolve_attachment_folder(
+        work_item=work_item,
+        attachment_type=attachment_type,
+        actor=actor
     )
-
-    return attachment_folder
+    return folder.get_path_string()

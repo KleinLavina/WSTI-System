@@ -2,27 +2,24 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.db.models import Q
-from accounts.models import WorkItem, WorkItemMessage, WorkItemAttachment
 from django.utils import timezone
-from datetime import timedelta
 from django.urls import reverse
+from datetime import timedelta
+
+from accounts.models import WorkItem, WorkItemMessage, WorkItemAttachment
+from notifications.services.status import notify_work_item_status_changed
 from ..services.work_item_service import (
     update_work_item_status,
     submit_work_item,
     add_attachment_to_work_item,
     update_work_item_context,
 )
-from notifications.services.status import notify_work_item_status_changed
+
 
 # ============================================================
-# HELPER: Calculate Time Remaining
-# ============================================================
-# ============================================================
 # TIME REMAINING LOGIC (STATUS-AWARE)
 # ============================================================
-# ============================================================
-# TIME REMAINING LOGIC (STATUS-AWARE)
-# ============================================================
+
 def calculate_time_remaining(due_at, status, submitted_at=None):
     """
     Human-readable time logic based on:
@@ -97,6 +94,7 @@ def calculate_time_remaining(due_at, status, submitted_at=None):
     else:
         return f"Submitted {minutes}m late"
 
+
 def get_submission_indicator(due_at, submitted_at):
     """
     Returns:
@@ -130,6 +128,7 @@ def get_submission_indicator(due_at, submitted_at):
 # ============================================================
 # ACTIVE WORK ITEMS (WITH FILTER COUNTS & TIME REMAINING)
 # ============================================================
+
 @login_required
 def user_work_items(request):
     """
@@ -253,7 +252,6 @@ def user_work_items(request):
             submitted_at=item.submitted_at
         )
 
-
     total_active_count = base_qs.count()
 
     return render(
@@ -278,6 +276,7 @@ def user_work_items(request):
 # ============================================================
 # WORK ITEM DETAIL
 # ============================================================
+
 @login_required
 def user_work_item_detail(request, item_id):
     work_item = get_object_or_404(
@@ -311,7 +310,7 @@ def user_work_item_detail(request, item_id):
         action = request.POST.get("action")
 
         try:
-            # 🔥 Capture old status BEFORE any mutation
+            # Capture old status BEFORE any mutation
             old_status = work_item.status
 
             if action == "update_status":
@@ -355,8 +354,7 @@ def user_work_item_detail(request, item_id):
                     work_item.status == "done"
                     and work_item.review_decision == "pending"
                 ):
-                    # ✅ IMPORTANT FIX:
-                    # Do NOT use update_fields — allow model logic to clear submitted_at
+                    # Allow model logic to clear submitted_at
                     work_item.status = "working_on_it"
                     work_item.save()
 
@@ -381,7 +379,7 @@ def user_work_item_detail(request, item_id):
     # -------------------------------------------------
     # ATTACHMENTS
     # -------------------------------------------------
-    attachments = work_item.attachments.all()
+    attachments = work_item.attachments.select_related("folder").all()
 
     attachment_types = [
         ("matrix_a", "Monthly Report Form – Matrix A"),
@@ -406,15 +404,16 @@ def user_work_item_detail(request, item_id):
             "status_choices": WorkItem._meta.get_field("status").choices,
             "attachment_types": attachment_types,
             "uploaded_types": uploaded_types,
-
-            # ✅ submission metadata for UI
             "submission_status": submission_status,
             "submission_delta": submission_delta,
         }
     )
+
+
 # ============================================================
 # INACTIVE WORK ITEMS (WITH FILTER COUNTS)
 # ============================================================
+
 @login_required
 def user_inactive_work_items(request):
     """
@@ -434,7 +433,7 @@ def user_inactive_work_items(request):
         .select_related("workcycle")
         .filter(
             owner=request.user,
-            is_active=False,  # Archived work items only
+            is_active=False,
         )
     )
 
@@ -452,7 +451,7 @@ def user_inactive_work_items(request):
         )
 
     # -------------------------------------------------
-    # WORK ITEM FILTERS (NO LIFECYCLE)
+    # WORK ITEM FILTERS
     # -------------------------------------------------
     status = request.GET.get("status")
     if status in {"not_started", "working_on_it", "done"}:
@@ -490,7 +489,7 @@ def user_inactive_work_items(request):
     # -------------------------------------------------
     work_items_list = list(qs)
     for item in work_items_list:
-        item.time_remaining = None  # Explicitly disabled
+        item.time_remaining = None
 
     # -------------------------------------------------
     # SORTING (ARCHIVE-CENTRIC)
@@ -503,7 +502,10 @@ def user_inactive_work_items(request):
         work_items_list.sort(key=lambda x: x.workcycle.due_at, reverse=True)
     else:
         # Default: most recently archived first
-        work_items_list.sort(key=lambda x: x.inactive_at or x.created_at, reverse=True)
+        work_items_list.sort(
+            key=lambda x: x.inactive_at or x.created_at,
+            reverse=True
+        )
 
     # -------------------------------------------------
     # RENDER
@@ -525,41 +527,15 @@ def user_inactive_work_items(request):
 
 
 # ============================================================
-# DELETE ATTACHMENT
+# WORK ITEM ATTACHMENTS (FLEXIBLE UPLOAD)
 # ============================================================
-@login_required
-def delete_work_item_attachment(request, attachment_id):
-    attachment = get_object_or_404(
-        WorkItemAttachment.objects.select_related("work_item"),
-        id=attachment_id,
-        work_item__owner=request.user
-    )
 
-    work_item = attachment.work_item
-    attachment_type = attachment.attachment_type
-
-    # 🔒 Safety rules
-    if work_item.review_decision == "approved":
-        messages.error(request, "Approved work items cannot be modified.")
-        return redirect(
-            f"{reverse('user_app:work-item-attachments', args=[work_item.id])}?type={attachment_type}"
-        )
-
-    if request.method == "POST":
-        attachment.file.delete(save=False)
-        attachment.delete()
-        messages.success(request, "Attachment deleted.")
-
-    return redirect(
-        f"{reverse('user_app:work-item-attachments', args=[work_item.id])}?type={attachment_type}"
-    )
-
-
-# ============================================================
-# WORK ITEM ATTACHMENTS
-# ============================================================
 @login_required
 def user_work_item_attachments(request, item_id):
+    """
+    Upload and view attachments for a work item.
+    Supports flexible folder structure based on user's org assignment.
+    """
     work_item = get_object_or_404(
         WorkItem,
         id=item_id,
@@ -581,11 +557,18 @@ def user_work_item_attachments(request, item_id):
             item_id=work_item.id
         )
 
-    # ================= UPLOAD =================
+    # -------------------------------------------------
+    # UPLOAD HANDLER
+    # -------------------------------------------------
     if request.method == "POST":
         try:
             files = request.FILES.getlist("attachments")
 
+            if not files:
+                messages.warning(request, "No files selected.")
+                return redirect(f"{request.path}?type={attachment_type}")
+
+            # Use service to handle flexible upload
             add_attachment_to_work_item(
                 work_item=work_item,
                 files=files,
@@ -593,18 +576,31 @@ def user_work_item_attachments(request, item_id):
                 user=request.user
             )
 
-            messages.success(request, "Attachment uploaded.")
+            messages.success(
+                request,
+                f"{len(files)} attachment(s) uploaded successfully."
+            )
             return redirect(f"{request.path}?type={attachment_type}")
 
         except Exception as e:
-            messages.error(request, str(e))
+            messages.error(request, f"Upload failed: {str(e)}")
 
-    # ================= FETCH ATTACHMENTS =================
+    # -------------------------------------------------
+    # FETCH ATTACHMENTS WITH FOLDER INFO
+    # -------------------------------------------------
     attachments = (
         work_item.attachments
         .filter(attachment_type=attachment_type)
-        .order_by("uploaded_at")
+        .select_related("folder", "uploaded_by")
+        .order_by("-uploaded_at")
     )
+
+    # Add folder path to each attachment for display
+    for attachment in attachments:
+        if attachment.folder:
+            attachment.folder_path = attachment.folder.get_path_string()
+        else:
+            attachment.folder_path = "No folder assigned"
 
     return render(
         request,
@@ -614,15 +610,68 @@ def user_work_item_attachments(request, item_id):
             "attachments": attachments,
             "attachment_type": attachment_type,
             "attachment_label": TYPE_MAP[attachment_type],
+            "can_upload": work_item.review_decision != "approved",
         }
+    )
+
+
+# ============================================================
+# DELETE ATTACHMENT
+# ============================================================
+
+@login_required
+def delete_work_item_attachment(request, attachment_id):
+    """
+    Delete an attachment with proper permission and state checks.
+    """
+    attachment = get_object_or_404(
+        WorkItemAttachment.objects.select_related("work_item"),
+        id=attachment_id,
+        work_item__owner=request.user
+    )
+
+    work_item = attachment.work_item
+    attachment_type = attachment.attachment_type
+
+    # Safety: Cannot modify approved work items
+    if work_item.review_decision == "approved":
+        messages.error(
+            request,
+            "Cannot delete attachments from approved work items."
+        )
+        return redirect(
+            f"{reverse('user_app:work-item-attachments', args=[work_item.id])}"
+            f"?type={attachment_type}"
+        )
+
+    if request.method == "POST":
+        try:
+            # Delete physical file
+            if attachment.file:
+                attachment.file.delete(save=False)
+            
+            # Delete database record
+            attachment.delete()
+            
+            messages.success(request, "Attachment deleted successfully.")
+        except Exception as e:
+            messages.error(request, f"Delete failed: {str(e)}")
+
+    return redirect(
+        f"{reverse('user_app:work-item-attachments', args=[work_item.id])}"
+        f"?type={attachment_type}"
     )
 
 
 # ============================================================
 # WORK ITEM COMMENTS
 # ============================================================
+
 @login_required
 def user_work_item_comments(request, item_id):
+    """
+    View and post comments on a work item.
+    """
     work_item = get_object_or_404(
         WorkItem,
         id=item_id,
@@ -632,20 +681,36 @@ def user_work_item_comments(request, item_id):
 
     if request.method == "POST":
         text = request.POST.get("message", "").strip()
-        if text:
+        
+        if not text:
+            messages.warning(request, "Comment cannot be empty.")
+            return redirect(
+                "user_app:work-item-comments",
+                item_id=work_item.id
+            )
+
+        try:
             WorkItemMessage.objects.create(
                 work_item=work_item,
                 sender=request.user,
                 sender_role=request.user.login_role,
                 message=text
             )
-            messages.success(request, "Comment posted.")
-            return redirect(
-                "user_app:work-item-comments",
-                item_id=work_item.id
-            )
+            messages.success(request, "Comment posted successfully.")
+        except Exception as e:
+            messages.error(request, f"Failed to post comment: {str(e)}")
 
-    messages_qs = work_item.messages.select_related("sender")
+        return redirect(
+            "user_app:work-item-comments",
+            item_id=work_item.id
+        )
+
+    # Fetch comments with sender info
+    messages_qs = (
+        work_item.messages
+        .select_related("sender")
+        .order_by("created_at")
+    )
 
     return render(
         request,

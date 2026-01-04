@@ -1,0 +1,19 @@
+Needs Improvement
+
+1. User-Side Page
+
+* Create a dashboard.
+* Add filtering options for pages by creation date (ascending/descending), assigned users, assigned teams, and active or inactive work cycles.
+* Automatically change the status from "Not Started" to "In Progress" when a work item is viewed or opened.
+* Add clearer work cycle categories:
+
+  * Done / Not Done
+  * For Review statuses: Pending, Needs Revision, Approved
+
+2. Admin-Side Page
+
+* Create a reports page.
+* Develop an interactive UI to improve communication and clarity between reviewers, admins, managers, and workers.
+* Add filtering options for pages by creation date (ascending/descending), assigned users, assigned teams, and active or inactive work cycles.
+* Add a back button in the review section for work items that still need fixes.
+* Add a modal form for reassignment; currently, the data for existing assignments is not loading correctly.

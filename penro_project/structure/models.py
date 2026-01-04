@@ -95,6 +95,13 @@ class DocumentFolder(models.Model):
             current = current.parent
         return list(reversed(path))
 
+    def get_path_string(self):
+        """
+        Returns human-readable path string.
+        Example: "ROOT / 2024 / MATRIX_A / Q1 Report / Engineering / Backend"
+        """
+        return " / ".join(folder.name for folder in self.get_path())
+
     # ======================================================
     # VALIDATION (SINGLE SOURCE OF TRUTH)
     # ======================================================
@@ -102,27 +109,34 @@ class DocumentFolder(models.Model):
     def clean(self):
         """
         Enforces:
+        - NEW STRUCTURE: ROOT > YEAR > CATEGORY (attachment type) > WORKCYCLE > Org hierarchy
         - Strict hierarchy for system folders
         - Flexible placement for manual folders
         - No ROOT nesting
         - No circular references
         """
 
+        # NEW HIERARCHY STRUCTURE
         hierarchy = {
             self.FolderType.ROOT: [None],
-
+            
+            # Year comes directly under ROOT
             self.FolderType.YEAR: [self.FolderType.ROOT],
+            
+            # Category (attachment type buckets) under YEAR
             self.FolderType.CATEGORY: [self.FolderType.YEAR],
+            
+            # Workcycle under CATEGORY
             self.FolderType.WORKCYCLE: [self.FolderType.CATEGORY],
-
+            
+            # Organizational hierarchy under WORKCYCLE
             self.FolderType.DIVISION: [self.FolderType.WORKCYCLE],
             self.FolderType.SECTION: [self.FolderType.DIVISION],
             self.FolderType.SERVICE: [self.FolderType.SECTION],
             self.FolderType.UNIT: [self.FolderType.SECTION, self.FolderType.SERVICE],
 
-            # Attachments are flexible
+            # Attachments are flexible - can be under any org level
             self.FolderType.ATTACHMENT: [
-                self.FolderType.WORKCYCLE,
                 self.FolderType.DIVISION,
                 self.FolderType.SECTION,
                 self.FolderType.SERVICE,

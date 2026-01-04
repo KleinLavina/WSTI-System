@@ -1,130 +1,146 @@
-# user_app/context_processors.py
-
 """
 Context Processors for User App
 ================================
 
-Add global template variables, specifically for unread message counts.
+Provides global template variables for unread discussion counts
+using Facebook-style per-user read cursors.
 
-To enable, add to settings.py:
+Enable in settings.py:
 
 TEMPLATES = [
     {
-        'OPTIONS': {
-            'context_processors': [
-                # ... other processors ...
-                'user_app.context_processors.unread_discussions',
+        "OPTIONS": {
+            "context_processors": [
+                # ...
+                "user_app.context_processors.unread_discussions_cached",
             ],
         },
     },
 ]
 """
 
-from accounts.models import WorkItemMessage
-from django.db.models import Q
 from django.core.cache import cache
 
-
+from accounts.models import (
+    WorkItem,
+    WorkItemMessage,
+    WorkItemReadState,
+)
 def unread_discussions(request):
     """
-    Add unread discussion count to all templates.
-    
-    Usage in templates:
+    Add unread discussion count to all templates
+    using cursor-based (Facebook-style) read receipts.
+
+    Template usage:
         {% if has_unread_discussions %}
             <span class="badge">{{ unread_discussions_count }}</span>
         {% endif %}
-    
-    Returns:
-        dict: {
-            'unread_discussions_count': int,
-            'has_unread_discussions': bool,
-        }
     """
-    
+
     if not request.user.is_authenticated:
         return {
-            'unread_discussions_count': 0,
-            'has_unread_discussions': False,
+            "unread_discussions_count": 0,
+            "has_unread_discussions": False,
         }
-    
-    # Get unread count (fresh query every time)
-    unread_count = WorkItemMessage.objects.filter(
-        work_item__owner=request.user,
-        work_item__is_active=True,
-        is_read=False
-    ).exclude(
-        sender=request.user
-    ).count()
-    
+
+    total_unread = 0
+
+    work_items = (
+        WorkItem.objects
+        .filter(owner=request.user, is_active=True)
+        .prefetch_related("messages", "read_states")
+    )
+
+    for item in work_items:
+        read_state = next(
+            (
+                rs for rs in item.read_states.all()
+                if rs.user_id == request.user.id
+            ),
+            None,
+        )
+
+        last_read_id = read_state.last_read_message_id if read_state else 0
+
+        unread_count = (
+            item.messages
+            .filter(id__gt=last_read_id)
+            .exclude(sender=request.user)
+            .count()
+        )
+
+        total_unread += unread_count
+
     return {
-        'unread_discussions_count': unread_count,
-        'has_unread_discussions': unread_count > 0,
+        "unread_discussions_count": total_unread,
+        "has_unread_discussions": total_unread > 0,
     }
-
-
 def unread_discussions_cached(request):
     """
-    Cached version of unread discussions counter.
-    
-    ⚡ BETTER PERFORMANCE - Recommended for production
-    
-    Cache expires every 60 seconds to reduce database queries.
-    Cache is automatically invalidated when new messages are created
-    (if you implement the signals).
-    
-    To invalidate cache manually:
-        from django.core.cache import cache
-        cache.delete(f'unread_count_{user.id}')
-    
-    Returns:
-        dict: {
-            'unread_discussions_count': int,
-            'has_unread_discussions': bool,
-        }
+    Cached unread discussion counter.
+
+    - Facebook-style cursor logic
+    - Per-user cache key
+    - 60-second TTL
+    - Requires explicit invalidation
     """
-    
+
     if not request.user.is_authenticated:
         return {
-            'unread_discussions_count': 0,
-            'has_unread_discussions': False,
+            "unread_discussions_count": 0,
+            "has_unread_discussions": False,
         }
-    
-    cache_key = f'unread_count_{request.user.id}'
-    unread_count = cache.get(cache_key)
-    
-    if unread_count is None:
-        # Cache miss - query database
-        unread_count = WorkItemMessage.objects.filter(
-            work_item__owner=request.user,
-            work_item__is_active=True,
-            is_read=False
-        ).exclude(
-            sender=request.user
-        ).count()
-        
-        # Cache for 60 seconds
-        cache.set(cache_key, unread_count, 60)
-    
+
+    cache_key = f"unread_discussions_user_{request.user.id}"
+    cached_value = cache.get(cache_key)
+
+    if cached_value is not None:
+        return {
+            "unread_discussions_count": cached_value,
+            "has_unread_discussions": cached_value > 0,
+        }
+
+    total_unread = 0
+
+    work_items = (
+        WorkItem.objects
+        .filter(owner=request.user, is_active=True)
+        .prefetch_related("messages", "read_states")
+    )
+
+    for item in work_items:
+        read_state = next(
+            (
+                rs for rs in item.read_states.all()
+                if rs.user_id == request.user.id
+            ),
+            None,
+        )
+
+        last_read_id = read_state.last_read_message_id if read_state else 0
+
+        total_unread += (
+            item.messages
+            .filter(id__gt=last_read_id)
+            .exclude(sender=request.user)
+            .count()
+        )
+
+    # Cache for 60 seconds
+    cache.set(cache_key, total_unread, timeout=60)
+
     return {
-        'unread_discussions_count': unread_count,
-        'has_unread_discussions': unread_count > 0,
+        "unread_discussions_count": total_unread,
+        "has_unread_discussions": total_unread > 0,
     }
-
-
 def invalidate_unread_cache(user):
     """
-    Invalidate unread count cache for a specific user.
-    
-    Call this after:
-    - New message created
-    - Message marked as read
-    - Work item becomes inactive
-    
-    Args:
-        user: User instance
-    
-    Usage:
-        from user_app.context_processors import invalidate_unread_cache
-        invalidate_unread_cache(request.user)
+    Invalidate cached unread discussion count for a user.
+
+    Call this when:
+    - A new message is created
+    - A discussion thread is opened (cursor moves)
+    - "Mark all as read" is triggered
+    - A work item is archived/deactivated
     """
-    cache.delete(f'unread_count_{user.id}')
+    cache.delete(f"unread_discussions_user_{user.id}")
