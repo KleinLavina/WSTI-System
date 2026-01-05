@@ -20,7 +20,12 @@ class User(AbstractUser):
         blank=True,
         help_text="Job title or designation"
     )
-
+    profile_image = models.ImageField(
+        upload_to='profile_images/',
+        null=True,
+        blank=True,
+        help_text="User profile picture"
+    )
     login_role = models.CharField(
         max_length=50,
         choices=[

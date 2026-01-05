@@ -149,13 +149,20 @@
 
         <div class="cell worker" style="font-weight: 600; color: var(--primary-dark);">
           <div class="d-flex align-items-center gap-2">
-            <div class="user-avatar-sm" 
-                 style="background: linear-gradient(135deg, var(--primary), var(--primary-accent)); 
-                        color: white; width: 32px; height: 32px; border-radius: 50%; 
-                        display: flex; align-items: center; justify-content: center; 
-                        font-weight: 700; text-transform: uppercase; font-size: 0.8rem;">
-              {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
-            </div>
+            {% if item.owner.profile_image %}
+              <img class="user-avatar-sm"
+                   src="{{ item.owner.profile_image.url }}"
+                   alt="{{ item.owner.get_full_name|default:item.owner.username }}"
+                   style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+            {% else %}
+              <div class="user-avatar-sm" 
+                   style="background: linear-gradient(135deg, var(--primary), var(--primary-accent)); 
+                          color: white; width: 32px; height: 32px; border-radius: 50%; 
+                          display: flex; align-items: center; justify-content: center; 
+                          font-weight: 700; text-transform: uppercase; font-size: 0.8rem;">
+                {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
+              </div>
+            {% endif %}
             <div>
               <div>{{ item.owner.get_full_name|default:item.owner.username }}</div>
               <div class="text-muted small">{{ item.owner.email|default:"" }}</div>
@@ -205,8 +212,6 @@
             </span>
           {% endif %}
         </div>
-
-
 
         <div class="cell small" style="color: var(--gray-600);">
           {% if item.reviewed_at %}
@@ -280,13 +285,20 @@
 
         <div class="cell worker" style="font-weight: 600; color: var(--primary-dark);">
           <div class="d-flex align-items-center gap-2">
-            <div class="user-avatar-sm" 
-                 style="background: linear-gradient(135deg, #f59e0b, #d97706); 
-                        color: white; width: 32px; height: 32px; border-radius: 50%; 
-                        display: flex; align-items: center; justify-content: center; 
-                        font-weight: 700; text-transform: uppercase; font-size: 0.8rem;">
-              {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
-            </div>
+            {% if item.owner.profile_image %}
+              <img class="user-avatar-sm"
+                   src="{{ item.owner.profile_image.url }}"
+                   alt="{{ item.owner.get_full_name|default:item.owner.username }}"
+                   style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+            {% else %}
+              <div class="user-avatar-sm" 
+                   style="background: linear-gradient(135deg, #f59e0b, #d97706); 
+                          color: white; width: 32px; height: 32px; border-radius: 50%; 
+                          display: flex; align-items: center; justify-content: center; 
+                          font-weight: 700; text-transform: uppercase; font-size: 0.8rem;">
+                {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
+              </div>
+            {% endif %}
             <div>
               <div>{{ item.owner.get_full_name|default:item.owner.username }}</div>
               <div class="text-muted small">{{ item.owner.email|default:"" }}</div>
@@ -347,7 +359,6 @@
             </span>
           {% endif %}
         </div>
-
 
         <div class="cell action text-end">
           <a href="{% url 'admin_app:work-item-review' item.id %}"
@@ -411,13 +422,20 @@
 
         <div class="cell worker" style="font-weight: 600; color: var(--primary-dark);">
           <div class="d-flex align-items-center gap-2">
-            <div class="user-avatar-sm" 
-                 style="background: linear-gradient(135deg, #a21caf, #86198f); 
-                        color: white; width: 32px; height: 32px; border-radius: 50%; 
-                        display: flex; align-items: center; justify-content: center; 
-                        font-weight: 700; text-transform: uppercase; font-size: 0.8rem;">
-              {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
-            </div>
+            {% if item.owner.profile_image %}
+              <img class="user-avatar-sm"
+                   src="{{ item.owner.profile_image.url }}"
+                   alt="{{ item.owner.get_full_name|default:item.owner.username }}"
+                   style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+            {% else %}
+              <div class="user-avatar-sm" 
+                   style="background: linear-gradient(135deg, #a21caf, #86198f); 
+                          color: white; width: 32px; height: 32px; border-radius: 50%; 
+                          display: flex; align-items: center; justify-content: center; 
+                          font-weight: 700; text-transform: uppercase; font-size: 0.8rem;">
+                {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
+              </div>
+            {% endif %}
             <div>
               <div>{{ item.owner.get_full_name|default:item.owner.username }}</div>
               <div class="text-muted small">{{ item.owner.email|default:"" }}</div>
@@ -754,6 +772,15 @@
 .empty-state.success{ 
   color: var(--primary);
   background: var(--primary-light);
+}
+
+/* Profile image styling */
+.user-avatar-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  object-fit: cover;
 }
 
 /* Hover Effects */

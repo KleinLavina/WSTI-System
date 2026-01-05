@@ -1,0 +1,574 @@
+<div class="onboard-container">
+
+  <!-- PROGRESS BAR -->
+  <div class="onboard-progress">
+    <div class="progress-step completed">
+      <div class="step-circle">✓</div>
+      <div class="step-label">Division</div>
+    </div>
+
+    <div class="progress-line completed"></div>
+
+    <div class="progress-step completed">
+      <div class="step-circle">✓</div>
+      <div class="step-label">Section</div>
+    </div>
+
+    <div class="progress-line completed"></div>
+
+    <div class="progress-step active">
+      <div class="step-circle">3</div>
+      <div class="step-label">Service</div>
+    </div>
+
+    <div class="progress-line"></div>
+
+    <div class="progress-step">
+      <div class="step-circle">4</div>
+      <div class="step-label">Unit</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="onboard-content">
+
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb-trail">
+      <span class="breadcrumb-item">{{ division.name }}</span>
+      <span class="breadcrumb-separator">›</span>
+      <span class="breadcrumb-item">{{ section.name }}</span>
+    </div>
+
+    <h2 class="onboard-title">Select Your Service</h2>
+
+    <p class="onboard-subtitle">
+      {% if services %}
+        Which service within <strong>{{ section.name }}</strong> do you belong to?
+      {% else %}
+        No services are available in this section. You may skip this step.
+      {% endif %}
+    </p>
+
+    <!-- FORM -->
+    <form method="post"
+          class="onboard-form"
+          action="{% url 'user_app:onboard-service' %}">
+      {% csrf_token %}
+
+      {% if services %}
+      <div class="options-grid">
+        {% for service in services %}
+        <label class="option-card">
+          <input type="radio"
+                 name="service"
+                 value="{{ service.id }}">
+
+          <div class="option-content">
+            <div class="option-icon">⚙️</div>
+            <div class="option-name">{{ service.name }}</div>
+          </div>
+          <div class="check-indicator">✓</div>
+        </label>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <p class="empty-text">No services available</p>
+      </div>
+      {% endif %}
+
+      <!-- ACTIONS -->
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">
+          {% if services %}Continue{% else %}Skip{% endif %}
+          <span class="arrow">→</span>
+        </button>
+      </div>
+    </form>
+
+    <p class="optional-note">
+      <span class="badge-optional">Optional</span>
+      You may skip this step if you don't belong to a specific service.
+    </p>
+
+  </div>
+</div>
+
+<!-- STYLES -->
+<style>
+.onboard-container {
+  max-width: 600px; /* Further reduced from 700px */
+  margin: 0 auto;
+  padding: 1.25rem 1rem; /* Further reduced from 1.5rem 1.25rem */
+  background: #fafbfc;
+}
+
+/* ===========================
+   BREADCRUMB (ULTRA COMPACT)
+=========================== */
+.breadcrumb-trail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem; /* Further reduced */
+  margin-bottom: 1rem; /* Further reduced */
+  flex-wrap: wrap;
+}
+
+.breadcrumb-item {
+  display: inline-block;
+  padding: 0.25rem 0.75rem; /* Further reduced */
+  background: #f3f4f6;
+  border-radius: 999px;
+  font-size: 0.75rem; /* Further reduced */
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.breadcrumb-separator {
+  color: #9ca3af;
+  font-size: 0.875rem; /* Further reduced */
+}
+
+/* ===========================
+   PROGRESS BAR (ULTRA COMPACT)
+=========================== */
+.onboard-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem; /* Further reduced */
+  gap: 0.125rem;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem; /* Further reduced */
+}
+
+.step-circle {
+  width: 32px; /* Further reduced from 36px */
+  height: 32px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem; /* Further reduced */
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.progress-step.active .step-circle {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); /* Further reduced */
+  transform: scale(1.03); /* Further reduced */
+}
+
+.progress-step.completed .step-circle {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+}
+
+.step-label {
+  font-size: 0.625rem; /* Further reduced from 0.7rem */
+  font-weight: 600;
+  color: #9ca3af;
+  transition: color 0.15s ease;
+}
+
+.progress-step.active .step-label {
+  color: #2563eb;
+}
+
+.progress-step.completed .step-label {
+  color: #10b981;
+}
+
+.progress-line {
+  width: 40px; /* Further reduced from 50px */
+  height: 1.5px; /* Further reduced from 2px */
+  background: #e5e7eb;
+  margin-bottom: 0.875rem; /* Further reduced */
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  transition: width 0.4s ease;
+}
+
+.progress-line.completed::after {
+  width: 100%;
+}
+
+/* ===========================
+   CONTENT (ULTRA COMPACT)
+=========================== */
+.onboard-content {
+  text-align: center;
+}
+
+.onboard-title {
+  font-size: 1.25rem; /* Further reduced from 1.5rem */
+  font-weight: 700;
+  margin-bottom: 0.25rem; /* Further reduced */
+  color: #1f2937;
+}
+
+.onboard-subtitle {
+  color: #6b7280;
+  margin-bottom: 1.25rem; /* Further reduced */
+  font-size: 0.875rem; /* Further reduced */
+  line-height: 1.4;
+}
+
+/* ===========================
+   OPTIONS GRID (ULTRA COMPACT)
+=========================== */
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* Further reduced from 160px */
+  gap: 0.75rem; /* Further reduced */
+  margin: 1.25rem 0; /* Further reduced */
+}
+
+.option-card {
+  cursor: pointer;
+  border: 1.5px solid #e5e7eb; /* Reduced border width */
+  border-radius: 8px; /* Further reduced from 10px */
+  padding: 0.875rem; /* Further reduced from 1.125rem */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.option-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1.5px; /* Further reduced */
+  background: linear-gradient(90deg, #2563eb, #60a5fa);
+  transform: scaleX(0);
+  transition: transform 0.2s ease;
+}
+
+.option-card:hover {
+  border-color: #2563eb;
+  transform: translateY(-1px); /* Further reduced */
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12); /* Further reduced */
+}
+
+.option-card input[type="radio"] {
+  display: none;
+}
+
+.option-card input[type="radio"]:checked + .option-content {
+  color: #2563eb;
+}
+
+.option-card input[type="radio"]:checked ~ .check-indicator {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem; /* Further reduced */
+}
+
+.option-icon {
+  font-size: 1.75rem; /* Further reduced from 2rem */
+  margin-bottom: 0.125rem;
+}
+
+.option-name {
+  font-weight: 600;
+  text-align: center;
+  color: #374151;
+  font-size: 0.875rem; /* Further reduced */
+  line-height: 1.3;
+}
+
+.check-indicator {
+  position: absolute;
+  top: 0.375rem; /* Further reduced */
+  right: 0.375rem;
+  width: 18px; /* Further reduced from 20px */
+  height: 18px;
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.625rem; /* Further reduced */
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===========================
+   EMPTY STATE (ULTRA COMPACT)
+=========================== */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 1.5rem 1rem; /* Further reduced */
+  color: #9ca3af;
+}
+
+.empty-icon {
+  font-size: 2rem; /* Further reduced */
+  margin-bottom: 0.5rem;
+}
+
+.empty-text {
+  margin: 0;
+  font-size: 0.85rem; /* Further reduced */
+}
+
+/* ===========================
+   ACTIONS (ULTRA COMPACT)
+=========================== */
+.form-actions {
+  margin-top: 1.25rem; /* Further reduced */
+  display: flex;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: #fff;
+  border: none;
+  padding: 0.625rem 1.75rem; /* Further reduced */
+  border-radius: 6px; /* Further reduced from 8px */
+  font-weight: 600;
+  font-size: 0.875rem; /* Further reduced */
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25); /* Further reduced */
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.arrow {
+  font-size: 1rem; /* Further reduced */
+}
+
+/* ===========================
+   OPTIONAL NOTE (ULTRA COMPACT)
+=========================== */
+.optional-note {
+  margin-top: 1rem; /* Further reduced */
+  font-size: 0.75rem; /* Further reduced */
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.badge-optional {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.15rem 0.5rem; /* Further reduced */
+  border-radius: 999px;
+  font-size: 0.65rem; /* Further reduced */
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+/* ===========================
+   RESPONSIVE (ULTRA COMPACT)
+=========================== */
+@media (max-width: 768px) {
+  .onboard-container {
+    padding: 1rem 0.875rem; /* Further reduced */
+    max-width: 100%;
+  }
+  
+  .onboard-progress {
+    margin-bottom: 1.25rem;
+  }
+  
+  .progress-line {
+    width: 25px; /* Further reduced */
+  }
+  
+  .step-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
+  
+  .step-label {
+    font-size: 0.6rem;
+  }
+  
+  .options-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.625rem;
+  }
+  
+  .breadcrumb-trail {
+    gap: 0.125rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .breadcrumb-item {
+    padding: 0.125rem 0.5rem;
+    font-size: 0.7rem;
+  }
+  
+  .breadcrumb-separator {
+    font-size: 0.75rem;
+  }
+  
+  .onboard-title {
+    font-size: 1.1rem;
+  }
+  
+  .onboard-subtitle {
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .progress-line {
+    width: 20px;
+  }
+  
+  .options-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .onboard-title {
+    font-size: 1rem;
+  }
+  
+  .option-card {
+    padding: 0.75rem;
+  }
+  
+  .option-icon {
+    font-size: 1.5rem;
+  }
+  
+  .option-name {
+    font-size: 0.8rem;
+  }
+  
+  .btn-primary {
+    padding: 0.5rem 1.5rem;
+    width: 100%;
+    justify-content: center;
+    font-size: 0.8rem;
+  }
+  
+  .breadcrumb-trail {
+    justify-content: flex-start;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 0.375rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  
+  .breadcrumb-trail::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .step-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 0.65rem;
+  }
+  
+  .progress-line {
+    width: 15px;
+  }
+  
+  .step-label {
+    font-size: 0.55rem;
+  }
+  
+  .optional-note {
+    font-size: 0.7rem;
+  }
+  
+  .empty-icon {
+    font-size: 1.5rem;
+  }
+  
+  .empty-text {
+    font-size: 0.75rem;
+  }
+  
+  .badge-optional {
+    padding: 0.1rem 0.375rem;
+    font-size: 0.6rem;
+  }
+}
+
+/* Extra compact for very small heights */
+@media (max-height: 600px) {
+  .onboard-container {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .onboard-progress {
+    margin-bottom: 1rem;
+  }
+  
+  .onboard-title {
+    font-size: 1rem;
+    margin-bottom: 0.125rem;
+  }
+  
+  .onboard-subtitle {
+    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .options-grid {
+    margin: 0.75rem 0;
+    gap: 0.375rem;
+  }
+  
+  .form-actions {
+    margin-top: 0.75rem;
+  }
+}
+</style>

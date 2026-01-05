@@ -14,7 +14,7 @@ from .views.work_item_views import (
 
 from .views.user_work_item_threads import user_work_item_threads
 from .views.notification_views import user_notifications
-
+from .views.user_profile_views import user_profile, user_update_image, onboard_complete, onboard_division, onboard_service, onboard_section, onboard_unit
 # Import message views
 from .views.message_views import (
     user_work_item_discussion,
@@ -31,6 +31,17 @@ urlpatterns = [
     # DASHBOARD
     # ======================
     path("dashboard/", dashboard, name="dashboard"),
+    # user_app/urls.py
+    path("profile/", user_profile, name="profile"),
+    path("profile/image/", user_update_image, name="profile-image"),
+
+# user_app/urls.py
+
+path("onboard/division/", onboard_division, name="onboard-division"),
+path("onboard/section/", onboard_section, name="onboard-section"),
+path("onboard/service/", onboard_service, name="onboard-service"),
+path("onboard/unit/", onboard_unit, name="onboard-unit"),
+path("onboard/complete/", onboard_complete, name="onboard-complete"),
 
     # ======================
     # WORK ITEMS

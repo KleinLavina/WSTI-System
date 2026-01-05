@@ -41,16 +41,23 @@
 
       <div class="udrop">
         <div class="udrop-header">
-          <div class="udrop-avatar">
-            <i class="fas fa-user"></i>
-          </div>
+          {% if request.user.profile_image %}
+            <img class="udrop-avatar"
+                 src="{{ request.user.profile_image.url }}"
+                 alt="{{ request.user.get_full_name|default:request.user.username }}"
+                 style="object-fit: cover;">
+          {% else %}
+            <div class="udrop-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+          {% endif %}
           <div class="udrop-info">
             <span class="udrop-name">{{ request.user.first_name }} {{ request.user.last_name }}</span>
             <span class="udrop-email">{{ request.user.email|default:"No email set" }}</span>
           </div>
         </div>
         <div class="udrop-links">
-          <a href="#"><i class="fas fa-id-card"></i>Profile</a>
+          <a href="{% url 'user_app:profile' %}"><i class="fas fa-id-card"></i>Profile</a>
           <a href="#"><i class="fas fa-cog"></i>Settings</a>
           <a href="#"><i class="fas fa-sliders-h"></i>Preferences</a>
           <div class="udrop-divider"></div>
@@ -280,8 +287,6 @@
   background: rgba(255, 255, 255, 0.18);
 }
 
-/* USER */
-
 .ubox {
   display: flex;
   align-items: center;
@@ -356,14 +361,15 @@
 .udrop-avatar {
   width: 48px;
   height: 48px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, var(--cyan-400), var(--cyan-500));
   border-radius: 11px;
-  font-size: 1.2rem;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--cyan-400), var(--cyan-500));
   color: var(--white);
   box-shadow: 0 4px 12px rgba(34, 211, 238, 0.35);
   flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
 }
 
 .udrop-info {

@@ -321,12 +321,13 @@
   height: 44px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   border-radius: 10px;
   font-size: 1.1rem;
   color: #fff;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   flex-shrink: 0;
+  overflow: hidden;
+  object-fit: cover;
 }
 
 .ah-udrop-info {
@@ -561,9 +562,16 @@
 
         <div class="ah-udrop">
           <div class="ah-udrop-header">
-            <div class="ah-udrop-avatar">
-              <i class="fas fa-user"></i>
-            </div>
+            {% if request.user.profile_image %}
+              <img class="ah-udrop-avatar"
+                   src="{{ request.user.profile_image.url }}"
+                   alt="{{ request.user.get_full_name|default:request.user.username }}"
+                   style="background: linear-gradient(135deg, #3b82f6, #8b5cf6);">
+            {% else %}
+              <div class="ah-udrop-avatar" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: grid; place-items: center;">
+                <i class="fas fa-user"></i>
+              </div>
+            {% endif %}
             <div class="ah-udrop-info">
               <span class="ah-udrop-name">{{ request.user.first_name }} {{ request.user.last_name }}</span>
               <span class="ah-udrop-email">{{ request.user.email|default:"No email set" }}</span>

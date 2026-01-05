@@ -18,7 +18,7 @@ from .work_item_views import (
     user_work_item_attachments,
     delete_work_item_attachment,
 )
-
+from .user_profile_views import user_profile, user_update_image, onboard_unit, onboard_section, onboard_complete, onboard_division, onboard_service
 # Threads (if you have a separate threads view)
 from .user_work_item_threads import user_work_item_threads
 

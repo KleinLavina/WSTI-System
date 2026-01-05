@@ -6,6 +6,7 @@ from django.db import IntegrityError
 from django.db.models import Q
 from accounts.models import User, Team, OrgAssignment
 from accounts.forms import UserCreateForm
+from django.contrib import messages
 
 @login_required
 def users(request):
@@ -160,6 +161,160 @@ def users(request):
     }
 
     return render(request, "admin/page/users.html", context)
+
+@login_required
+def user_profile(request, user_id):
+    """
+    Admin view: User Profile (view + inline edit)
+    """
+    user_obj = get_object_or_404(
+        User.objects.select_related(
+            "org_assignment__division",
+            "org_assignment__section",
+            "org_assignment__service",
+            "org_assignment__unit",
+        ),
+        id=user_id,
+    )
+
+    if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        email = request.POST.get("email", "").strip()
+
+        # ------------------------------------
+        # VALIDATE USERNAME
+        # ------------------------------------
+        if not username:
+            messages.error(request, "Username cannot be empty.")
+            return redirect("admin_app:user-profile", user_id=user_obj.id)
+
+        if (
+            User.objects
+            .exclude(id=user_obj.id)
+            .filter(username=username)
+            .exists()
+        ):
+            messages.error(request, "Username is already taken.")
+            return redirect("admin_app:user-profile", user_id=user_obj.id)
+
+        # ------------------------------------
+        # SAVE FIELDS
+        # ------------------------------------
+        user_obj.username = username
+        user_obj.first_name = request.POST.get("first_name", "").strip()
+        user_obj.last_name = request.POST.get("last_name", "").strip()
+        user_obj.email = email
+        user_obj.position_title = request.POST.get("position_title", "").strip()
+
+        user_obj.save(update_fields=[
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "position_title",
+        ])
+
+        messages.success(request, "User profile updated successfully.")
+
+        return redirect("admin_app:user-profile", user_id=user_obj.id)
+
+    return render(
+        request,
+        "admin/page/user_profile.html",
+        {
+            "profile_user": user_obj,
+        }
+    )
+
+@login_required
+def user_update_role(request, user_id):
+    """
+    Admin-only view to update user role
+    """
+    # Only admins can update roles
+    if request.user.login_role != 'admin':
+        messages.error(request, "You don't have permission to change user roles.")
+        return redirect("admin_app:user-profile", user_id=user_id)
+
+    if request.method != "POST":
+        return redirect("admin_app:user-profile", user_id=user_id)
+
+    user_obj = get_object_or_404(User, id=user_id)
+    new_role = request.POST.get("login_role", "").strip()
+
+    # Validate role
+    if new_role not in ['user', 'admin']:
+        messages.error(request, "Invalid role selected.")
+        return redirect("admin_app:user-profile", user_id=user_obj.id)
+
+    # Prevent self-demotion (admin removing their own admin role)
+    if user_obj.id == request.user.id and new_role == 'user' and request.user.login_role == 'admin':
+        messages.error(request, "You cannot remove your own admin privileges.")
+        return redirect("admin_app:user-profile", user_id=user_obj.id)
+
+    # Update role
+    user_obj.login_role = new_role
+    user_obj.save(update_fields=["login_role"])
+
+    messages.success(request, f"User role updated to {user_obj.get_login_role_display()}.")
+    return redirect("admin_app:user-profile", user_id=user_obj.id)
+
+@login_required
+def user_update_image(request, user_id):
+    """
+    Update user profile image
+    Can be done by admin or the user themselves
+    """
+    user_obj = get_object_or_404(User, id=user_id)
+    
+    # Permission check: admin or self
+    if request.user.login_role != 'admin' and request.user.id != user_obj.id:
+        messages.error(request, "You don't have permission to change this user's profile picture.")
+        return redirect("admin_app:user-profile", user_id=user_id)
+
+    if request.method != "POST":
+        return redirect("admin_app:user-profile", user_id=user_id)
+
+    # Check if user wants to remove the image
+    remove_image = request.POST.get('remove_image') == 'true'
+    
+    if remove_image:
+        # Delete old image file if exists
+        if user_obj.profile_image:
+            user_obj.profile_image.delete(save=False)
+        
+        user_obj.profile_image = None
+        user_obj.save(update_fields=['profile_image'])
+        messages.success(request, "Profile picture removed successfully.")
+        return redirect("admin_app:user-profile", user_id=user_obj.id)
+
+    # Handle new image upload
+    profile_image = request.FILES.get('profile_image')
+    
+    if not profile_image:
+        messages.error(request, "No image file provided.")
+        return redirect("admin_app:user-profile", user_id=user_obj.id)
+
+    # Validate file type
+    if not profile_image.content_type.startswith('image/'):
+        messages.error(request, "Please upload a valid image file.")
+        return redirect("admin_app:user-profile", user_id=user_obj.id)
+
+    # Validate file size (5MB max)
+    if profile_image.size > 5 * 1024 * 1024:
+        messages.error(request, "Image file size must be less than 5MB.")
+        return redirect("admin_app:user-profile", user_id=user_obj.id)
+
+    # Delete old image if exists
+    if user_obj.profile_image:
+        user_obj.profile_image.delete(save=False)
+
+    # Save new image
+    user_obj.profile_image = profile_image
+    user_obj.save(update_fields=['profile_image'])
+
+    messages.success(request, "Profile picture updated successfully.")
+    return redirect("admin_app:user-profile", user_id=user_obj.id)
 
 @login_required
 def create_user(request):
@@ -491,15 +646,11 @@ def onboard_unit(request, user_id):
             "total_steps": 4,
         },
     )
-
-
 @login_required
 def onboard_complete(request, user_id):
     """
-    Final onboarding step.
-    This view MUST return HTML because it is rendered inside a modal.
+    Final onboarding step - handles both new users and org reassignment
     """
-
     user = get_object_or_404(User, id=user_id)
 
     # Pull onboarding data from session
@@ -508,50 +659,48 @@ def onboard_complete(request, user_id):
     service_id = request.session.get(f"onboard_{user.id}_service")
     unit_id = request.session.get(f"onboard_{user.id}_unit")
 
-    # Safety check: onboarding incomplete → restart
+    # Safety check
     if not division_id or not section_id:
         return redirect("admin_app:onboard-division", user_id=user.id)
 
     try:
+        # Get team instances
+        division = Team.objects.get(id=division_id, team_type=Team.TeamType.DIVISION)
+        section = Team.objects.get(id=section_id, team_type=Team.TeamType.SECTION)
+        service = Team.objects.get(id=service_id, team_type=Team.TeamType.SERVICE) if service_id else None
+        unit = Team.objects.get(id=unit_id, team_type=Team.TeamType.UNIT) if unit_id else None
+
         # Create or update organization assignment
-        org_assignment, _ = OrgAssignment.objects.update_or_create(
+        org_assignment, created = OrgAssignment.objects.update_or_create(
             user=user,
             defaults={
-                "division_id": division_id,
-                "section_id": section_id,
-                "service_id": service_id or None,
-                "unit_id": unit_id or None,
+                "division": division,
+                "section": section,
+                "service": service,
+                "unit": unit,
             }
         )
 
-        # Clear onboarding session data
-        for key in (
+        # Clear session data
+        for key in [
             f"onboard_{user.id}_division",
             f"onboard_{user.id}_section",
             f"onboard_{user.id}_service",
             f"onboard_{user.id}_unit",
             f"user_form_{user.id}",
-        ):
+        ]:
             request.session.pop(key, None)
 
-        # ✅ ALWAYS return HTML (no JSON here)
-        return render(
-            request,
-            "admin/page/modals/onboard_complete.html",
-            {
-                "user": user,
-                "org_assignment": org_assignment,
-                "success": True,
-            },
-        )
+        return render(request, "admin/page/modals/onboard_complete.html", {
+            "user": user,
+            "org_assignment": org_assignment,
+            "success": True,
+            "is_new": created,
+        })
     
     except Exception as e:
-        return render(
-            request,
-            "admin/page/modals/onboard_complete.html",
-            {
-                "user": user,
-                "error": f"Failed to complete onboarding: {str(e)}",
-                "success": False,
-            },
-        )   
+        return render(request, "admin/page/modals/onboard_complete.html", {
+            "user": user,
+            "error": f"Failed: {str(e)}",
+            "success": False,
+        })

@@ -1,0 +1,560 @@
+{% extends "admin/layout/base.html" %}
+{% block title %}User Profile{% endblock %}
+{% load static %}
+
+{% block content %}
+<div class="container-xl py-4">
+
+  <!-- BACK TO USERS -->
+  <div class="mb-3">
+    <a href="{% url 'user_app:dashboard' %}"
+       class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-2">
+      <i class="fas fa-arrow-left"></i>
+      Back to Users
+    </a>
+  </div>
+
+  <!-- HEADER -->
+  <div class="mb-4 d-flex align-items-center gap-3">
+    <div class="position-relative">
+      {% if profile_user.profile_image %}
+        <img
+          src="{{ profile_user.profile_image.url }}"
+          class="rounded-3 shadow-sm profile-avatar"
+          width="96"
+          height="96"
+          alt="Avatar"
+          style="object-fit: cover;">
+      {% else %}
+        <img
+          src="https://ui-avatars.com/api/?name={{ profile_user.get_full_name|default:profile_user.username }}&background=3b82f6&color=fff&size=96&bold=true"
+          class="rounded-3 shadow-sm profile-avatar"
+          width="96"
+          height="96"
+          alt="Avatar">
+      {% endif %}
+      
+      {% if request.user.login_role == 'admin' or request.user.id == profile_user.id %}
+      <button type="button" 
+              class="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle"
+              style="width: 32px; height: 32px; padding: 0;"
+              data-bs-toggle="modal"
+              data-bs-target="#changeProfileImageModal"
+              title="Change profile picture">
+        <i class="fas fa-camera"></i>
+      </button>
+      {% endif %}
+    </div>
+
+    <div>
+      <h3 class="fw-bold mb-1">
+        {{ profile_user.get_full_name|default:profile_user.username }}
+      </h3>
+
+      <div class="text-muted">
+        {{ profile_user.position_title|default:"No position title" }}
+      </div>
+
+      <span class="badge mt-2 {% if profile_user.login_role == 'admin' %}bg-dark{% else %}bg-primary{% endif %}">
+        {{ profile_user.get_login_role_display }}
+      </span>
+    </div>
+  </div>
+
+  <!-- BASIC INFO -->
+  <div class="card mb-4">
+
+    <!-- HEADER WITH CONTROLS -->
+    <div class="card-header d-flex justify-content-between align-items-center fw-semibold">
+      <div>
+        <i class="fas fa-id-card me-2"></i> Basic Information
+      </div>
+
+      <div>
+        <button type="button" id="editBtn" class="btn btn-sm btn-outline-primary">
+          <i class="fas fa-pen"></i> Edit
+        </button>
+
+        <button type="submit" form="basicInfoForm" id="saveBtn"
+                class="btn btn-sm btn-success d-none">
+          <i class="fas fa-check"></i> Save
+        </button>
+
+        <button type="button" id="cancelBtn"
+                class="btn btn-sm btn-outline-secondary d-none">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- FORM -->
+    <form method="post" id="basicInfoForm">
+      {% csrf_token %}
+
+      <div class="card-body row g-3">
+
+        <!-- USERNAME (EDITABLE) -->
+        <div class="col-md-4">
+          <strong>Username:</strong>
+          <span class="view-field">@{{ profile_user.username }}</span>
+          <input type="text"
+                 name="username"
+                 class="form-control form-control-sm edit-field d-none"
+                 value="{{ profile_user.username }}">
+        </div>
+
+        <!-- EMAIL -->
+        <div class="col-md-4">
+          <strong>Email:</strong>
+          <span class="view-field">{{ profile_user.email|default:"—" }}</span>
+          <input type="email"
+                 name="email"
+                 class="form-control form-control-sm edit-field d-none"
+                 value="{{ profile_user.email }}">
+        </div>
+
+        <!-- STATUS (READ ONLY) -->
+        <div class="col-md-4">
+          <strong>Status:</strong>
+          {% if profile_user.is_active %}
+            <span class="text-success">Active</span>
+          {% else %}
+            <span class="text-danger">Inactive</span>
+          {% endif %}
+        </div>
+
+        <!-- FIRST NAME -->
+        <div class="col-md-4">
+          <strong>First name:</strong>
+          <span class="view-field">{{ profile_user.first_name|default:"—" }}</span>
+          <input type="text"
+                 name="first_name"
+                 class="form-control form-control-sm edit-field d-none"
+                 value="{{ profile_user.first_name }}">
+        </div>
+
+        <!-- LAST NAME -->
+        <div class="col-md-4">
+          <strong>Last name:</strong>
+          <span class="view-field">{{ profile_user.last_name|default:"—" }}</span>
+          <input type="text"
+                 name="last_name"
+                 class="form-control form-control-sm edit-field d-none"
+                 value="{{ profile_user.last_name }}">
+        </div>
+
+        <!-- DATE JOINED -->
+        <div class="col-md-4">
+          <strong>Date joined:</strong>
+          {{ profile_user.date_joined|date:"F j, Y" }}
+        </div>
+
+        <!-- POSITION -->
+        <div class="col-md-4">
+          <strong>Position:</strong>
+          <span class="view-field">{{ profile_user.position_title|default:"—" }}</span>
+          <input type="text"
+                 name="position_title"
+                 class="form-control form-control-sm edit-field d-none"
+                 value="{{ profile_user.position_title }}">
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+  <!-- ORGANIZATION -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center fw-semibold">
+      <div>
+        <i class="fas fa-sitemap me-2"></i> Organizational Assignment
+      </div>
+      <button type="button"
+        class="btn btn-sm btn-outline-primary"
+        onclick="changeOrganization()">
+        <i class="fas fa-exchange-alt"></i> Change Org
+      </button>
+    </div>
+    <div class="card-body row g-3">
+      <div class="col-md-3"><strong>Division:</strong> {{ profile_user.division.name|default:"—" }}</div>
+      <div class="col-md-3"><strong>Section:</strong> {{ profile_user.section.name|default:"—" }}</div>
+      <div class="col-md-3"><strong>Service:</strong> {{ profile_user.service.name|default:"—" }}</div>
+      <div class="col-md-3"><strong>Unit:</strong> {{ profile_user.unit.name|default:"—" }}</div>
+    </div>
+  </div>
+
+  <!-- SYSTEM INFO -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center fw-semibold">
+      <div>
+        <i class="fas fa-cog me-2"></i> System Details
+      </div>
+
+      {% if request.user.login_role == 'admin' %}
+      <div>
+        <button type="button" id="editRoleBtn" class="btn btn-sm btn-outline-primary">
+          <i class="fas fa-pen"></i> Edit Role
+        </button>
+
+        <button type="submit" form="roleForm" id="saveRoleBtn"
+                class="btn btn-sm btn-success d-none">
+          <i class="fas fa-check"></i> Save
+        </button>
+
+        <button type="button" id="cancelRoleBtn"
+                class="btn btn-sm btn-outline-secondary d-none">
+          Cancel
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- ONBOARDING MODAL -->
+<div class="modal fade"
+     id="onboardModal"
+     tabindex="-1"
+     aria-hidden="true"
+     data-bs-backdrop="static"
+     data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered modal-onboard-compact">
+    <div class="modal-content onboard-modal-content">
+      <div class="modal-body p-0" id="onboardModalBody">
+        <div class='loading-spinner'>
+          <div class="spinner"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PROFILE IMAGE MODAL -->
+<div class="modal fade" id="changeProfileImageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-camera me-2"></i>
+          Change Profile Picture
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post"
+      enctype="multipart/form-data"
+      action="{% url 'user_app:profile-image' %}"
+      id="profileImageForm">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="text-center mb-3">
+            {% if profile_user.profile_image %}
+              <img id="currentProfileImage" 
+                   src="{{ profile_user.profile_image.url }}" 
+                   class="rounded-3 mb-3" 
+                   width="150" 
+                   height="150"
+                   style="object-fit: cover;"
+                   alt="Current profile">
+            {% else %}
+              <img id="currentProfileImage" 
+                   src="https://ui-avatars.com/api/?name={{ profile_user.get_full_name|default:profile_user.username }}&background=3b82f6&color=fff&size=150&bold=true" 
+                   class="rounded-3 mb-3" 
+                   width="150" 
+                   height="150"
+                   alt="Current profile">
+            {% endif %}
+          </div>
+          
+          <div class="mb-3">
+            <label for="profileImageInput" class="form-label">Choose new image</label>
+            <input type="file" 
+                   class="form-control" 
+                   id="profileImageInput" 
+                   name="profile_image" 
+                   accept="image/*"
+                   required>
+            <div class="form-text">Recommended: Square image, at least 200x200 pixels. Max 5MB.</div>
+          </div>
+
+          <div id="imagePreviewContainer" class="text-center d-none">
+            <p class="text-muted small mb-2">Preview:</p>
+            <img id="imagePreview" class="rounded-3" width="150" height="150" style="object-fit: cover;" alt="Preview">
+          </div>
+
+          {% if profile_user.profile_image %}
+          <div class="form-check">
+            <input class="form-check-input" 
+                   type="checkbox" 
+                   id="removeImageCheck" 
+                   name="remove_image"
+                   value="true">
+            <label class="form-check-label" for="removeImageCheck">
+              Remove current profile picture (use default)
+            </label>
+          </div>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-check me-1"></i>
+            Update Picture
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Loading Spinner */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-spinner p {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.onboard-modal-content {
+  background: #fafbfc;
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.modal-onboard-compact {
+  max-width: 580px;
+}
+</style>
+
+<script>
+/* ==========================================================
+   BASIC INFO EDIT MODE
+========================================================== */
+const editBtn = document.getElementById("editBtn");
+const saveBtn = document.getElementById("saveBtn");
+const cancelBtn = document.getElementById("cancelBtn");
+const viewFields = document.querySelectorAll(".view-field");
+const editFields = document.querySelectorAll(".edit-field");
+
+function enterEditMode() {
+  viewFields.forEach(el => el.classList.add("d-none"));
+  editFields.forEach(el => el.classList.remove("d-none"));
+  editBtn?.classList.add("d-none");
+  saveBtn?.classList.remove("d-none");
+  cancelBtn?.classList.remove("d-none");
+}
+
+function exitEditMode() {
+  viewFields.forEach(el => el.classList.remove("d-none"));
+  editFields.forEach(el => el.classList.add("d-none"));
+  editBtn?.classList.remove("d-none");
+  saveBtn?.classList.add("d-none");
+  cancelBtn?.classList.add("d-none");
+}
+
+editBtn?.addEventListener("click", enterEditMode);
+cancelBtn?.addEventListener("click", exitEditMode);
+
+/* ==========================================================
+   ROLE EDIT MODE (ADMIN)
+========================================================== */
+const editRoleBtn = document.getElementById("editRoleBtn");
+const saveRoleBtn = document.getElementById("saveRoleBtn");
+const cancelRoleBtn = document.getElementById("cancelRoleBtn");
+
+if (editRoleBtn) {
+  const viewRoleFields = document.querySelectorAll(".view-role-field");
+  const editRoleFields = document.querySelectorAll(".edit-role-field");
+
+  editRoleBtn.addEventListener("click", () => {
+    viewRoleFields.forEach(el => el.classList.add("d-none"));
+    editRoleFields.forEach(el => el.classList.remove("d-none"));
+    editRoleBtn.classList.add("d-none");
+    saveRoleBtn?.classList.remove("d-none");
+    cancelRoleBtn?.classList.remove("d-none");
+  });
+
+  cancelRoleBtn?.addEventListener("click", () => {
+    viewRoleFields.forEach(el => el.classList.remove("d-none"));
+    editRoleFields.forEach(el => el.classList.add("d-none"));
+    editRoleBtn.classList.remove("d-none");
+    saveRoleBtn?.classList.add("d-none");
+    cancelRoleBtn?.classList.add("d-none");
+  });
+}
+
+/* ==========================================================
+   ONBOARDING MODAL LOADER
+========================================================== */
+async function loadOnboarding(url) {
+  const modalEl = document.getElementById("onboardModal");
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  const body = document.getElementById("onboardModalBody");
+
+  body.innerHTML = `
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Loading...</p>
+    </div>
+  `;
+
+  modal.show();
+
+  try {
+    const response = await fetch(url, {
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      credentials: "same-origin"
+    });
+
+    body.innerHTML = await response.text();
+
+  } catch (err) {
+    console.error(err);
+    body.innerHTML = `
+      <div class="loading-spinner">
+        <p style="color:#dc2626;">Failed to load onboarding.</p>
+      </div>
+    `;
+  }
+}
+
+/* ==========================================================
+   CHANGE ORGANIZATION BUTTON
+========================================================== */
+function changeOrganization() {
+  loadOnboarding("{% url 'user_app:onboard-division' %}");
+}
+
+/* ==========================================================
+   ONBOARDING STEP SUBMIT (CRITICAL FIX)
+========================================================== */
+document.addEventListener("submit", async function (e) {
+  const form = e.target.closest(".onboard-form");
+  if (!form) return;
+
+  e.preventDefault();
+
+  const submitBtn = form.querySelector("button[type='submit']");
+  if (submitBtn?.disabled) return;
+
+  const originalHTML = submitBtn.innerHTML;
+  submitBtn.disabled = true;
+  submitBtn.innerHTML =
+    '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      body: new FormData(form),
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      credentials: "same-origin"
+    });
+
+    const data = await response.json();
+
+    if (data.next) {
+      loadOnboarding(data.next);
+      return;
+    }
+
+    if (data.completed) {
+      bootstrap.Modal.getInstance(
+        document.getElementById("onboardModal")
+      )?.hide();
+      setTimeout(() => window.location.reload(), 400);
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Onboarding failed. Please retry.");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalHTML;
+  }
+});
+
+/* ==========================================================
+   IMAGE PREVIEW
+========================================================== */
+const profileImageInput = document.getElementById("profileImageInput");
+const imagePreview = document.getElementById("imagePreview");
+const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+const removeImageCheck = document.getElementById("removeImageCheck");
+
+profileImageInput?.addEventListener("change", function () {
+  const file = this.files[0];
+
+  if (!file) {
+    imagePreviewContainer.classList.add("d-none");
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert("File size must be less than 5MB");
+    this.value = "";
+    return;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    alert("Please select an image file");
+    this.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    imagePreview.src = e.target.result;
+    imagePreviewContainer.classList.remove("d-none");
+  };
+  reader.readAsDataURL(file);
+
+  removeImageCheck && (removeImageCheck.checked = false);
+});
+
+removeImageCheck?.addEventListener("change", function () {
+  if (this.checked) {
+    profileImageInput.removeAttribute("required");
+    profileImageInput.value = "";
+    imagePreviewContainer.classList.add("d-none");
+  } else {
+    profileImageInput.setAttribute("required", "required");
+  }
+});
+
+/* ==========================================================
+   ONBOARDING COMPLETE HOOK (OPTIONAL)
+========================================================== */
+window.finishOnboarding = function () {
+  bootstrap.Modal.getInstance(
+    document.getElementById("onboardModal")
+  )?.hide();
+  setTimeout(() => window.location.reload(), 400);
+};
+</script>
+
+{% endblock %}

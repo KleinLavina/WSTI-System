@@ -1,40 +1,78 @@
 <style>
 /* ===========================
+   COLOR PALETTE - SOFT MUTED DARK BLUE
+=========================== */
+:root {
+  --dark-blue-50: #f8fafc;
+  --dark-blue-100: #f1f5f9;
+  --dark-blue-200: #e2e8f0;
+  --dark-blue-300: #cbd5e1;
+  --dark-blue-400: #94a3b8;
+  --dark-blue-500: #64748b;
+  --dark-blue-600: #475569;
+  --dark-blue-700: #334155;
+  --dark-blue-800: #1e293b;
+  --dark-blue-900: #0f172a;
+  
+  --accent-blue-soft: #3b82f6;
+  --accent-blue-muted: #60a5fa;
+  --accent-teal: #0d9488;
+}
+
+/* ===========================
    USER GRID - ENHANCED COMPACT (5 CARDS PER ROW)
 =========================== */
 .user-grid-compact {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0.875rem;
-  padding: 0.25rem 0;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  background: var(--dark-blue-50);
 }
 
 .user-card-compact {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 1rem;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid var(--dark-blue-200);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  gap: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   position: relative;
-  min-height: 260px;
+  min-height: 240px;
+  overflow: hidden;
+}
+
+.user-card-compact::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-blue-soft), var(--accent-teal));
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .user-card-compact:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  border-color: #d1d5db;
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 20px 25px -5px rgba(30, 41, 59, 0.1), 0 10px 10px -5px rgba(30, 41, 59, 0.04);
+  border-color: var(--accent-blue-muted);
+}
+
+.user-card-compact:hover::before {
+  opacity: 1;
 }
 
 /* BADGES WITH CONTEXT */
 .badges-context {
   display: flex;
   justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .context-item {
@@ -43,71 +81,78 @@
 }
 
 .context-label {
-  font-size: 0.6rem;
-  color: #9ca3af;
-  font-weight: 500;
-  margin-bottom: 0.25rem;
+  font-size: 0.65rem;
+  color: var(--dark-blue-500);
+  font-weight: 600;
+  margin-bottom: 0.375rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.375rem;
+  letter-spacing: 0.02em;
 }
 
 .context-label i {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
+  color: var(--dark-blue-400);
 }
 
 .badge-division-compact,
 .badge-role-compact {
   display: block;
   font-size: 0.7rem !important;
-  padding: 0.25rem 0.5rem !important;
-  border-radius: 6px;
+  padding: 0.375rem 0.5rem !important;
+  border-radius: 8px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
   text-align: center;
+  transition: all 0.2s ease;
 }
 
-.badge-division-compact {
-  background: #f3f4f6;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
+.badge.badge-division-compact {
+  background: linear-gradient(135deg, #6b8f71 0%, #4f7660 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 4px rgba(79, 118, 96, 0.25);
 }
 
 .badge-role-compact.admin {
-  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--dark-blue-700) 0%, var(--dark-blue-900) 100%);
+  color: white;
   border: none;
+  box-shadow: 0 2px 4px rgba(30, 41, 59, 0.2);
 }
 
 .badge-role-compact.user {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--accent-blue-soft) 0%, #1d4ed8 100%);
+  color: white;
   border: none;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
-/* USER PROFILE WITH DETAILS */
+/* USER PROFILE - COMPACT */
 .user-profile-enhanced {
   display: flex;
   align-items: flex-start;
-  gap: 0.875rem;
-  padding: 0.5rem 0;
-  border-top: 1px solid #f3f4f6;
-  border-bottom: 1px solid #f3f4f6;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--dark-blue-100);
+  border-bottom: 1px solid var(--dark-blue-100);
 }
 
 .avatar-compact {
-  width: 48px !important;
-  height: 48px !important;
-  border-radius: 10px;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 12px;
   flex-shrink: 0;
-  border: 2px solid #e5e7eb;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border: 3px solid white;
+  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.1), 0 0 0 1px var(--dark-blue-200);
+  object-fit: cover;
 }
 
 .user-details-compact {
@@ -116,7 +161,7 @@
 }
 
 .detail-group {
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.5rem;
 }
 
 .detail-group:last-child {
@@ -125,166 +170,177 @@
 
 .detail-label {
   font-size: 0.65rem;
-  color: #6b7280;
-  font-weight: 500;
-  margin-bottom: 0.125rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.detail-label i {
-  font-size: 0.65rem;
-}
-
-.user-name-compact {
+  color: var(--dark-blue-500);
   font-weight: 600;
-  font-size: 0.9rem;
-  color: #1f2937;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
-}
-
-.user-position-compact {
-  font-size: 0.75rem;
-  color: #4b5563;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
-}
-
-.user-username-compact {
-  font-size: 0.7rem;
-  color: #6b7280;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
-}
-
-/* ORGANIZATIONAL STRUCTURE VISUAL */
-.org-structure-compact {
-  background: #f8fafc;
-  border-radius: 8px;
-  padding: 0.75rem;
-  margin: 0.25rem 0;
-  border: 1px solid #e5e7eb;
-}
-
-.org-level {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.org-level:last-child {
-  margin-bottom: 0;
-}
-
-.level-label {
-  font-size: 0.65rem;
-  color: #6b7280;
-  font-weight: 500;
-  flex-shrink: 0;
-  width: 75px;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.level-label i {
-  font-size: 0.65rem;
-  flex-shrink: 0;
-}
-
-.level-value {
-  font-size: 0.75rem;
-  color: #374151;
-  font-weight: 500;
-  text-align: left;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 0.25rem 0.5rem;
-  background: #fff;
-  border-radius: 4px;
-  border: 1px solid #e5e7eb;
-}
-
-.org-arrow {
-  font-size: 0.8rem;
-  color: #9ca3af;
-  text-align: center;
-  margin: 0.125rem 0;
-  opacity: 0.6;
-}
-
-/* CONTACT & STATUS */
-.contact-status-compact {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid #f3f4f6;
-}
-
-.status-section,
-.email-section {
-  flex: 1;
-  min-width: 0;
-}
-
-.status-label,
-.email-label {
-  font-size: 0.65rem;
-  color: #6b7280;
-  font-weight: 500;
   margin-bottom: 0.25rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.375rem;
+  letter-spacing: 0.02em;
 }
 
-.status-label i,
-.email-label i {
+.detail-label i {
   font-size: 0.65rem;
+  color: var(--dark-blue-400);
+  width: 12px;
+  text-align: center;
+}
+
+.user-name-compact {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--dark-blue-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.user-position-compact {
+  font-size: 0.8rem;
+  color: var(--dark-blue-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+/* ORGANIZATIONAL STRUCTURE */
+.org-structure-compact {
+  background: linear-gradient(135deg, var(--dark-blue-50) 0%, #ffffff 100%);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin: 0.25rem 0 0.5rem 0;
+  border: 1px solid var(--dark-blue-200);
+  position: relative;
+}
+
+.org-structure-compact::before {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--accent-blue-muted), var(--accent-teal));
+  border-radius: 1px;
+}
+
+.org-level {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.org-level:last-child {
+  margin-bottom: 0;
+}
+
+.org-level::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-blue-soft);
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px var(--dark-blue-300);
+}
+
+.level-label {
+  font-size: 0.65rem;
+  color: var(--dark-blue-600);
+  font-weight: 600;
+  flex-shrink: 0;
+  width: 65px;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.level-label i {
+  font-size: 0.65rem;
+  flex-shrink: 0;
+  color: var(--dark-blue-500);
+}
+
+.level-value {
+  font-size: 0.75rem;
+  color: var(--dark-blue-800);
+  font-weight: 500;
+  text-align: left;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0.375rem 0.75rem;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid var(--dark-blue-200);
+  margin-left: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* STATUS SECTION */
+.status-section {
+  min-width: 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--dark-blue-100);
+}
+
+.status-label {
+  font-size: 0.65rem;
+  color: var(--dark-blue-500);
+  font-weight: 600;
+  margin-bottom: 0.375rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  letter-spacing: 0.02em;
+}
+
+.status-label i {
+  font-size: 0.65rem;
+  color: var(--dark-blue-400);
 }
 
 .status-badge {
   font-size: 0.7rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  padding: 0.375rem 0.5rem;
+  border-radius: 8px;
   font-weight: 600;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.375rem;
   width: 100%;
   text-align: center;
   justify-content: center;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .status-badge.active {
-  background: #dcfce7;
-  color: #166534;
-  border: 1px solid #bbf7d0;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+  border-color: #a7f3d0;
 }
 
 .status-badge.inactive {
-  background: #fee2e2;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
   color: #991b1b;
-  border: 1px solid #fecaca;
+  border-color: #fecaca;
 }
 
 .status-icon {
@@ -292,60 +348,48 @@
   display: inline-block;
 }
 
-.user-email-compact {
-  font-size: 0.7rem;
-  color: #4b5563;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 0.25rem 0.5rem;
-  background: #fff;
-  border-radius: 4px;
-  border: 1px solid #e5e7eb;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.email-icon {
-  font-size: 0.7rem;
-  opacity: 0.7;
-  flex-shrink: 0;
-}
-
 /* QUICK ACTION BUTTON */
 .card-actions {
   margin-top: auto;
   padding-top: 0.5rem;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--dark-blue-100);
 }
 
 .btn-view-details {
   width: 100%;
-  background: #f8fafc;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  background: linear-gradient(135deg, white 0%, var(--dark-blue-50) 100%);
+  color: var(--dark-blue-700);
+  border: 1px solid var(--dark-blue-300);
+  padding: 0.625rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   white-space: nowrap;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
+  letter-spacing: 0.02em;
 }
 
 .btn-view-details:hover {
-  background: #f1f5f9;
-  color: #1f2937;
-  border-color: #d1d5db;
+  background: linear-gradient(135deg, var(--dark-blue-50) 0%, var(--dark-blue-100) 100%);
+  color: var(--accent-blue-soft);
+  border-color: var(--accent-blue-muted);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
 }
 
 .btn-view-details i {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+}
+
+.btn-view-details:hover i {
+  transform: translateX(2px);
 }
 
 /* ===========================
@@ -360,22 +404,22 @@
 @media (max-width: 1200px) {
   .user-grid-compact {
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    gap: 1.125rem;
   }
   
   .user-card-compact {
-    min-height: 280px;
+    min-height: 260px;
   }
 }
 
 @media (max-width: 992px) {
   .user-grid-compact {
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: 1.125rem;
   }
   
   .user-card-compact {
-    padding: 1.125rem;
+    padding: 1.5rem;
     min-height: auto;
   }
 }
@@ -383,40 +427,39 @@
 @media (max-width: 768px) {
   .user-grid-compact {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 1.25rem;
   }
   
   .user-card-compact {
-    padding: 1.25rem;
+    padding: 1.5rem;
   }
   
   .user-profile-enhanced {
-    gap: 1rem;
+    gap: 1.125rem;
   }
   
   .avatar-compact {
-    width: 56px !important;
-    height: 56px !important;
-  }
-  
-  .contact-status-compact {
-    flex-direction: column;
-    gap: 0.75rem;
+    width: 64px !important;
+    height: 64px !important;
   }
 }
 
 @media (max-width: 480px) {
   .user-card-compact {
-    padding: 1rem;
+    padding: 1.25rem;
   }
   
   .badges-context {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
   
   .org-structure-compact {
-    padding: 0.625rem;
+    padding: 1rem;
+  }
+  
+  .org-level {
+    padding-left: 1.75rem;
   }
 }
 </style>
@@ -435,7 +478,7 @@
           <i class="fas fa-building"></i> Division
         </div>
         <span class="badge badge-division-compact" title="Division: {{ user.org_assignment.division.name|default:'No Division' }}">
-          {{ user.org_assignment.division.name|default:"—"|truncatechars:12 }}
+          {{ user.org_assignment.division.name|default:"—"|truncatechars:14 }}
         </span>
       </div>
       <div class="context-item">
@@ -444,17 +487,24 @@
         </div>
         <span class="badge badge-role-compact {% if user.login_role == 'admin' %}admin{% else %}user{% endif %}" 
               title="User Role: {{ user.get_login_role_display }}">
-          {{ user.get_login_role_display|truncatechars:10 }}
+          {{ user.get_login_role_display|truncatechars:12 }}
         </span>
       </div>
     </div>
 
     <!-- USER PROFILE WITH DETAILS -->
     <div class="user-profile-enhanced">
-      <img class="avatar-compact"
-           src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username }}&background=2563eb&color=fff&size=48"
-           alt="{{ user.get_full_name|default:user.username }}"
-           title="User Avatar">
+      {% if user.profile_image %}
+        <img class="avatar-compact"
+             src="{{ user.profile_image.url }}"
+             alt="{{ user.get_full_name|default:user.username }}"
+             title="User Avatar">
+      {% else %}
+        <img class="avatar-compact"
+             src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username }}&background=3b82f6&color=fff&size=56&bold=true"
+             alt="{{ user.get_full_name|default:user.username }}"
+             title="User Avatar">
+      {% endif %}
       
       <div class="user-details-compact">
         <div class="detail-group">
@@ -462,7 +512,7 @@
             <i class="fas fa-user"></i> Name
           </div>
           <div class="user-name-compact" title="{{ user.get_full_name|default:user.username }}">
-            {{ user.get_full_name|default:user.username|truncatechars:18 }}
+            {{ user.get_full_name|default:user.username|truncatechars:20 }}
           </div>
         </div>
         
@@ -471,16 +521,7 @@
             <i class="fas fa-briefcase"></i> Position
           </div>
           <div class="user-position-compact" title="{{ user.position_title|default:'No position title' }}">
-            {{ user.position_title|default:"No title"|truncatechars:20 }}
-          </div>
-        </div>
-        
-        <div class="detail-group">
-          <div class="detail-label">
-            <i class="fas fa-at"></i> Username
-          </div>
-          <div class="user-username-compact" title="Username: {{ user.username }}">
-            @{{ user.username|truncatechars:25 }}
+            {{ user.position_title|default:"No title"|truncatechars:22 }}
           </div>
         </div>
       </div>
@@ -497,10 +538,6 @@
         </div>
       </div>
       
-      <div class="org-arrow">
-        <i class="fas fa-arrow-down"></i>
-      </div>
-      
       <div class="org-level">
         <div class="level-label">
           <i class="fas fa-sitemap"></i> Service
@@ -508,10 +545,6 @@
         <div class="level-value" title="Service: {{ user.org_assignment.service.name|default:'Not assigned' }}">
           {{ user.org_assignment.service.name|default:"—"|truncatechars:25 }}
         </div>
-      </div>
-      
-      <div class="org-arrow">
-        <i class="fas fa-arrow-down"></i>
       </div>
       
       <div class="org-level">
@@ -524,42 +557,29 @@
       </div>
     </div>
 
-    <!-- CONTACT & STATUS -->
-    <div class="contact-status-compact">
-      <div class="status-section">
-        <div class="status-label">
-          <i class="fas fa-circle-check"></i> Account Status
-        </div>
-        <div class="status-badge {% if user.is_active %}active{% else %}inactive{% endif %}" 
-             title="Account is {% if user.is_active %}active{% else %}inactive{% endif %}">
-          {% if user.is_active %}
-            <i class="fas fa-circle status-icon"></i> Active
-          {% else %}
-            <i class="fas fa-circle status-icon"></i> Inactive
-          {% endif %}
-        </div>
+    <!-- STATUS -->
+    <div class="status-section">
+      <div class="status-label">
+        <i class="fas fa-circle-check"></i> Status
       </div>
-      
-      <div class="email-section">
-        <div class="email-label">
-          <i class="fas fa-envelope"></i> Email Contact
-        </div>
-        <div class="user-email-compact" title="Email: {{ user.email|default:'No email provided' }}">
-          {% if user.email %}
-            <i class="fas fa-at email-icon"></i> {{ user.email|truncatechars:10 }}
-          {% else %}
-            <i class="fas fa-minus email-icon"></i> No email
-          {% endif %}
-        </div>
+      <div class="status-badge {% if user.is_active %}active{% else %}inactive{% endif %}" 
+           title="Account is {% if user.is_active %}active{% else %}inactive{% endif %}">
+        {% if user.is_active %}
+          <i class="fas fa-circle status-icon"></i> Active
+        {% else %}
+          <i class="fas fa-circle status-icon"></i> Inactive
+        {% endif %}
       </div>
     </div>
 
     <!-- QUICK ACTION BUTTON -->
     <div class="card-actions">
-      <button class="btn-view-details" 
-              title="View full details for {{ user.get_full_name|default:user.username }}">
-        <i class="fas fa-eye"></i> View Details
-      </button>
+      <a href="{% url 'admin_app:user-profile' user.id %}"
+         class="btn-view-details"
+         title="View full details for {{ user.first_name|default:user.username }}">
+        <i class="fas fa-arrow-right"></i>
+        View Details
+      </a>
     </div>
 
   </div>

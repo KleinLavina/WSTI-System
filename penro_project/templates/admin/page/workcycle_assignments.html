@@ -338,7 +338,6 @@
   height: 32px;
   min-width: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), var(--primary-accent));
   color: white;
   font-size: 0.8rem;
   font-weight: 700;
@@ -346,6 +345,8 @@
   align-items: center;
   justify-content: center;
   text-transform: uppercase;
+  overflow: hidden;
+  object-fit: cover;
 }
 
 /* COMPACT BADGES */
@@ -675,9 +676,15 @@
       {% for item in active_items %}
       <div class="wc-row">
         <div class="wc-user">
-          <div class="wc-avatar">
-            {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
-          </div>
+          {% if item.owner.profile_image %}
+            <img class="wc-avatar"
+                 src="{{ item.owner.profile_image.url }}"
+                 alt="{{ item.owner.get_full_name|default:item.owner.username }}">
+          {% else %}
+            <div class="wc-avatar" style="background: linear-gradient(135deg, var(--primary), var(--primary-accent));">
+              {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
+            </div>
+          {% endif %}
           <div>
             <div class="fw-semibold">{{ item.owner.get_full_name|default:item.owner.username }}</div>
             <div class="text-muted small">{{ item.owner.email }}</div>
@@ -757,9 +764,15 @@
         {% for item in archived_items %}
         <div class="wc-row">
           <div class="wc-user">
-            <div class="wc-avatar">
-              {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
-            </div>
+            {% if item.owner.profile_image %}
+              <img class="wc-avatar"
+                   src="{{ item.owner.profile_image.url }}"
+                   alt="{{ item.owner.get_full_name|default:item.owner.username }}">
+            {% else %}
+              <div class="wc-avatar" style="background: linear-gradient(135deg, #dc2626, #ef4444);">
+                {{ item.owner.first_name|slice:":1" }}{{ item.owner.last_name|slice:":1" }}
+              </div>
+            {% endif %}
             <div>
               <div class="fw-semibold">{{ item.owner.get_full_name|default:item.owner.username }}</div>
               <div class="text-muted small">{{ item.owner.email }}</div>
@@ -791,4 +804,4 @@
   </div>
 
 </div>
-{% endblock %}  
+{% endblock %}
