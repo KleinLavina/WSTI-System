@@ -1,6 +1,6 @@
 from django.utils import timezone
 from django.core.exceptions import ValidationError, PermissionDenied
-
+from structure.services.folder_resolution import resolve_attachment_folder
 from accounts.models import WorkItemAttachment
 
 
@@ -59,33 +59,18 @@ def submit_work_item(work_item, user):
 # ============================================================
 # ATTACHMENTS (FLEXIBLE UPLOAD)
 # ============================================================
-
 def add_attachment_to_work_item(*, work_item, files, attachment_type, user):
     """
-    Add attachments to a work item with flexible folder resolution.
-    
-    Supports:
-    - Users with full org assignment (Division > Section > Service > Unit)
-    - Users with partial org assignment (Division only, Section only, etc.)
-    - Users with NO org assignment (creates "Unassigned" folder)
-    
-    Folder structure is automatically resolved based on:
-    - Year (from work cycle deadline)
-    - Attachment type (MATRIX_A, MATRIX_B, MOV)
-    - Work cycle name
-    - User's organizational assignment (deepest available level)
-    
-    Args:
-        work_item: WorkItem instance
-        files: List of uploaded files
-        attachment_type: str ("matrix_a", "matrix_b", "mov")
-        user: User performing the upload
-    
-    Raises:
-        PermissionDenied: If user lacks upload permission
-        ValidationError: If inputs are invalid
+    Add attachments to a work item.
+
+    Uses the canonical folder resolution service.
+    Does NOT duplicate or override folder rules.
+    Safe for all existing integrations.
     """
 
+    # -------------------------------------------------
+    # BASIC VALIDATION
+    # -------------------------------------------------
     if not user:
         raise PermissionDenied("Uploader is required.")
 
@@ -95,7 +80,6 @@ def add_attachment_to_work_item(*, work_item, files, attachment_type, user):
     if not files:
         raise ValidationError("No files provided.")
 
-    # Validate attachment type
     valid_types = {"matrix_a", "matrix_b", "mov"}
     if attachment_type not in valid_types:
         raise ValidationError(
@@ -103,23 +87,35 @@ def add_attachment_to_work_item(*, work_item, files, attachment_type, user):
             f"Must be one of: {', '.join(valid_types)}"
         )
 
-    # Check if user can upload to this work item
+    # -------------------------------------------------
+    # PERMISSION CHECK
+    # -------------------------------------------------
+    # Reuse your existing permission rule
+    # (admins vs owner)
     if user.login_role != "admin" and work_item.owner_id != user.id:
         raise PermissionDenied(
             "You can only upload attachments to your own work items."
         )
 
-    # Check if work item is approved (locked)
     if work_item.review_decision == "approved":
         raise PermissionDenied(
             "Cannot add attachments to approved work items."
         )
 
-    # Create attachments
-    # Folder will be auto-resolved in WorkItemAttachment.save()
-    # No need to check org assignment here - flexible resolution handles it
+    # -------------------------------------------------
+    # ✅ CANONICAL FOLDER RESOLUTION (KEY FIX)
+    # -------------------------------------------------
+    folder = resolve_attachment_folder(
+        work_item=work_item,
+        attachment_type=attachment_type,
+        actor=user,
+    )
+
+    # -------------------------------------------------
+    # CREATE ATTACHMENTS
+    # -------------------------------------------------
     created_count = 0
-    
+
     for file in files:
         try:
             WorkItemAttachment.objects.create(
@@ -127,21 +123,16 @@ def add_attachment_to_work_item(*, work_item, files, attachment_type, user):
                 file=file,
                 attachment_type=attachment_type,
                 uploaded_by=user,
-                # folder is None - will be auto-resolved based on:
-                # 1. Work item's work cycle
-                # 2. Attachment type
-                # 3. User's org assignment (or "Unassigned" if none)
+                folder=folder,  # ✅ ALWAYS VALID
             )
             created_count += 1
+
         except Exception as e:
-            # If any file fails, raise error with context
             raise ValidationError(
                 f"Failed to upload '{file.name}': {str(e)}"
             )
 
     return created_count
-
-
 # ============================================================
 # CONTEXT UPDATES
 # ============================================================

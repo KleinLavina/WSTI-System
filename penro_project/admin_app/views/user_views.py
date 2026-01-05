@@ -3,13 +3,17 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.urls import reverse
 from django.db import IntegrityError
-
+from django.db.models import Q
 from accounts.models import User, Team, OrgAssignment
 from accounts.forms import UserCreateForm
 
 @login_required
 def users(request):
-    users = (
+    """
+    Users list view with organizational filtering, search, and sorting.
+    """
+    # Base queryset with org relationships
+    users_qs = (
         User.objects
         .select_related(
             "org_assignment__division",
@@ -17,20 +21,145 @@ def users(request):
             "org_assignment__service",
             "org_assignment__unit",
         )
-        .order_by("username")
     )
 
-    form = UserCreateForm()  # ✅ REQUIRED
+    # =====================================================
+    # ORGANIZATIONAL FILTERS
+    # =====================================================
+    current_division = request.GET.get('division')
+    current_section = request.GET.get('section')
+    current_service = request.GET.get('service')
+    current_unit = request.GET.get('unit')
 
-    return render(
-        request,
-        "admin/page/users.html",
-        {
-            "users": users,
-            "total_users": users.count(),
-            "form": form,          # ✅ THIS MAKES INPUTS APPEAR
-        },
-    )
+    # Get all divisions for filter dropdown
+    divisions = Team.objects.filter(team_type=Team.TeamType.DIVISION).order_by('name')
+
+    # Filter by division
+    sections = []
+    services = []
+    units = []
+    
+    division_name = None
+    section_name = None
+    service_name = None
+    unit_name = None
+
+    if current_division:
+        users_qs = users_qs.filter(org_assignment__division_id=current_division)
+        division_obj = Team.objects.filter(id=current_division).first()
+        if division_obj:
+            division_name = division_obj.name
+        
+        # Get sections for this division
+        sections = Team.objects.filter(
+            team_type=Team.TeamType.SECTION,
+            parent_id=current_division
+        ).order_by('name')
+
+        # Filter by section
+        if current_section:
+            users_qs = users_qs.filter(org_assignment__section_id=current_section)
+            section_obj = Team.objects.filter(id=current_section).first()
+            if section_obj:
+                section_name = section_obj.name
+            
+            # Get services for this section
+            services = Team.objects.filter(
+                team_type=Team.TeamType.SERVICE,
+                parent_id=current_section
+            ).order_by('name')
+
+            # Get units that belong to section or its services
+            units_qs = Team.objects.filter(
+                team_type=Team.TeamType.UNIT,
+                parent_id=current_section
+            )
+            
+            # Filter by service (optional)
+            if current_service:
+                users_qs = users_qs.filter(org_assignment__service_id=current_service)
+                service_obj = Team.objects.filter(id=current_service).first()
+                if service_obj:
+                    service_name = service_obj.name
+                
+                # Units under this service
+                units_qs = units_qs | Team.objects.filter(
+                    team_type=Team.TeamType.UNIT,
+                    parent_id=current_service
+                )
+            
+            units = units_qs.order_by('name')
+
+            # Filter by unit
+            if current_unit:
+                users_qs = users_qs.filter(org_assignment__unit_id=current_unit)
+                unit_obj = Team.objects.filter(id=current_unit).first()
+                if unit_obj:
+                    unit_name = unit_obj.name
+
+    # =====================================================
+    # SEARCH
+    # =====================================================
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        users_qs = users_qs.filter(
+            Q(username__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(position_title__icontains=search_query)
+        )
+
+    # =====================================================
+    # SORTING
+    # =====================================================
+    current_sort = request.GET.get('sort', 'name_asc')
+    
+    sort_mapping = {
+        'name_asc': ['first_name', 'last_name', 'username'],
+        'name_desc': ['-first_name', '-last_name', '-username'],
+        'date_desc': ['-date_joined'],
+        'date_asc': ['date_joined'],
+        'role_asc': ['login_role', 'username'],
+    }
+    
+    sort_fields = sort_mapping.get(current_sort, ['first_name', 'last_name', 'username'])
+    users_qs = users_qs.order_by(*sort_fields)
+
+    # =====================================================
+    # CONTEXT
+    # =====================================================
+    form = UserCreateForm()
+
+    context = {
+        "users": users_qs,
+        "total_users": users_qs.count(),
+        "form": form,
+        
+        # Filter data
+        "divisions": divisions,
+        "sections": sections,
+        "services": services,
+        "units": units,
+        
+        # Current filters
+        "current_division": current_division,
+        "current_section": current_section,
+        "current_service": current_service,
+        "current_unit": current_unit,
+        
+        # Filter names
+        "current_division_name": division_name,
+        "current_section_name": section_name,
+        "current_service_name": service_name,
+        "current_unit_name": unit_name,
+        
+        # Search & Sort
+        "search_query": search_query,
+        "current_sort": current_sort,
+    }
+
+    return render(request, "admin/page/users.html", context)
 
 @login_required
 def create_user(request):

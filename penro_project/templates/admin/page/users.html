@@ -1,170 +1,263 @@
 {% extends "admin/layout/base.html" %}
 {% block title %}Users{% endblock %}
+{% load static %}
 {% block content %}
-
+<link rel="stylesheet" href="{% static 'css/users_styles.css' %}">
+<script src="{% static 'js/users_scripts.js' %}"></script>
 <!-- =========================
-     HEADER/ REFERNCES USERS.HTML
+     UNIFIED HEADER (ENHANCED)
 ========================= -->
-<div class="users-header">
+<div class="wc-unified-header">
 
-  <div>
-    <h3 class="fw-bold mb-0">
-      Users
-      <span class="user-count">{{ total_users }}</span>
-    </h3>
-    <div class="text-muted small">
-      TIWI Reference · User Directory
-    </div>
-  </div>
-
-  <div>
-    <a href="{% url 'admin_app:manage-organization' %}"
-   class="btn-add-user">
-  <span class="btn-icon">
-    <i class="fas fa-code-branch"></i>
-  </span>
-  Manage Organization
-</a>
-
-      <a href="#"
-      class="btn-add-user"
-      data-bs-toggle="modal"
-      data-bs-target="#createUserModal">
-      <span class="btn-icon">+</span>
-      Add / Register A User
-    </a>
-  </div>
-
-</div>
-
-<hr class="my-3">
-
-<!-- =========================
-     USER GRID - ENHANCED COMPACT
-========================= -->
-<div class="user-grid-compact">
-  {% for user in users %}
-  <div class="user-card-compact">
-
-    <!-- BADGES WITH CONTEXT -->
-    <div class="badges-context">
-      <div class="context-item">
-        <div class="context-label">Division</div>
-        <span class="badge badge-division-compact" title="Division: {{ user.org_assignment.division.name|default:'No Division' }}">
-          {{ user.org_assignment.division.name|default:"—"|truncatechars:12 }}
-        </span>
-      </div>
-      <div class="context-item">
-        <div class="context-label">Role</div>
-        <span class="badge badge-role-compact {% if user.login_role == 'admin' %}admin{% else %}user{% endif %}" 
-              title="User Role: {{ user.get_login_role_display }}">
-          {{ user.get_login_role_display|truncatechars:10 }}
-        </span>
-      </div>
+  <!-- TOP ROW: Title + Action Buttons -->
+  <div class="wc-header-top">
+    <div class="wc-title-section">
+      <h3 class="wc-main-title">
+        <i class="fas fa-users"></i>
+        Users
+        <span class="wc-user-count">{{ total_users }}</span>
+      </h3>
+      <p class="wc-subtitle">
+        Manage user directory, roles, permissions, and organizational structure
+      </p>
     </div>
 
-    <!-- USER PROFILE WITH DETAILS -->
-    <div class="user-profile-enhanced">
-      <img class="avatar-compact"
-           src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username }}&background=2563eb&color=fff&size=48"
-           alt="{{ user.get_full_name|default:user.username }}"
-           title="User Avatar">
-      
-      <div class="user-details-compact">
-        <div class="detail-group">
-          <div class="detail-label">Name</div>
-          <div class="user-name-compact" title="{{ user.get_full_name|default:user.username }}">
-            {{ user.get_full_name|default:user.username|truncatechars:18 }}
-          </div>
-        </div>
-        
-        <div class="detail-group">
-          <div class="detail-label">Position</div>
-          <div class="user-position-compact" title="{{ user.position_title|default:'No position title' }}">
-            {{ user.position_title|default:"No title"|truncatechars:20 }}
-          </div>
-        </div>
-        
-        <div class="detail-group">
-          <div class="detail-label">Username</div>
-          <div class="user-username-compact" title="Username: {{ user.username }}">
-            @{{ user.username|truncatechars:25 }}
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- ACTION BUTTONS (RIGHT SIDE) -->
+    <div class="wc-action-buttons-top">
+      <button
+        type="button"
+        class="wc-info-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#usersHelpModal">
+        <i class="fas fa-question-circle"></i>
+        User Management Guide
+      </button>
 
-    <!-- ORGANIZATIONAL STRUCTURE VISUAL -->
-    <div class="org-structure-compact">
-      <div class="org-level">
-        <div class="level-label">Section</div>
-        <div class="level-value" title="Section: {{ user.org_assignment.section.name|default:'Not assigned' }}">
-          {{ user.org_assignment.section.name|default:"—"|truncatechars:25 }}
-        </div>
-      </div>
-      
-      <div class="org-arrow">↓</div>
-      
-      <div class="org-level">
-        <div class="level-label">Service</div>
-        <div class="level-value" title="Service: {{ user.org_assignment.service.name|default:'Not assigned' }}">
-          {{ user.org_assignment.service.name|default:"—"|truncatechars:25 }}
-        </div>
-      </div>
-      
-      <div class="org-arrow">↓</div>
-      
-      <div class="org-level">
-        <div class="level-label">Unit</div>
-        <div class="level-value" title="Unit: {{ user.org_assignment.unit.name|default:'Not assigned' }}">
-          {{ user.org_assignment.unit.name|default:"—"|truncatechars:25 }}
-        </div>
-      </div>
-    </div>
+      <a
+        href="{% url 'admin_app:manage-organization' %}"
+        class="wc-organization-btn">
+        <i class="fas fa-sitemap"></i>
+        Organization
+      </a>
 
-    <!-- CONTACT & STATUS -->
-    <div class="contact-status-compact">
-      <div class="status-section">
-        <div class="status-label">Account Status</div>
-        <div class="status-badge {% if user.is_active %}active{% else %}inactive{% endif %}" 
-             title="Account is {% if user.is_active %}active{% else %}inactive{% endif %}">
-          {% if user.is_active %}
-            <span class="status-icon">●</span> Active
-          {% else %}
-            <span class="status-icon">●</span> Inactive
-          {% endif %}
-        </div>
-      </div>
-      
-      <div class="email-section">
-        <div class="email-label">Email Contact</div>
-        <div class="user-email-compact" title="Email: {{ user.email|default:'No email provided' }}">
-          {% if user.email %}
-            <span class="email-icon">✉</span> {{ user.email|truncatechars:10 }}
-          {% else %}
-            <span class="email-icon">—</span> No email
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <!-- QUICK ACTION BUTTON -->
-    <div class="card-actions">
-      <button class="btn-view-details" 
-              title="View full details for {{ user.get_full_name|default:user.username }}">
-        View Details
+      <button
+        type="button"
+        class="wc-create-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#createUserModal">
+        <i class="fas fa-user-plus"></i>
+        Add User
       </button>
     </div>
+  </div>
+
+  <!-- BOTTOM ROW: Filters + Search + Sort (HORIZONTAL) -->
+  <div class="wc-header-bottom">
+    
+
+    <!-- RIGHT: SEARCH & SORT (HORIZONTAL) -->
+    <div class="wc-search-sort-section">
+      <!-- SEARCH -->
+      <form method="get" class="wc-search-form">
+        {% if current_division %}<input type="hidden" name="division" value="{{ current_division }}">{% endif %}
+        {% if current_section %}<input type="hidden" name="section" value="{{ current_section }}">{% endif %}
+        {% if current_service %}<input type="hidden" name="service" value="{{ current_service }}">{% endif %}
+        {% if current_unit %}<input type="hidden" name="unit" value="{{ current_unit }}">{% endif %}
+        {% if current_sort %}<input type="hidden" name="sort" value="{{ current_sort }}">{% endif %}
+
+        <div class="wc-search-wrapper">
+          <i class="fas fa-search wc-search-icon"></i>
+          <input type="search"
+                 name="q"
+                 value="{{ search_query }}"
+                 class="wc-search-input"
+                 placeholder="Search users...">
+          <button type="submit" class="wc-search-btn">
+            Search
+          </button>
+        </div>
+      </form>
+
+      <!-- SORT -->
+      <div class="wc-sort-wrapper">
+        <div class="wc-sort-buttons">
+          <a href="?sort=name_asc{% if current_division %}&division={{ current_division }}{% endif %}{% if current_section %}&section={{ current_section }}{% endif %}{% if current_service %}&service={{ current_service }}{% endif %}{% if current_unit %}&unit={{ current_unit }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+             class="wc-sort-btn {% if current_sort == 'name_asc' %}active{% endif %}"
+             title="Sort by Name (A-Z)">
+            <i class="fas fa-sort-alpha-up"></i>
+          </a>
+          <a href="?sort=name_desc{% if current_division %}&division={{ current_division }}{% endif %}{% if current_section %}&section={{ current_section }}{% endif %}{% if current_service %}&service={{ current_service }}{% endif %}{% if current_unit %}&unit={{ current_unit }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+             class="wc-sort-btn {% if current_sort == 'name_desc' %}active{% endif %}"
+             title="Sort by Name (Z-A)">
+            <i class="fas fa-sort-alpha-down"></i>
+          </a>
+          <a href="?sort=date_desc{% if current_division %}&division={{ current_division }}{% endif %}{% if current_section %}&section={{ current_section }}{% endif %}{% if current_service %}&service={{ current_service }}{% endif %}{% if current_unit %}&unit={{ current_unit }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+             class="wc-sort-btn {% if current_sort == 'date_desc' %}active{% endif %}"
+             title="Recently Joined">
+            <i class="fas fa-calendar-plus"></i>
+          </a>
+          <a href="?sort=date_asc{% if current_division %}&division={{ current_division }}{% endif %}{% if current_section %}&section={{ current_section }}{% endif %}{% if current_service %}&service={{ current_service }}{% endif %}{% if current_unit %}&unit={{ current_unit }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+             class="wc-sort-btn {% if current_sort == 'date_asc' %}active{% endif %}"
+             title="Early Members">
+            <i class="fas fa-calendar-minus"></i>
+          </a>
+          <a href="?sort=role_asc{% if current_division %}&division={{ current_division }}{% endif %}{% if current_section %}&section={{ current_section }}{% endif %}{% if current_service %}&service={{ current_service }}{% endif %}{% if current_unit %}&unit={{ current_unit }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+             class="wc-sort-btn {% if current_sort == 'role_asc' %}active{% endif %}"
+             title="Sort by Role">
+            <i class="fas fa-user-tag"></i>
+          </a>
+        </div>
+      </div>
+    </div>
 
   </div>
-  {% endfor %}
+
+    <!-- LEFT: ORG FILTERS -->
+    <div class="wc-filters-section">
+      <div class="wc-section-label">
+        <i class="fas fa-filter"></i>
+        Filter by Organization
+      </div>
+      <div class="wc-filters">
+        <!-- Division Filter -->
+        <div class="wc-filter-dropdown">
+          <button class="wc-filter-btn {% if current_division %}active{% endif %}" id="divisionFilterBtn">
+            <i class="fas fa-building"></i>
+            <span>{{ current_division_name|default:"Division" }}</span>
+            <i class="fas fa-chevron-down wc-dropdown-icon"></i>
+          </button>
+          <div class="wc-filter-menu" id="divisionFilterMenu">
+            <a href="?{% if current_sort %}sort={{ current_sort }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="wc-filter-option {% if not current_division %}active{% endif %}">
+              All Divisions
+            </a>
+            {% for division in divisions %}
+            <a href="?division={{ division.id }}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="wc-filter-option {% if current_division == division.id|stringformat:'s' %}active{% endif %}">
+              {{ division.name }}
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Section Filter (conditional) -->
+        {% if current_division and sections %}
+        <div class="wc-filter-dropdown">
+          <button class="wc-filter-btn {% if current_section %}active{% endif %}" id="sectionFilterBtn">
+            <i class="fas fa-layer-group"></i>
+            <span>{{ current_section_name|default:"Section" }}</span>
+            <i class="fas fa-chevron-down wc-dropdown-icon"></i>
+          </button>
+          <div class="wc-filter-menu" id="sectionFilterMenu">
+            <a href="?division={{ current_division }}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="wc-filter-option {% if not current_section %}active{% endif %}">
+              All Sections
+            </a>
+            {% for section in sections %}
+            <a href="?division={{ current_division }}&section={{ section.id }}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="wc-filter-option {% if current_section == section.id|stringformat:'s' %}active{% endif %}">
+              {{ section.name }}
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Service Filter (conditional) -->
+        {% if current_section and services %}
+        <div class="wc-filter-dropdown">
+          <button class="wc-filter-btn {% if current_service %}active{% endif %}" id="serviceFilterBtn">
+            <i class="fas fa-sitemap"></i>
+            <span>{{ current_service_name|default:"Service" }}</span>
+            <i class="fas fa-chevron-down wc-dropdown-icon"></i>
+          </button>
+          <div class="wc-filter-menu" id="serviceFilterMenu">
+            <a href="?division={{ current_division }}&section={{ current_section }}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="wc-filter-option {% if not current_service %}active{% endif %}">
+              All Services
+            </a>
+            {% for service in services %}
+            <a href="?division={{ current_division }}&section={{ current_section }}&service={{ service.id }}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="wc-filter-option {% if current_service == service.id|stringformat:'s' %}active{% endif %}">
+              {{ service.name }}
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Unit Filter (conditional) -->
+        {% if current_section and units %}
+        <div class="wc-filter-dropdown">
+          <button class="wc-filter-btn {% if current_unit %}active{% endif %}" id="unitFilterBtn">
+            <i class="fas fa-users"></i>
+            <span>{{ current_unit_name|default:"Unit" }}</span>
+            <i class="fas fa-chevron-down wc-dropdown-icon"></i>
+          </button>
+          <div class="wc-filter-menu" id="unitFilterMenu">
+            <a href="?division={{ current_division }}&section={{ current_section }}{% if current_service %}&service={{ current_service }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="wc-filter-option {% if not current_unit %}active{% endif %}">
+              All Units
+            </a>
+            {% for unit in units %}
+            <a href="?division={{ current_division }}&section={{ current_section }}{% if current_service %}&service={{ current_service }}{% endif %}&unit={{ unit.id }}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="wc-filter-option {% if current_unit == unit.id|stringformat:'s' %}active{% endif %}">
+              {{ unit.name }}
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Clear Filters Button -->
+        {% if current_division or current_section or current_service or current_unit %}
+        <a href="?{% if current_sort %}sort={{ current_sort }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+           class="wc-clear-filters-btn">
+          <i class="fas fa-times-circle"></i>
+          Clear Filters
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+
 </div>
+
+<!-- =========================
+     USER GRID (INCLUDE)
+========================= -->
+<section class="wc-content-area">
+  {% include "admin/page/includes/users_grid.html" %}
+</section>
 
 <!-- =========================
      MODALS
 ========================= -->
-
 {% include "admin/page/modals/create_user_modal.html" %}
+
+<!-- USERS HELP MODAL -->
+<div class="modal fade" id="usersHelpModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-question-circle me-2"></i>
+          User Management Guide
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Manage your organization's user accounts with these features:</p>
+        <ul class="mb-0">
+          <li><strong>Add User</strong>: Register new users with customized roles</li>
+          <li><strong>Organization View</strong>: Visualize user hierarchy and departments</li>
+          <li><strong>Organizational Filters</strong>: Filter by Division, Section, Service, and Unit</li>
+          <li><strong>Search & Sort</strong>: Find and organize users by name, date joined, or role</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ONBOARDING MODAL -->
 <div class="modal fade"
@@ -185,781 +278,7 @@
   </div>
 </div>
 
-<!-- =========================
-     STYLES - ENHANCED COMPACT
-========================= -->
-<style>
-/* ===========================
-   HEADER STYLES
-=========================== */
-.users-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:.75rem;
-}
 
-.user-count{
-  background:#eef2ff;
-  color:#4338ca;
-  font-size:.75rem;
-  padding:.15rem .5rem;
-  border-radius:999px;
-  margin-left:.35rem;
-}
 
-.btn-add-user{
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  color:#fff;
-  padding:.65rem 1.25rem;
-  border-radius:10px;
-  font-size:.9rem;
-  font-weight:600;
-  text-decoration:none;
-  display:inline-flex;
-  align-items:center;
-  gap:0.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
 
-.btn-add-user:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
-  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-  color:#fff;
-}
-
-.btn-icon{
-  font-size:1.2rem;
-  line-height:1;
-}
-
-/* ===========================
-   USER GRID - ENHANCED COMPACT (5 CARDS PER ROW)
-=========================== */
-.user-grid-compact {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.875rem;
-  padding: 0.25rem 0;
-}
-
-.user-card-compact {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 1rem;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  position: relative;
-  min-height: 260px; /* Slightly taller for more details */
-}
-
-.user-card-compact:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  border-color: #d1d5db;
-}
-
-/* BADGES WITH CONTEXT */
-.badges-context {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
-}
-
-.context-item {
-  flex: 1;
-  min-width: 0;
-}
-
-.context-label {
-  font-size: 0.6rem;
-  color: #9ca3af;
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.badge-division-compact,
-.badge-role-compact {
-  display: block;
-  font-size: 0.7rem !important;
-  padding: 0.25rem 0.5rem !important;
-  border-radius: 6px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-  text-align: center;
-}
-
-.badge-division-compact {
-  background: #f3f4f6;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
-}
-
-.badge-role-compact.admin {
-  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-  color: #fff;
-  border: none;
-}
-
-.badge-role-compact.user {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  color: #fff;
-  border: none;
-}
-
-/* USER PROFILE WITH DETAILS */
-.user-profile-enhanced {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.875rem;
-  padding: 0.5rem 0;
-  border-top: 1px solid #f3f4f6;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.avatar-compact {
-  width: 48px !important;
-  height: 48px !important;
-  border-radius: 10px;
-  flex-shrink: 0;
-  border: 2px solid #e5e7eb;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-.user-details-compact {
-  flex: 1;
-  min-width: 0;
-}
-
-.detail-group {
-  margin-bottom: 0.375rem;
-}
-
-.detail-group:last-child {
-  margin-bottom: 0;
-}
-
-.detail-label {
-  font-size: 0.65rem;
-  color: #6b7280;
-  font-weight: 500;
-  margin-bottom: 0.125rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-name-compact {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #1f2937;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
-}
-
-.user-position-compact {
-  font-size: 0.75rem;
-  color: #4b5563;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
-}
-
-.user-username-compact {
-  font-size: 0.7rem;
-  color: #6b7280;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
-}
-
-/* ORGANIZATIONAL STRUCTURE VISUAL */
-.org-structure-compact {
-  background: #f8fafc;
-  border-radius: 8px;
-  padding: 0.75rem;
-  margin: 0.25rem 0;
-  border: 1px solid #e5e7eb;
-}
-
-.org-level {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.org-level:last-child {
-  margin-bottom: 0;
-}
-
-.level-label {
-  font-size: 0.65rem;
-  color: #6b7280;
-  font-weight: 500;
-  flex-shrink: 0;
-  width: 60px;
-}
-
-.level-value {
-  font-size: 0.75rem;
-  color: #374151;
-  font-weight: 500;
-  text-align: left;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 0.25rem 0.5rem;
-  background: #fff;
-  border-radius: 4px;
-  border: 1px solid #e5e7eb;
-}
-
-.org-arrow {
-  font-size: 0.8rem;
-  color: #9ca3af;
-  text-align: center;
-  margin: 0.125rem 0;
-  opacity: 0.6;
-}
-
-/* CONTACT & STATUS */
-.contact-status-compact {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid #f3f4f6;
-}
-
-.status-section,
-.email-section {
-  flex: 1;
-  min-width: 0;
-}
-
-.status-label,
-.email-label {
-  font-size: 0.65rem;
-  color: #6b7280;
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.status-badge {
-  font-size: 0.7rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  font-weight: 600;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  width: 100%;
-  text-align: center;
-  justify-content: center;
-}
-
-.status-badge.active {
-  background: #dcfce7;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-}
-
-.status-badge.inactive {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
-}
-
-.status-icon {
-  font-size: 0.5rem;
-  display: inline-block;
-}
-
-.user-email-compact {
-  font-size: 0.7rem;
-  color: #4b5563;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 0.25rem 0.5rem;
-  background: #fff;
-  border-radius: 4px;
-  border: 1px solid #e5e7eb;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.email-icon {
-  font-size: 0.7rem;
-  opacity: 0.7;
-  flex-shrink: 0;
-}
-
-/* QUICK ACTION BUTTON */
-.card-actions {
-  margin-top: auto;
-  padding-top: 0.5rem;
-  border-top: 1px solid #f3f4f6;
-}
-
-.btn-view-details {
-  width: 100%;
-  background: #f8fafc;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.btn-view-details:hover {
-  background: #f1f5f9;
-  color: #1f2937;
-  border-color: #d1d5db;
-}
-
-/* ===========================
-   RESPONSIVE GRID
-=========================== */
-@media (max-width: 2500px) {
-  .user-grid-compact {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (max-width: 1200px) {
-  .user-grid-compact {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-  }
-  
-  .user-card-compact {
-    min-height: 280px;
-  }
-}
-
-@media (max-width: 992px) {
-  .user-grid-compact {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-  
-  .user-card-compact {
-    padding: 1.125rem;
-    min-height: auto;
-  }
-}
-
-@media (max-width: 768px) {
-  .users-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .btn-add-user {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .user-grid-compact {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .user-card-compact {
-    padding: 1.25rem;
-  }
-  
-  .user-profile-enhanced {
-    gap: 1rem;
-  }
-  
-  .avatar-compact {
-    width: 56px !important;
-    height: 56px !important;
-  }
-  
-  .contact-status-compact {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .user-card-compact {
-    padding: 1rem;
-  }
-  
-  .badges-context {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .org-structure-compact {
-    padding: 0.625rem;
-  }
-}
-
-/* ===========================
-   TOOLTIP ENHANCEMENTS
-=========================== */
-/* Base element */
-[title] {
-  position: relative;
-  cursor: help;
-}
-
-/* Hidden state + animation speed */
-[title]::after,
-[title]::before {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.1s ease, transform 0.1s ease;
-}
-
-/* Tooltip bubble */
-[title]::after {
-  content: attr(title);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(0);
-  background: #1f2937;
-  color: white;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  white-space: nowrap;
-  z-index: 1000;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Tooltip arrow */
-[title]::before {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: #1f2937;
-  margin-bottom: -0.25rem;
-  z-index: 1000;
-}
-
-/* Show tooltip */
-[title]:hover::after {
-  opacity: 1;
-  transform: translateX(-50%) translateY(-4px);
-}
-
-[title]:hover::before {
-  opacity: 1;
-}
-
-
-/* ===========================
-   MODAL ANIMATIONS & STYLES
-=========================== */
-.modal.fade .modal-dialog {
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: scale(0.9) translateY(-30px);
-  opacity: 0;
-}
-
-.modal.show .modal-dialog {
-  transform: scale(1) translateY(0);
-  opacity: 1;
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOutLeft {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-}
-
-.onboard-slide-enter {
-  animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.onboard-slide-exit {
-  animation: slideOutLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.modal-content {
-  border: none;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-}
-
-.onboard-modal-content {
-  background: #fafbfc;
-}
-
-.loading-spinner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  gap: 1rem;
-}
-
-.spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #2563eb;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading-spinner p {
-  color: #6b7280;
-  font-size: 0.95rem;
-  margin: 0;
-}
-</style>
-
-<!-- =========================
-     JAVASCRIPT (UNCHANGED)
-========================= -->
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-
-  /* =====================================================
-     GUARD: prevent double-binding (CRITICAL FIX)
-  ===================================================== */
-  if (window.__createUserBound) return;
-  window.__createUserBound = true;
-
-  /* =====================================================
-     CREATE USER SUBMIT
-  ===================================================== */
-  const createForm = document.getElementById("createUserForm");
-  const createModalEl = document.getElementById("createUserModal");
-
-  if (createForm) {
-    createForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      const submitBtn = createForm.querySelector('button[type="submit"]');
-      if (submitBtn.disabled) return; // HARD STOP double submit
-
-      const originalHTML = submitBtn.innerHTML;
-      submitBtn.disabled = true;
-      submitBtn.innerHTML =
-        '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-
-      // Clear old validation errors
-      createForm.querySelectorAll(".error-message").forEach(el => el.remove());
-      createForm.querySelectorAll(".error").forEach(el => el.classList.remove("error"));
-
-      try {
-        const response = await fetch(createForm.action, {
-          method: "POST",
-          body: new FormData(createForm),
-          headers: { "X-Requested-With": "XMLHttpRequest" }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          // Show validation errors inline
-          if (data.errors) {
-            Object.entries(data.errors).forEach(([field, messages]) => {
-              const input = createForm.querySelector(`[name="${field}"]`);
-              if (!input) return;
-
-              input.classList.add("error");
-
-              const msg = document.createElement("div");
-              msg.className = "error-message";
-              msg.textContent = messages[0];
-              input.closest(".form-field")?.appendChild(msg);
-            });
-            throw new Error("Validation failed");
-          }
-          throw new Error("Server error");
-        }
-
-        if (!data.success) {
-          throw new Error("Unknown failure");
-        }
-
-        /* ===============================
-           SUCCESS → CLOSE MODAL
-        =============================== */
-        const modal = bootstrap.Modal.getInstance(createModalEl);
-        modal.hide();
-
-        setTimeout(() => {
-          loadOnboarding(data.onboard_url);
-        }, 400);
-
-      } catch (err) {
-        console.error(err);
-        alert("Unable to process request. Please check inputs.");
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalHTML;
-      }
-    });
-  }
-
-  /* =====================================================
-     ONBOARDING LOADER
-  ===================================================== */
-  window.loadOnboarding = async function (url) {
-    const modalEl = document.getElementById("onboardModal");
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-    const body = document.getElementById("onboardModalBody");
-
-    body.innerHTML = `
-      <div class="loading-spinner">
-        <div class="spinner"></div>
-        <p>Loading...</p>
-      </div>
-    `;
-
-    modal.show();
-
-    try {
-      const response = await fetch(url, {
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-      });
-
-      const html = await response.text();
-      const temp = document.createElement("div");
-      temp.innerHTML = html;
-
-      if (temp.firstElementChild) {
-        temp.firstElementChild.classList.add("onboard-slide-enter");
-      }
-
-      body.innerHTML = temp.innerHTML;
-    } catch (err) {
-      console.error(err);
-      body.innerHTML = `
-        <div class="loading-spinner">
-          <p style="color:#dc2626;">Failed to load onboarding.</p>
-        </div>
-      `;
-    }
-  };
-
-  /* =====================================================
-     ONBOARDING STEP SUBMIT (DELEGATED)
-  ===================================================== */
-  document.addEventListener("submit", async function (e) {
-    const form = e.target.closest(".onboard-form");
-    if (!form) return;
-
-    e.preventDefault();
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    if (submitBtn.disabled) return;
-
-    const originalHTML = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML =
-      '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-
-    const currentContent = document.querySelector("#onboardModalBody > *");
-    currentContent?.classList.add("onboard-slide-exit");
-
-    try {
-      const response = await fetch(form.action, {
-        method: "POST",
-        body: new FormData(form),
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-      });
-
-      const data = await response.json();
-
-      if (data.next) {
-        loadOnboarding(data.next);
-      } else if (data.completed) {
-        const modal = bootstrap.Modal.getInstance(
-          document.getElementById("onboardModal")
-        );
-        modal.hide();
-        setTimeout(() => window.location.reload(), 400);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Onboarding failed. Please retry.");
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = originalHTML;
-    }
-  });
-
-  /* =====================================================
-     COMPLETION HANDLER
-  ===================================================== */
-  window.finishOnboarding = function () {
-    const modal = bootstrap.Modal.getInstance(
-      document.getElementById("onboardModal")
-    );
-    modal?.hide();
-    setTimeout(() => window.location.reload(), 400);
-  };
-
-});
-</script>
-
-
-{% endblock %}  
+{% endblock %}

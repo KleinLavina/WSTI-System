@@ -26,7 +26,6 @@ def assert_can_upload(*, work_item, actor):
 # ============================================================
 # SAFE FOLDER CREATION
 # ============================================================
-
 def get_or_create_folder(
     *,
     name,
@@ -37,46 +36,48 @@ def get_or_create_folder(
     system=True,
 ):
     """
-    Creates or retrieves a folder with the given parameters.
+    Creates or retrieves a DocumentFolder safely.
 
-    IMPORTANT:
-    - Uses (parent, name) uniqueness
-    - Does NOT alter hierarchy logic
-    - Ensures workcycle inheritance for org folders
+    RULES (ENFORCED):
+    - (parent, name) uniqueness
+    - ONLY WORKCYCLE folders may have `workcycle` set
+    - ORG folders (Division/Section/Service/Unit) NEVER reference workcycle
+    - Hierarchy + resolution logic remains unchanged
     """
 
+    # -------------------------------------------------
+    # SANITY: enforce model invariant at service level
+    # -------------------------------------------------
+    if (
+        folder_type != DocumentFolder.FolderType.WORKCYCLE
+        and workcycle is not None
+    ):
+        workcycle = None  # hard guarantee
+
+    # -------------------------------------------------
+    # CREATE OR GET
+    # -------------------------------------------------
     folder, created = DocumentFolder.objects.get_or_create(
         parent=parent,
         name=name,
         defaults={
             "folder_type": folder_type,
-            "workcycle": workcycle,
+            "workcycle": workcycle,          # ONLY set for WORKCYCLE
             "created_by": created_by,
             "is_system_generated": system,
         },
     )
 
-    # --------------------------------------------------------
-    # HARDEN WORKCYCLE INHERITANCE (SAFE FIX)
-    # --------------------------------------------------------
-    # Org folders MUST belong to the same workcycle as parent
-    # This does NOT change resolution behavior — only correctness
-    if (
-        folder_type in {
-            DocumentFolder.FolderType.DIVISION,
-            DocumentFolder.FolderType.SECTION,
-            DocumentFolder.FolderType.SERVICE,
-            DocumentFolder.FolderType.UNIT,
-        }
-        and not folder.workcycle
-        and parent
-        and parent.workcycle
-    ):
-        folder.workcycle = parent.workcycle
-        folder.save(update_fields=["workcycle"])
+    # -------------------------------------------------
+    # NO POST-SAVE MUTATION OF workcycle
+    # -------------------------------------------------
+    # IMPORTANT:
+    # - org folders inherit context via parent chain
+    # - NEVER assign workcycle to org folders
+    # - model validation stays intact
+    # -------------------------------------------------
 
     return folder
-
 
 # ============================================================
 # MAIN RESOLUTION SERVICE (FLEXIBLE & GRACEFUL)
