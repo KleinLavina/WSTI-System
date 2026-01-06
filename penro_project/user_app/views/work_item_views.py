@@ -276,27 +276,34 @@ def user_work_items(request):
 # ============================================================
 # WORK ITEM DETAIL
 # ============================================================
-
 @login_required
 def user_work_item_detail(request, item_id):
     work_item = get_object_or_404(
         WorkItem,
         id=item_id,
-        owner=request.user,
-        is_active=True
+        owner=request.user,   # ✅ allow inactive
     )
 
     # -------------------------------------------------
-    # TIME REMAINING (FROZEN IF SUBMITTED)
+    # READ-ONLY MODE FOR ARCHIVED
     # -------------------------------------------------
-    work_item.time_remaining = calculate_time_remaining(
-        due_at=work_item.workcycle.due_at,
-        status=work_item.status,
-        submitted_at=work_item.submitted_at
+    is_read_only = not work_item.is_active
+
+    # -------------------------------------------------
+    # TIME REMAINING
+    # -------------------------------------------------
+    work_item.time_remaining = (
+        calculate_time_remaining(
+            due_at=work_item.workcycle.due_at,
+            status=work_item.status,
+            submitted_at=work_item.submitted_at
+        )
+        if work_item.is_active
+        else None
     )
 
     # -------------------------------------------------
-    # SUBMISSION STATUS (ON TIME / LATE)
+    # SUBMISSION STATUS
     # -------------------------------------------------
     submission_status, submission_delta = get_submission_indicator(
         due_at=work_item.workcycle.due_at,
@@ -304,13 +311,22 @@ def user_work_item_detail(request, item_id):
     )
 
     # -------------------------------------------------
-    # HANDLE ACTIONS
+    # BLOCK ALL MUTATIONS IF ARCHIVED
     # -------------------------------------------------
     if request.method == "POST":
+        if is_read_only:
+            messages.error(
+                request,
+                "This work item is archived and cannot be modified."
+            )
+            return redirect(
+                "user_app:work-item-detail",
+                item_id=work_item.id
+            )
+
         action = request.POST.get("action")
 
         try:
-            # Capture old status BEFORE any mutation
             old_status = work_item.status
 
             if action == "update_status":
@@ -347,14 +363,13 @@ def user_work_item_detail(request, item_id):
                     old_status=old_status,
                 )
 
-                messages.success(request, "Work item submitted successfully.")
+                messages.success(request, "Work item submitted.")
 
             elif action == "undo_submit":
                 if (
                     work_item.status == "done"
                     and work_item.review_decision == "pending"
                 ):
-                    # Allow model logic to clear submitted_at
                     work_item.status = "working_on_it"
                     work_item.save()
 
@@ -377,7 +392,7 @@ def user_work_item_detail(request, item_id):
             messages.error(request, str(e))
 
     # -------------------------------------------------
-    # ATTACHMENTS
+    # ATTACHMENTS (VIEW ONLY IF ARCHIVED)
     # -------------------------------------------------
     attachments = work_item.attachments.select_related("folder").all()
 
@@ -391,16 +406,14 @@ def user_work_item_detail(request, item_id):
         work_item.attachments.values_list("attachment_type", flat=True)
     )
 
-    # -------------------------------------------------
-    # RENDER
-    # -------------------------------------------------
     return render(
         request,
         "user/page/work_item_detail.html",
         {
             "work_item": work_item,
             "attachments": attachments,
-            "can_edit": work_item.status != "done",
+            "can_edit": not is_read_only and work_item.status != "done",
+            "is_read_only": is_read_only,
             "status_choices": WorkItem._meta.get_field("status").choices,
             "attachment_types": attachment_types,
             "uploaded_types": uploaded_types,
@@ -409,7 +422,6 @@ def user_work_item_detail(request, item_id):
         }
     )
 
-
 # ============================================================
 # INACTIVE WORK ITEMS (WITH FILTER COUNTS)
 # ============================================================
@@ -417,17 +429,12 @@ def user_work_item_detail(request, item_id):
 @login_required
 def user_inactive_work_items(request):
     """
-    List INACTIVE (archived) work items with:
-    - search
-    - work status filter
-    - review status filter
-    - sorting
-    - filter counts
+    Archived work items (is_active=False)
     """
 
-    # -------------------------------------------------
+    # ------------------------------------
     # BASE QUERYSET (ARCHIVED ONLY)
-    # -------------------------------------------------
+    # ------------------------------------
     base_qs = (
         WorkItem.objects
         .select_related("workcycle")
@@ -439,9 +446,9 @@ def user_inactive_work_items(request):
 
     qs = base_qs
 
-    # -------------------------------------------------
+    # ------------------------------------
     # SEARCH
-    # -------------------------------------------------
+    # ------------------------------------
     search = request.GET.get("q", "").strip()
     if search:
         qs = qs.filter(
@@ -450,9 +457,9 @@ def user_inactive_work_items(request):
             Q(inactive_note__icontains=search)
         )
 
-    # -------------------------------------------------
-    # WORK ITEM FILTERS
-    # -------------------------------------------------
+    # ------------------------------------
+    # FILTERS
+    # ------------------------------------
     status = request.GET.get("status")
     if status in {"not_started", "working_on_it", "done"}:
         qs = qs.filter(status=status)
@@ -461,70 +468,58 @@ def user_inactive_work_items(request):
     if review in {"pending", "approved", "revision"}:
         qs = qs.filter(review_decision=review)
 
-    # -------------------------------------------------
-    # FILTER COUNTS (FROM ARCHIVED BASE)
-    # -------------------------------------------------
-    count_base = base_qs
-    if search:
-        count_base = count_base.filter(
-            Q(workcycle__title__icontains=search) |
-            Q(message__icontains=search) |
-            Q(inactive_note__icontains=search)
-        )
+    # ------------------------------------
+    # STATS (THIS FIXES YOUR CARD ISSUE)
+    # ------------------------------------
+    total_archived_count = base_qs.count()
 
-    status_counts = {
-        "not_started": count_base.filter(status="not_started").count(),
-        "working_on_it": count_base.filter(status="working_on_it").count(),
-        "done": count_base.filter(status="done").count(),
-    }
+    completed_count = base_qs.filter(
+        status="done"
+    ).count()
 
-    review_counts = {
-        "pending": count_base.filter(review_decision="pending").count(),
-        "approved": count_base.filter(review_decision="approved").count(),
-        "revision": count_base.filter(review_decision="revision").count(),
-    }
-
-    # -------------------------------------------------
-    # ARCHIVED ITEMS → NO TIME REMAINING
-    # -------------------------------------------------
-    work_items_list = list(qs)
-    for item in work_items_list:
+    # ------------------------------------
+    # PREP LIST (NO COUNTDOWN)
+    # ------------------------------------
+    work_items = list(qs)
+    for item in work_items:
         item.time_remaining = None
 
-    # -------------------------------------------------
-    # SORTING (ARCHIVE-CENTRIC)
-    # -------------------------------------------------
+    # ------------------------------------
+    # SORTING
+    # ------------------------------------
     sort = request.GET.get("sort")
 
     if sort == "due_asc":
-        work_items_list.sort(key=lambda x: x.workcycle.due_at)
+        work_items.sort(key=lambda x: x.workcycle.due_at)
     elif sort == "due_desc":
-        work_items_list.sort(key=lambda x: x.workcycle.due_at, reverse=True)
+        work_items.sort(key=lambda x: x.workcycle.due_at, reverse=True)
     else:
-        # Default: most recently archived first
-        work_items_list.sort(
+        # Most recently archived
+        work_items.sort(
             key=lambda x: x.inactive_at or x.created_at,
             reverse=True
         )
 
-    # -------------------------------------------------
+    # ------------------------------------
     # RENDER
-    # -------------------------------------------------
+    # ------------------------------------
     return render(
         request,
         "user/page/work_items_inactive.html",
         {
-            "work_items": work_items_list,
+            "work_items": work_items,
             "search_query": search,
             "active_status": status,
             "active_review": review,
             "active_sort": sort,
-            "status_counts": status_counts,
-            "review_counts": review_counts,
+
+            # ✅ REQUIRED FOR ARCHIVED STATS CARDS
+            "total_archived_count": total_archived_count,
+            "completed_count": completed_count,
+
             "view_mode": "archived",
         }
     )
-
 
 # ============================================================
 # WORK ITEM ATTACHMENTS (FLEXIBLE UPLOAD)
@@ -532,88 +527,21 @@ def user_inactive_work_items(request):
 
 @login_required
 def user_work_item_attachments(request, item_id):
-    """
-    Upload and view attachments for a work item.
-    Supports flexible folder structure based on user's org assignment.
-    """
     work_item = get_object_or_404(
         WorkItem,
         id=item_id,
         owner=request.user
     )
 
-    attachment_type = request.GET.get("type")
-
-    TYPE_MAP = {
-        "matrix_a": "Monthly Report Form – Matrix A",
-        "matrix_b": "Monthly Report Form – Matrix B",
-        "mov": "Means of Verification (MOV)",
-    }
-
-    if attachment_type not in TYPE_MAP:
-        messages.error(request, "Invalid attachment type.")
+    if not work_item.is_active and request.method == "POST":
+        messages.error(
+            request,
+            "Cannot modify attachments of archived work items."
+        )
         return redirect(
             "user_app:work-item-detail",
             item_id=work_item.id
         )
-
-    # -------------------------------------------------
-    # UPLOAD HANDLER
-    # -------------------------------------------------
-    if request.method == "POST":
-        try:
-            files = request.FILES.getlist("attachments")
-
-            if not files:
-                messages.warning(request, "No files selected.")
-                return redirect(f"{request.path}?type={attachment_type}")
-
-            # Use service to handle flexible upload
-            add_attachment_to_work_item(
-                work_item=work_item,
-                files=files,
-                attachment_type=attachment_type,
-                user=request.user
-            )
-
-            messages.success(
-                request,
-                f"{len(files)} attachment(s) uploaded successfully."
-            )
-            return redirect(f"{request.path}?type={attachment_type}")
-
-        except Exception as e:
-            messages.error(request, f"Upload failed: {str(e)}")
-
-    # -------------------------------------------------
-    # FETCH ATTACHMENTS WITH FOLDER INFO
-    # -------------------------------------------------
-    attachments = (
-        work_item.attachments
-        .filter(attachment_type=attachment_type)
-        .select_related("folder", "uploaded_by")
-        .order_by("-uploaded_at")
-    )
-
-    # Add folder path to each attachment for display
-    for attachment in attachments:
-        if attachment.folder:
-            attachment.folder_path = attachment.folder.get_path_string()
-        else:
-            attachment.folder_path = "No folder assigned"
-
-    return render(
-        request,
-        "user/page/work_item_attachments.html",
-        {
-            "work_item": work_item,
-            "attachments": attachments,
-            "attachment_type": attachment_type,
-            "attachment_label": TYPE_MAP[attachment_type],
-            "can_upload": work_item.review_decision != "approved",
-        }
-    )
-
 
 # ============================================================
 # DELETE ATTACHMENT
@@ -666,22 +594,27 @@ def delete_work_item_attachment(request, attachment_id):
 # ============================================================
 # WORK ITEM COMMENTS
 # ============================================================
-
 @login_required
 def user_work_item_comments(request, item_id):
-    """
-    View and post comments on a work item.
-    """
     work_item = get_object_or_404(
         WorkItem,
         id=item_id,
         owner=request.user,
-        is_active=True
     )
+
+    if not work_item.is_active:
+        messages.error(
+            request,
+            "Archived work items are read-only."
+        )
+        return redirect(
+            "user_app:work-item-detail",
+            item_id=work_item.id
+        )
 
     if request.method == "POST":
         text = request.POST.get("message", "").strip()
-        
+
         if not text:
             messages.warning(request, "Comment cannot be empty.")
             return redirect(
@@ -689,23 +622,19 @@ def user_work_item_comments(request, item_id):
                 item_id=work_item.id
             )
 
-        try:
-            WorkItemMessage.objects.create(
-                work_item=work_item,
-                sender=request.user,
-                sender_role=request.user.login_role,
-                message=text
-            )
-            messages.success(request, "Comment posted successfully.")
-        except Exception as e:
-            messages.error(request, f"Failed to post comment: {str(e)}")
+        WorkItemMessage.objects.create(
+            work_item=work_item,
+            sender=request.user,
+            sender_role=request.user.login_role,
+            message=text
+        )
 
+        messages.success(request, "Comment posted.")
         return redirect(
             "user_app:work-item-comments",
             item_id=work_item.id
         )
 
-    # Fetch comments with sender info
     messages_qs = (
         work_item.messages
         .select_related("sender")
@@ -720,3 +649,69 @@ def user_work_item_comments(request, item_id):
             "messages": messages_qs,
         }
     )
+
+@login_required
+def toggle_work_item_archive(request, item_id):
+    """
+    Toggle archive state for a WorkItem.
+
+    Rules:
+    - Active item → archive
+    - Inactive item archived by SAME user → unarchive
+    - Inactive item archived by admin → forbidden
+    """
+
+    if request.method != "POST":
+        return redirect("user_app:work-items")
+
+    item = get_object_or_404(
+        WorkItem,
+        id=item_id,
+        owner=request.user,
+    )
+
+    # =====================================================
+    # ARCHIVE
+    # =====================================================
+    if item.is_active:
+        item.is_active = False
+        item.inactive_reason = "archived"
+        item.inactive_note = "Archived by user"
+        item.inactive_at = timezone.now()
+        item.inactive_by = request.user
+        item.save()
+
+        messages.success(request, "Work item archived.")
+        return redirect("user_app:work-items")
+
+    # =====================================================
+    # UNARCHIVE
+    # =====================================================
+    if not item.is_active:
+
+        # ❌ Admin-archived items cannot be restored by users
+        if item.inactive_by and item.inactive_by.login_role == "admin":
+            messages.error(
+                request,
+                "This work item was archived by an administrator and cannot be restored."
+            )
+            return redirect("user_app:work-items-archived")
+
+        # ❌ Safety: user mismatch
+        if item.inactive_by and item.inactive_by != request.user:
+            messages.error(
+                request,
+                "You are not allowed to restore this work item."
+            )
+            return redirect("user_app:work-items-archived")
+
+        # ✅ Restore
+        item.is_active = True
+        item.inactive_reason = ""
+        item.inactive_note = ""
+        item.inactive_at = None
+        item.inactive_by = None
+        item.save()
+
+        messages.success(request, "Work item restored.")
+        return redirect("user_app:work-items")

@@ -1,4 +1,4 @@
-{% extends "admin/layout/base.html" %}
+{% extends "user/layout/base.html" %}
 {% block title %}User Profile{% endblock %}
 {% load static %}
 
@@ -183,32 +183,6 @@
     </div>
   </div>
 
-  <!-- SYSTEM INFO -->
-  <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center fw-semibold">
-      <div>
-        <i class="fas fa-cog me-2"></i> System Details
-      </div>
-
-      {% if request.user.login_role == 'admin' %}
-      <div>
-        <button type="button" id="editRoleBtn" class="btn btn-sm btn-outline-primary">
-          <i class="fas fa-pen"></i> Edit Role
-        </button>
-
-        <button type="submit" form="roleForm" id="saveRoleBtn"
-                class="btn btn-sm btn-success d-none">
-          <i class="fas fa-check"></i> Save
-        </button>
-
-        <button type="button" id="cancelRoleBtn"
-                class="btn btn-sm btn-outline-secondary d-none">
-          Cancel
-        </button>
-      </div>
-      {% endif %}
-    </div>
-  </div>
 
 </div>
 

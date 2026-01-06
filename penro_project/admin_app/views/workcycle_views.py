@@ -1,4 +1,5 @@
 from django.db.models import Count
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import render, redirect, get_object_or_404
@@ -32,6 +33,7 @@ from notifications.services.system import notify_workcycle_deleted
 # WORK CYCLE LIST
 # ============================================================
 
+@login_required
 def workcycle_list(request):
     """
     Admin list view for ACTIVE Work Cycles
@@ -139,6 +141,7 @@ def workcycle_list(request):
         },
     )
 
+@login_required
 def inactive_workcycle_list(request):
     """
     Admin list view for INACTIVE (ARCHIVED) Work Cycles
@@ -282,7 +285,7 @@ def inactive_workcycle_list(request):
 # ============================================================
 # CREATE WORK CYCLE
 # ============================================================
-
+@login_required
 def create_workcycle(request):
     if request.method == "POST":
         title = request.POST.get("title")
@@ -357,6 +360,7 @@ def create_workcycle(request):
 # ============================================================
 # EDIT WORK CYCLE
 # ============================================================
+@login_required
 def edit_workcycle(request):
     if request.method == "POST":
         wc_id = request.POST.get("workcycle_id")
@@ -397,8 +401,13 @@ def edit_workcycle(request):
 # ============================================================
 # REASSIGN WORK CYCLE
 # ============================================================
+@login_required
 def reassign_workcycle(request):
     if request.method != "POST":
+        return redirect("admin_app:workcycles")
+
+    if request.user.login_role != "admin":
+        messages.error(request, "You are not allowed to perform this action.")
         return redirect("admin_app:workcycles")
 
     wc_id = request.POST.get("workcycle_id")
@@ -428,11 +437,12 @@ def reassign_workcycle(request):
         users=users,
         team=team,
         inactive_note=inactive_note,
-        performed_by=request.user,
+        performed_by=request.user,  # ✅ correct
     )
 
     messages.success(request, "Work cycle reassigned successfully.")
     return redirect("admin_app:workcycles")
+
 
 # ============================================================
 # WORK CYCLE ASSIGNMENT DETAILS

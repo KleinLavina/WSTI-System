@@ -134,7 +134,7 @@
   gap: 16px;
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid var(--archived-border-light);
+  border-top: 1px solid black;
 }
 
 /* Search Container */
@@ -317,6 +317,36 @@
   line-height: 1.2;
   margin-bottom: 2px;
 }
+.center-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.center-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 6px;
+  background: var(--archived-primary);
+  color: white;
+  white-space: nowrap;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.center-action-btn:hover {
+  background: var(--archived-secondary);
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+.center-action-btn i {
+  font-size: 0.75rem;
+}
 
 .archived-stat-label {
   font-size: 0.75rem;
@@ -369,6 +399,13 @@
   transform: rotate(45deg);
   transform-origin: top right;
   z-index: 1;
+}
+
+/* FIX: Corrected class name from 'achived' to 'achieved' */
+.archived-content .lifecycle-achieved {
+  background: rgba(95, 125, 95, 0.15) !important;
+  color: #4d664d !important;
+  border-color: rgba(95, 125, 95, 0.3) !important;
 }
 
 /* Override lifecycle badge colors for archived */
@@ -561,86 +598,63 @@
     </div>
   </div>
   
-  <!-- STATS SUMMARY -->
-  <div class="archived-stats-section">
-    <!-- Total Archived -->
-    <div class="archived-stat-card">
-      <div class="archived-stat-icon">
-        <i class="fas fa-box-archive"></i>
-      </div>
-      <div class="archived-stat-content">
-        <div class="archived-stat-number">{{ total_archived_count|default:"0" }}</div>
-        <div class="archived-stat-label">Total Archived</div>
-      </div>
-    </div>
-    
-    <!-- Completed Archived -->
-    <div class="archived-stat-card">
-      <div class="archived-stat-icon">
-        <i class="fas fa-check-circle"></i>
-      </div>
-      <div class="archived-stat-content">
-        <div class="archived-stat-number">{{ completed_count|default:"0" }}</div>
-        <div class="archived-stat-label">Completed</div>
-      </div>
-    </div>
-    
-    <!-- Lapsed Archived -->
-    <div class="archived-stat-card">
-      <div class="archived-stat-icon">
-        <i class="fas fa-exclamation-circle"></i>
-      </div>
-      <div class="archived-stat-content">
-        <div class="archived-stat-number">{{ lapsed_count|default:"0" }}</div>
-        <div class="archived-stat-label">Lapsed</div>
-      </div>
-    </div>
-  </div>
+
   
-  <!-- BOTTOM ROW: Search + Sort -->
-  <div class="header-bottom-row">
-    <!-- Search -->
-    <div class="search-container">
-      <form method="get" class="search-form">
-        <div class="search-wrapper">
-          <i class="fas fa-search search-icon"></i>
-          <input
-            type="search"
-            name="q"
-            class="search-input"
-            placeholder="Search archived work items…"
-            value="{{ search_query }}"
-          >
-          
-          <!-- Hidden sort -->
-          {% if active_sort %}
-            <input type="hidden" name="sort" value="{{ active_sort }}">
-          {% endif %}
-          
-          <button type="submit" class="search-button">
-            Search
-          </button>
-        </div>
-      </form>
-    </div>
-    
-    <!-- Sort Controls -->
-    <div class="sort-container">
-      <div class="sort-label">Sort:</div>
-      <div class="sort-buttons">
-        <a href="?{% if search_query %}q={{ search_query }}&{% endif %}sort=due_asc"
-           class="sort-btn {% if active_sort == 'due_asc' %}active{% endif %}">
-          <i class="fas fa-arrow-up"></i>
-          Asc
-        </a>
-        <a href="?{% if search_query %}q={{ search_query }}&{% endif %}sort=due_desc"
-           class="sort-btn {% if active_sort == 'due_desc' %}active{% endif %}">
-          <i class="fas fa-arrow-down"></i>
-          Desc
-        </a>
+  <!-- BOTTOM ROW: Search + Center Button + Sort -->
+<div class="header-bottom-row">
+
+  <!-- Search (LEFT) -->
+  <div class="search-container">
+    <form method="get" class="search-form">
+      <div class="search-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="search"
+          name="q"
+          class="search-input"
+          placeholder="Search archived work items…"
+          value="{{ search_query }}"
+        >
+        {% if active_sort %}
+          <input type="hidden" name="sort" value="{{ active_sort }}">
+        {% endif %}
+        <button type="submit" class="search-button">
+          Search
+        </button>
       </div>
+    </form>
+  </div>
+
+  <!-- CENTER BUTTON -->
+  <div class="center-action">
+    <a
+      href="{% url 'user_app:work-items-archived' %}"
+      class="center-action-btn"
+    >
+      <i class="fas fa-box-archive"></i>
+      {{ total_archived_count|default:"0" }} Archived
+    </a>
+  </div>
+
+  <!-- Sort (RIGHT) -->
+  <div class="sort-container">
+    <div class="sort-label">Sort:</div>
+    <div class="sort-buttons">
+      <a href="?{% if search_query %}q={{ search_query }}&{% endif %}sort=due_asc"
+         class="sort-btn {% if active_sort == 'due_asc' %}active{% endif %}">
+        <i class="fas fa-arrow-up"></i>
+        Asc
+      </a>
+      <a href="?{% if search_query %}q={{ search_query }}&{% endif %}sort=due_desc"
+         class="sort-btn {% if active_sort == 'due_desc' %}active{% endif %}">
+        <i class="fas fa-arrow-down"></i>
+        Desc
+      </a>
     </div>
   </div>
+
+</div>
+
 </div>
 
 <!-- ARCHIVED WORK ITEMS CONTENT -->

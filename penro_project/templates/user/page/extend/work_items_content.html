@@ -7,6 +7,26 @@
 
     <!-- ================= CARD HEADER ================= -->
     <header class="wi-card-header">
+      <!-- ACTION MENU (TOP RIGHT) -->
+{% if item.is_active %}
+<div class="wi-card-menu">
+  <button class="wi-menu-btn" aria-label="Actions">⋮</button>
+
+  <div class="wi-menu-dropdown">
+    <a href="{% url 'user_app:work-item-detail' item.id %}">
+      <i class="fas fa-eye"></i> View
+    </a>
+
+    <form method="post"
+          action="{% url 'user_app:work-item-toggle-archive' item.id %}">
+      {% csrf_token %}
+      <button type="submit" class="wi-menu-action danger">
+        <i class="fas fa-archive"></i> Archive
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
 
       <!-- STATUS BADGES ROW -->
       <div class="wi-status-row">
@@ -208,6 +228,63 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+/* =============================
+   CARD THREE-DOT MENU
+============================= */
+.wi-card-menu {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.wi-menu-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.wi-menu-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  min-width: 160px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+  z-index: 50;
+}
+
+.wi-menu-dropdown a,
+.wi-menu-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  background: none;
+  border: none;
+  width: 100%;
+  color: #1e293b;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.wi-menu-dropdown a:hover,
+.wi-menu-action:hover {
+  background: #f1f5f9;
+}
+
+.wi-menu-action.danger {
+  color: #b91c1c;
+}
+
+.wi-card-menu.open .wi-menu-dropdown {
+  display: block;
 }
 
 .wi-card:hover {
@@ -652,3 +729,17 @@
   }
 }
 </style>
+<script>
+document.addEventListener("click", function (e) {
+  document.querySelectorAll(".wi-card-menu").forEach(menu => {
+    if (!menu.contains(e.target)) {
+      menu.classList.remove("open");
+    }
+  });
+
+  const btn = e.target.closest(".wi-menu-btn");
+  if (btn) {
+    btn.closest(".wi-card-menu").classList.toggle("open");
+  }
+});
+</script>

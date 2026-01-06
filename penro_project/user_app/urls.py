@@ -10,6 +10,7 @@ from .views.work_item_views import (
     user_work_item_detail,
     user_work_item_attachments,
     delete_work_item_attachment,
+    toggle_work_item_archive,
 )
 
 from .views.user_work_item_threads import user_work_item_threads
@@ -74,6 +75,11 @@ path("onboard/complete/", onboard_complete, name="onboard-complete"),
         "attachments/<int:attachment_id>/delete/",
         delete_work_item_attachment,
         name="delete-attachment"
+    ),
+    path(
+        "work-items/<int:item_id>/toggle-archive/",
+        toggle_work_item_archive,
+        name="work-item-toggle-archive",
     ),
 
     # ======================

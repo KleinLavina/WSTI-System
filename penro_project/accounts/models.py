@@ -440,6 +440,15 @@ class WorkItem(models.Model):
         help_text="Timestamp when this item became inactive"
     )
 
+    inactive_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="archived_work_items",
+        help_text="User who archived or deactivated this work item"
+    )
+
     # ======================
     # STATUS / SUBMISSION
     # ======================
@@ -473,8 +482,7 @@ class WorkItem(models.Model):
 
     reviewed_at = models.DateTimeField(
         null=True,
-        blank=True,
-        help_text="Timestamp when this item was reviewed (approved or revised)"
+        blank=True
     )
 
     # ======================
@@ -482,8 +490,7 @@ class WorkItem(models.Model):
     # ======================
     submitted_at = models.DateTimeField(
         null=True,
-        blank=True,
-        help_text="Timestamp when work was submitted"
+        blank=True
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -496,6 +503,7 @@ class WorkItem(models.Model):
             models.Index(fields=["review_decision"]),
             models.Index(fields=["is_active"]),
             models.Index(fields=["inactive_reason"]),
+            models.Index(fields=["inactive_by"]),  # ✅ helpful for audit queries
         ]
 
     # =====================================================
@@ -503,13 +511,16 @@ class WorkItem(models.Model):
     # =====================================================
     def save(self, *args, **kwargs):
         is_new = self.pk is None
-        old_review = None
+        old = None
 
         if not is_new:
-            old_review = (
+            old = (
                 WorkItem.objects
                 .filter(pk=self.pk)
-                .values_list("review_decision", flat=True)
+                .values(
+                    "is_active",
+                    "review_decision",
+                )
                 .first()
             )
 
@@ -526,14 +537,13 @@ class WorkItem(models.Model):
         # REVIEW TIMESTAMP
         # ---------------------
         if self.review_decision in ("approved", "revision"):
-            if old_review != self.review_decision:
+            if not old or old["review_decision"] != self.review_decision:
                 self.reviewed_at = timezone.now()
         else:
-            # reverted to pending
             self.reviewed_at = None
 
         # ---------------------
-        # INACTIVE TIMESTAMP
+        # INACTIVE AUDIT
         # ---------------------
         if not self.is_active:
             if self.inactive_at is None:
@@ -542,6 +552,7 @@ class WorkItem(models.Model):
             self.inactive_at = None
             self.inactive_reason = ""
             self.inactive_note = ""
+            self.inactive_by = None  # ✅ reset on reactivation
 
         super().save(*args, **kwargs)
 
