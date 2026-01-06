@@ -1,4 +1,5 @@
 from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import Q, F
 from django.shortcuts import get_object_or_404, render
 
 from accounts.models import WorkItem, WorkCycle
@@ -6,17 +7,28 @@ from accounts.models import WorkItem, WorkCycle
 
 @staff_member_required
 def done_workers_by_workcycle(request, workcycle_id):
+    # =====================================================
+    # LOAD WORK CYCLE (ACTIVE ONLY)
+    # =====================================================
     workcycle = get_object_or_404(
         WorkCycle,
         id=workcycle_id,
         is_active=True,  # ✅ respect lifecycle
     )
 
+    # =====================================================
+    # BASE QUERY (ANALYTICS-SAFE)
+    # =====================================================
     base_qs = (
         WorkItem.objects
+        .filter(workcycle=workcycle)
         .filter(
-            workcycle=workcycle,
-            is_active=True,   # ✅ exclude archived items
+            Q(is_active=True)
+            |
+            Q(
+                is_active=False,
+                inactive_by=F("owner"),  # ✅ user archived own work
+            )
         )
         .select_related("owner", "workcycle")
     )
@@ -24,25 +36,37 @@ def done_workers_by_workcycle(request, workcycle_id):
     # =========================
     # APPROVED (REVIEWED)
     # =========================
-    approved_items = base_qs.filter(
-        status="done",
-        review_decision="approved",
-    ).order_by("-reviewed_at", "-submitted_at")
+    approved_items = (
+        base_qs
+        .filter(
+            status="done",
+            review_decision="approved",
+        )
+        .order_by("-reviewed_at", "-submitted_at")
+    )
 
     # =========================
     # SUBMITTED (PENDING / REVISION)
     # =========================
-    submitted_items = base_qs.filter(
-        status="done",
-        review_decision__in=["pending", "revision"],
-    ).order_by("-submitted_at")
+    submitted_items = (
+        base_qs
+        .filter(
+            status="done",
+            review_decision__in=["pending", "revision"],
+        )
+        .order_by("-submitted_at")
+    )
 
     # =========================
     # ONGOING
     # =========================
-    ongoing_items = base_qs.filter(
-        status__in=["working_on_it", "not_started"],
-    ).order_by("status", "created_at")
+    ongoing_items = (
+        base_qs
+        .filter(
+            status__in=["working_on_it", "not_started"],
+        )
+        .order_by("status", "created_at")
+    )
 
     # ======================================================
     # APPLY SUBMISSION STATUS (ON TIME / LATE)
@@ -78,6 +102,9 @@ def done_workers_by_workcycle(request, workcycle_id):
     apply_submission_meta(approved_items)
     apply_submission_meta(submitted_items)
 
+    # ======================================================
+    # CONTEXT
+    # ======================================================
     context = {
         "workcycle": workcycle,
 

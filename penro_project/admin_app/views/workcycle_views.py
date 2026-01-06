@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_POST
 from django.urls import reverse
+from django.db.models import Q, F
 from django.db.models.deletion import ProtectedError
 from accounts.models import (
     User,
@@ -449,22 +450,52 @@ def reassign_workcycle(request):
 # ============================================================
 
 def workcycle_assignments(request, pk):
+    # =====================================================
+    # LOAD WORK CYCLE
+    # =====================================================
     workcycle = get_object_or_404(WorkCycle, pk=pk)
 
+    # =====================================================
+    # ASSIGNMENTS
+    # =====================================================
     assignments = (
         WorkAssignment.objects
         .filter(workcycle=workcycle)
         .select_related("assigned_user", "assigned_team")
     )
 
-    active_items = WorkItem.objects.filter(
-        workcycle=workcycle,
-        is_active=True,
+    # =====================================================
+    # ACTIVE LIST
+    # (active = True) OR (inactive AND archived by owner)
+    # =====================================================
+    active_items = (
+        WorkItem.objects
+        .filter(workcycle=workcycle)
+        .filter(
+            Q(is_active=True)
+            |
+            Q(
+                is_active=False,
+                inactive_by=F("owner"),
+            )
+        )
+        .select_related("owner", "workcycle")
     )
 
-    archived_items = WorkItem.objects.filter(
-        workcycle=workcycle,
-        is_active=False,
+    # =====================================================
+    # ARCHIVED LIST
+    # (inactive AND NOT archived by owner)
+    # =====================================================
+    archived_items = (
+        WorkItem.objects
+        .filter(
+            workcycle=workcycle,
+            is_active=False,
+        )
+        .exclude(
+            inactive_by=F("owner")
+        )
+        .select_related("owner", "workcycle")
     )
 
     # ----------------------------------
@@ -482,16 +513,17 @@ def workcycle_assignments(request, pk):
                 days = late.days
                 hours = late.seconds // 3600
 
-                if days > 0:
-                    item.submission_delta = f"{days}d {hours}h"
-                else:
-                    item.submission_delta = f"{hours}h"
-
+                item.submission_delta = (
+                    f"{days}d {hours}h" if days > 0 else f"{hours}h"
+                )
                 item.submission_status = "late"
         else:
             item.submission_status = None
             item.submission_delta = None
 
+    # =====================================================
+    # COUNTS (ACTIVE SEMANTICS)
+    # =====================================================
     status_counts = {
         "done": active_items.filter(status="done").count(),
         "working_on_it": active_items.filter(status="working_on_it").count(),
@@ -510,8 +542,12 @@ def workcycle_assignments(request, pk):
         {
             "workcycle": workcycle,
             "assignments": assignments,
+
+            # UI buckets
             "active_items": active_items,
             "archived_items": archived_items,
+
+            # Stats
             "status_counts": status_counts,
             "review_counts": review_counts,
         },

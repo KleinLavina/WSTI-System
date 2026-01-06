@@ -1,30 +1,79 @@
-<li class="org-node {{ team.team_type }}">
+{% load static %}
 
-  <div class="org-label">
-    📁 {{ team.name }}
-    <span class="type">{{ team.get_team_type_display }}</span>
-    {% if team.users %}
-      <small class="count">({{ team.users|length }} users)</small>
-    {% endif %}
+{# Recursive tree node template #}
+<div class="node {{ team.team_type }}">
+  <div class="node-header">
+    <span class="node-title">{{ team.name }}</span>
+    <span class="type-badge">{{ team.get_team_type_display }}</span>
+    <div class="node-actions">
+      <button class="btn-icon" onclick="editTeam({{ team.id }}, '{{ team.name|escapejs }}')" title="Edit">
+        <i class="fas fa-edit"></i>
+      </button>
+      <button class="btn-icon delete" onclick="deleteTeam({{ team.id }}, '{{ team.name|escapejs }}')" title="Delete">
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
   </div>
 
   {% if team.users %}
-    <ul class="team-users">
+  <div class="users-section">
+    <div class="users-header">
+      <i class="fas fa-users"></i> {{ team.get_team_type_display }} Members ({{ team.users|length }})
+    </div>
+    <div class="user-list">
       {% for user in team.users %}
-        <li class="user-item">
-          👤 {{ user.get_full_name|default:user.username }}
-          <span class="role">{{ user.get_login_role_display }}</span>
-        </li>
+      <div class="user-item">
+        {% if user.profile_image %}
+          <img src="{{ user.profile_image.url }}" alt="{{ user.get_full_name }}" class="user-avatar">
+        {% else %}
+          <div class="user-avatar placeholder">
+            {% if user.first_name and user.last_name %}
+              {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+            {% elif user.first_name %}
+              {{ user.first_name|slice:":2"|upper }}
+            {% else %}
+              {{ user.username|slice:":2"|upper }}
+            {% endif %}
+          </div>
+        {% endif %}
+        
+        <div class="user-info">
+          <div class="user-name">
+            {% if user.get_full_name %}
+              {{ user.get_full_name }}
+            {% else %}
+              {{ user.username }}
+            {% endif %}
+          </div>
+          {% if user.position_title %}
+          <div class="user-position">{{ user.position_title }}</div>
+          {% endif %}
+        </div>
+        
+        <span class="user-role {% if user.login_role == 'admin' %}admin{% endif %}">
+          {{ user.get_login_role_display }}
+        </span>
+      </div>
       {% endfor %}
-    </ul>
+    </div>
+  </div>
+  {% else %}
+  <div class="users-section">
+    <div class="users-header">
+      <i class="fas fa-users"></i> {{ team.get_team_type_display }} Members (0)
+    </div>
+    <div class="no-users">No members assigned</div>
+  </div>
   {% endif %}
+</div>
 
-  {% if team.children_list %}
-    <ul class="team-children">
-      {% for child in team.children_list %}
-        {% include "admin/page/partials/team_node.html" with team=child %}
-      {% endfor %}
-    </ul>
-  {% endif %}
-
-</li>
+{# Recursively render children #}
+{% if team.children_list %}
+<ul>
+  {% for child in team.children_list %}
+  <li>
+    {% include "admin/page/partials/team_node.html" with team=child %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}

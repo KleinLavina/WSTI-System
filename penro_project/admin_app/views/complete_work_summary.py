@@ -15,11 +15,10 @@ def completed_work_summary(request):
     """
     Analytics dashboard for completed / ongoing work.
 
-    Features:
-    - Lifecycle stats cards (ongoing / due soon / lapsed / archived)
-    - Lifecycle filtering (?state=) — applied AFTER lifecycle injection
-    - Search by work cycle title (?q=)
-    - Sort by due date (?sort=due_asc | due_desc)
+    Rules:
+    - Include ACTIVE work items
+    - Include INACTIVE work items ONLY if archived by the OWNER
+    - Exclude INACTIVE work items archived by ADMIN or others
     """
 
     # =====================================================
@@ -30,11 +29,19 @@ def completed_work_summary(request):
     sort = request.GET.get("sort")
 
     # =====================================================
-    # BASE QUERY (ACTIVE ONLY)
+    # BASE QUERY (ANALYTICS-SAFE)
     # =====================================================
-    base_qs = WorkItem.objects.filter(
-        workcycle__is_active=True,
-        is_active=True,
+    base_qs = (
+        WorkItem.objects
+        .filter(workcycle__is_active=True)
+        .filter(
+            Q(is_active=True)
+            |
+            Q(
+                is_active=False,
+                inactive_by=F("owner"),  # ✅ user archived their own work
+            )
+        )
     )
 
     # -----------------------------
@@ -146,13 +153,10 @@ def completed_work_summary(request):
         wc = workcycles.get(row["workcycle_id"])
 
         if not wc:
-            row["lifecycle_state"] = WorkCycle.LifecycleState.ONGOING
-            row["lifecycle_label"] = "Ongoing"
-            row["lifecycle_icon"] = "fa-sync-alt"
-            row["lifecycle_class"] = "state-ongoing"
-            continue
+            state_val = WorkCycle.LifecycleState.ONGOING
+        else:
+            state_val = wc.lifecycle_state
 
-        state_val = wc.lifecycle_state
         row["lifecycle_state"] = state_val
 
         if state_val == WorkCycle.LifecycleState.DUE_SOON:
@@ -178,7 +182,7 @@ def completed_work_summary(request):
     # =====================================================
     # COPY FULL SUMMARY (FOR STATS)
     # =====================================================
-    full_summary = summary[:]  # IMPORTANT
+    full_summary = summary[:]
 
     # =====================================================
     # APPLY LIFECYCLE FILTER (POST-INJECTION)
@@ -197,7 +201,7 @@ def completed_work_summary(request):
         ]
 
     # =====================================================
-    # LIFECYCLE COUNTS (FROM FULL DATASET)
+    # LIFECYCLE COUNTS
     # =====================================================
     lifecycle_counter = Counter(
         row["lifecycle_state"] for row in full_summary
@@ -225,9 +229,6 @@ def completed_work_summary(request):
             review_decision="pending"
         ).count(),
 
-        # -----------------------------
-        # LIFECYCLE STATS
-        # -----------------------------
         "ongoing": lifecycle_counter.get(
             WorkCycle.LifecycleState.ONGOING, 0
         ),
