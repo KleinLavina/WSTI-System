@@ -9,7 +9,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <title>{% block title %}Dashboard{% endblock %}</title>
-<!-- Bootstrap -->
+
+  <!-- =====================================================
+       CORE CSS
+  ====================================================== -->
+  <!-- Bootstrap -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -23,32 +27,29 @@
     referrerpolicy="no-referrer"
   >
 
-  <!-- Flatpickr CORE -->
+  <!-- Flatpickr -->
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
   >
-
-  <!-- Flatpickr CONFIRM DATE (OK / CANCEL) -->
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.css"
   >
-    <!-- Bootstrap -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Flatpickr CORE -->
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
-  <!-- Flatpickr CONFIRM DATE PLUGIN (REQUIRED) -->
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.js"></script>
-  
   <!-- =====================================================
-       GLOBAL BASE STYLES
+       CORE JS (HEAD-SAFE)
+  ====================================================== -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.js"></script>
+
+  <!-- =====================================================
+       GLOBAL STYLES
   ====================================================== -->
   <style>
     /* =============================
-       FONT: MONTSERRAT (VARIABLE)
+       FONT: MONTSERRAT
     ============================== */
     @font-face {
       font-family: "Montserrat";
@@ -59,81 +60,38 @@
       font-display: swap;
     }
 
-    /* =============================
-       PROTECT FONT AWESOME ICONS
-    ============================== */
-    .fa,
-    .fas,
-    .far,
-    .fab,
-    .fal,
-    .fa-solid,
-    .fa-regular,
-    .fa-brands {
-      font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
-      font-style: normal;
-      font-weight: 900;
-    }
-
-    /* =============================
-       BASE LAYOUT
-    ============================== */
-    html, body {
-      height: 100%;
-      margin: 0;
-    }
-
     body {
       background: #f8fafc;
       font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont,
                    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       color: #1f2937;
       font-size: 0.95rem;
-      font-weight: 400;
-      letter-spacing: 0.01em;
+      margin: 0;
     }
 
-    main {
-      display: block;
+    /* =============================
+       TYPOGRAPHY
+    ============================== */
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #040404;
     }
 
+    button, input, textarea, select {
+      font-family: inherit;
+    }
+
+    /* =============================
+       PAGE LAYOUT
+    ============================== */
     .page-content {
       padding: 20px;
       min-height: calc(100vh - 64px);
     }
 
     /* =============================
-       TYPOGRAPHY SYSTEM
-    ============================== */
-    h1, h2, h3, h4, h5, h6 {
-      font-family: "Montserrat", sans-serif;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      color: #040404;
-    }
-
-    p, span, label {
-      font-family: "Montserrat", sans-serif;
-      font-weight: 400;
-      letter-spacing: 0.01em;
-    }
-
-    button,
-    input,
-    textarea,
-    select {
-      font-family: "Montserrat", sans-serif;
-      font-weight: 500;
-      letter-spacing: 0.01em;
-    }
-
-    small {
-      font-weight: 500;
-      letter-spacing: 0.02em;
-    }
-
-    /* =============================
-       NOTIFICATIONS
+       NOTIFICATIONS (Django + AJAX)
     ============================== */
     .notifications {
       position: fixed;
@@ -170,7 +128,6 @@
       color: inherit;
       cursor: pointer;
       opacity: .85;
-      font-size: 1rem;
       padding: 0;
     }
 
@@ -179,39 +136,18 @@
     }
 
     /* Variants */
-    .notification-success {
-      background: #10b981;
-      border-left: 4px solid #059669;
-    }
-
-    .notification-error {
-      background: #ef4444;
-      border-left: 4px solid #dc2626;
-    }
-
-    .notification-warning {
-      background: #f59e0b;
-      border-left: 4px solid #d97706;
-    }
-
-    .notification-info {
-      background: #3b82f6;
-      border-left: 4px solid #2563eb;
-    }
+    .notification-success { background: #10b981; border-left: 4px solid #059669; }
+    .notification-error   { background: #ef4444; border-left: 4px solid #dc2626; }
+    .notification-warning { background: #f59e0b; border-left: 4px solid #d97706; }
+    .notification-info    { background: #3b82f6; border-left: 4px solid #2563eb; }
 
     /* Animations */
     @keyframes slideIn {
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
+      to { opacity: 1; transform: translateX(0); }
     }
 
     @keyframes fadeOut {
-      to {
-        opacity: 0;
-        transform: translateX(-20px);
-      }
+      to { opacity: 0; transform: translateX(-20px); }
     }
 
     .fade-out {
@@ -219,23 +155,19 @@
     }
   </style>
 
-  <!-- =====================================================
-       EXTRA CSS (PER PAGE)
-  ====================================================== -->
   {% block extra_css %}{% endblock %}
 </head>
 
 <body>
 
   <!-- =====================================================
-       NOTIFICATIONS
+       NOTIFICATIONS (SERVER-SIDE)
   ====================================================== -->
   <div class="notifications" id="notifications">
     {% if messages %}
       {% for message in messages %}
         <div class="notification notification-{{ message.tags|default:'info' }}"
              data-timeout="5000">
-
           <div class="d-flex align-items-center gap-2">
             <i class="fas
               {% if 'error' in message.tags %}fa-exclamation-circle
@@ -243,10 +175,8 @@
               {% elif 'warning' in message.tags %}fa-exclamation-triangle
               {% else %}fa-info-circle{% endif %}
             "></i>
-
             <span>{{ message }}</span>
           </div>
-
           <button class="notification-close" aria-label="Close">
             <i class="fas fa-times"></i>
           </button>
@@ -269,11 +199,16 @@
     </main>
   </div>
 
-
-
+  <!-- =====================================================
+       NOTIFICATION LOGIC (SERVER + AJAX)
+  ====================================================== -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      document.querySelectorAll(".notification").forEach(notification => {
+
+      // Auto-wire server-rendered notifications
+      document.querySelectorAll(".notification").forEach(initNotification);
+
+      function initNotification(notification) {
         const closeBtn = notification.querySelector(".notification-close");
         const timeout  = parseInt(notification.dataset.timeout) || 5000;
 
@@ -288,18 +223,47 @@
         notification.addEventListener("mouseleave", () => {
           timer = setTimeout(() => dismiss(notification), 1000);
         });
-      });
+      }
 
       function dismiss(el) {
         el.classList.add("fade-out");
         el.addEventListener("animationend", () => el.remove(), { once: true });
       }
+
+      // ===================================================
+      // GLOBAL AJAX HELPER (matches Django messages UI)
+      // ===================================================
+      window.notify = function (message, level = "info", timeout = 5000) {
+        const container = document.getElementById("notifications");
+        if (!container) return;
+
+        const iconMap = {
+          success: "fa-check-circle",
+          error: "fa-exclamation-circle",
+          warning: "fa-exclamation-triangle",
+          info: "fa-info-circle"
+        };
+
+        const el = document.createElement("div");
+        el.className = `notification notification-${level}`;
+        el.dataset.timeout = timeout;
+
+        el.innerHTML = `
+          <div class="d-flex align-items-center gap-2">
+            <i class="fas ${iconMap[level] || iconMap.info}"></i>
+            <span>${message}</span>
+          </div>
+          <button class="notification-close" aria-label="Close">
+            <i class="fas fa-times"></i>
+          </button>
+        `;
+
+        container.appendChild(el);
+        initNotification(el);
+      };
     });
   </script>
 
-  <!-- =====================================================
-       EXTRA JS (PER PAGE)
-  ====================================================== -->
   {% block extra_js %}{% endblock %}
 
 </body>

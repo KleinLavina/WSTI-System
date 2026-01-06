@@ -1,108 +1,51 @@
+
 document.addEventListener("DOMContentLoaded", function () {
 
   /* =====================================================
-     GUARD: prevent double-binding (CRITICAL FIX)
+     GUARD: prevent double-binding
   ===================================================== */
   if (window.__userScriptsLoaded) return;
   window.__userScriptsLoaded = true;
 
   /* =====================================================
-     DROPDOWN FILTER HANDLERS (FIXED)
+     DROPDOWN FILTER HANDLERS
   ===================================================== */
   function initializeDropdowns() {
-    const dropdownButtons = document.querySelectorAll(
-      '.wc-filter-dropdown .wc-filter-btn'
-    );
+    document.querySelectorAll(".wc-filter-dropdown .wc-filter-btn")
+      .forEach(button => {
+        button.addEventListener("click", e => {
+          e.preventDefault();
+          e.stopPropagation();
 
-    console.log(
-      'Initializing dropdowns. Found:',
-      dropdownButtons.length,
-      'buttons'
-    );
+          const dropdown = button.closest(".wc-filter-dropdown");
+          const isOpen = dropdown.classList.contains("open");
 
-    dropdownButtons.forEach((button, index) => {
-      console.log(`Setting up dropdown ${index}:`, button);
+          document.querySelectorAll(".wc-filter-dropdown")
+            .forEach(d => d.classList.remove("open"));
 
-      button.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const dropdown = this.closest('.wc-filter-dropdown');
-        const isOpen = dropdown.classList.contains('open');
-
-        console.log('Dropdown clicked. Was open:', isOpen);
-
-        // Close all dropdowns first
-        document
-          .querySelectorAll('.wc-filter-dropdown')
-          .forEach(d => d.classList.remove('open'));
-
-        // Open current if it was closed
-        if (!isOpen) {
-          dropdown.classList.add('open');
-          console.log('Dropdown opened');
-
-          // Position dropdown menu if near viewport edge
-          const menu = dropdown.querySelector('.wc-filter-menu');
-          if (menu) {
-            menu.style.top = '';
-            menu.style.bottom = '';
-
-            setTimeout(() => {
-              const rect = menu.getBoundingClientRect();
-              const spaceBelow = window.innerHeight - rect.bottom;
-
-              if (spaceBelow < 0) {
-                menu.style.top = 'auto';
-                menu.style.bottom = 'calc(100% + 8px)';
-                console.log('Dropdown repositioned above');
-              }
-            }, 10);
-          }
-        }
+          if (!isOpen) dropdown.classList.add("open");
+        });
       });
+
+    document.addEventListener("click", e => {
+      if (!e.target.closest(".wc-filter-dropdown")) {
+        document.querySelectorAll(".wc-filter-dropdown")
+          .forEach(d => d.classList.remove("open"));
+      }
     });
 
-    /* ---- Close dropdowns on outside click ---- */
-    const outsideClickHandler = function (e) {
-      if (!e.target.closest('.wc-filter-dropdown')) {
-        document
-          .querySelectorAll('.wc-filter-dropdown.open')
-          .forEach(d => d.classList.remove('open'));
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") {
+        document.querySelectorAll(".wc-filter-dropdown")
+          .forEach(d => d.classList.remove("open"));
       }
-    };
-
-    document.removeEventListener('click', window.__dropdownOutsideClick);
-    window.__dropdownOutsideClick = outsideClickHandler;
-    document.addEventListener('click', outsideClickHandler);
-
-    /* ---- Prevent menu clicks from closing dropdown ---- */
-    document.querySelectorAll('.wc-filter-menu').forEach(menu => {
-      menu.addEventListener('click', function (e) {
-        if (e.target.tagName === 'A') return; // allow navigation
-        e.stopPropagation();
-      });
     });
-
-    /* ---- Close dropdowns on ESC ---- */
-    const escapeHandler = function (e) {
-      if (e.key === 'Escape') {
-        document
-          .querySelectorAll('.wc-filter-dropdown')
-          .forEach(d => d.classList.remove('open'));
-      }
-    };
-
-    document.removeEventListener('keydown', window.__dropdownEscapeHandler);
-    window.__dropdownEscapeHandler = escapeHandler;
-    document.addEventListener('keydown', escapeHandler);
   }
 
-  console.log('Script loaded, initializing dropdowns...');
   initializeDropdowns();
 
   /* =====================================================
-     CREATE USER SUBMIT
+     CREATE USER SUBMIT (ABSOLUTE HARD GATE)
   ===================================================== */
   const createForm = document.getElementById("createUserForm");
   const createModalEl = document.getElementById("createUserModal");
@@ -119,49 +62,81 @@ document.addEventListener("DOMContentLoaded", function () {
       submitBtn.innerHTML =
         '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
 
+      // Clear previous errors
       createForm.querySelectorAll(".error-message").forEach(el => el.remove());
-      createForm.querySelectorAll(".error").forEach(el => el.classList.remove("error"));
+      createForm.querySelectorAll(".error").forEach(el =>
+        el.classList.remove("error")
+      );
 
+      let response;
       try {
-        const response = await fetch(createForm.action, {
+        response = await fetch(createForm.action, {
           method: "POST",
           body: new FormData(createForm),
           headers: { "X-Requested-With": "XMLHttpRequest" }
         });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          if (data.errors) {
-            Object.entries(data.errors).forEach(([field, messages]) => {
-              const input = createForm.querySelector(`[name="${field}"]`);
-              if (!input) return;
-
-              input.classList.add("error");
-
-              const msg = document.createElement("div");
-              msg.className = "error-message";
-              msg.textContent = messages[0];
-              input.closest(".form-field")?.appendChild(msg);
-            });
-          }
-          throw new Error("Validation failed");
-        }
-
-        const modal = bootstrap.Modal.getInstance(createModalEl);
-        modal.hide();
-
-        setTimeout(() => {
-          loadOnboarding(data.onboard_url);
-        }, 400);
-
-      } catch (err) {
-        console.error(err);
-        alert("Unable to process request. Please check inputs.");
-      } finally {
+      } catch (networkError) {
+        console.error("Network error:", networkError);
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalHTML;
+        return;
       }
+
+      /* -------------------------------------------------
+         SAFE JSON PARSE (NO CRASHES)
+      ------------------------------------------------- */
+      let data = {};
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        try {
+          data = await response.json();
+        } catch {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalHTML;
+          return;
+        }
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+        return;
+      }
+
+      /* -------------------------------------------------
+         ❌ HARD STOP — ANY ERROR BLOCKS ONBOARDING
+      ------------------------------------------------- */
+      if (!response.ok || data.success !== true) {
+
+        if (data.errors) {
+          Object.entries(data.errors).forEach(([field, messages]) => {
+            const input = createForm.querySelector(`[name="${field}"]`);
+            if (!input) return;
+
+            input.classList.add("error");
+
+            const msg = document.createElement("div");
+            msg.className = "error-message";
+            msg.textContent = messages[0];
+
+            input.closest(".form-field")?.appendChild(msg);
+          });
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+        return; // ⛔ NO ONBOARDING
+      }
+
+      /* -------------------------------------------------
+         ✅ SUCCESS → ONBOARDING
+      ------------------------------------------------- */
+      bootstrap.Modal.getInstance(createModalEl)?.hide();
+
+      setTimeout(() => {
+        loadOnboarding(data.onboard_url);
+      }, 400);
+
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalHTML;
     });
   }
 
@@ -174,8 +149,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const body = document.getElementById("onboardModalBody");
 
     body.innerHTML = `
-      <div class="loading-spinner">
-        <div class="spinner"></div>
+      <div class="text-center p-4">
+        <div class="spinner-border text-primary mb-2"></div>
         <p>Loading...</p>
       </div>
     `;
@@ -183,20 +158,13 @@ document.addEventListener("DOMContentLoaded", function () {
     modal.show();
 
     try {
-      const response = await fetch(url, {
+      const res = await fetch(url, {
         headers: { "X-Requested-With": "XMLHttpRequest" }
       });
-
-      const html = await response.text();
-      body.innerHTML = html;
-
-    } catch (err) {
-      console.error(err);
-      body.innerHTML = `
-        <div class="loading-spinner">
-          <p style="color:#dc2626;">Failed to load onboarding.</p>
-        </div>
-      `;
+      body.innerHTML = await res.text();
+    } catch {
+      body.innerHTML =
+        `<div class="text-danger text-center p-4">Failed to load onboarding.</div>`;
     }
   };
 
@@ -218,26 +186,25 @@ document.addEventListener("DOMContentLoaded", function () {
       '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
 
     try {
-      const response = await fetch(form.action, {
+      const res = await fetch(form.action, {
         method: "POST",
         body: new FormData(form),
         headers: { "X-Requested-With": "XMLHttpRequest" }
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
       if (data.next) {
         loadOnboarding(data.next);
       } else if (data.completed) {
         bootstrap.Modal.getInstance(
           document.getElementById("onboardModal")
-        ).hide();
+        )?.hide();
         setTimeout(() => window.location.reload(), 400);
       }
 
     } catch (err) {
-      console.error(err);
-      alert("Onboarding failed. Please retry.");
+      console.error("Onboarding error:", err);
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalHTML;
@@ -255,3 +222,4 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
 });
+

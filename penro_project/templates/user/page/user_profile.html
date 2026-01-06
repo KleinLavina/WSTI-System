@@ -4,186 +4,395 @@
 
 {% block content %}
 <div class="container-xl py-4">
-
-  <!-- BACK TO USERS -->
-  <div class="mb-3">
+  <!-- BACK NAVIGATION -->
+  <nav class="mb-4">
     <a href="{% url 'user_app:dashboard' %}"
-       class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-2">
+       class="btn btn-sm btn-outline-muted-blue d-inline-flex align-items-center gap-2">
       <i class="fas fa-arrow-left"></i>
-      Back to Users
+      Back to Dashboard
     </a>
-  </div>
+  </nav>
 
-  <!-- HEADER -->
-  <div class="mb-4 d-flex align-items-center gap-3">
-    <div class="position-relative">
-      {% if profile_user.profile_image %}
-        <img
-          src="{{ profile_user.profile_image.url }}"
-          class="rounded-3 shadow-sm profile-avatar"
-          width="96"
-          height="96"
-          alt="Avatar"
-          style="object-fit: cover;">
-      {% else %}
-        <img
-          src="https://ui-avatars.com/api/?name={{ profile_user.get_full_name|default:profile_user.username }}&background=3b82f6&color=fff&size=96&bold=true"
-          class="rounded-3 shadow-sm profile-avatar"
-          width="96"
-          height="96"
-          alt="Avatar">
-      {% endif %}
-      
-      {% if request.user.login_role == 'admin' or request.user.id == profile_user.id %}
-      <button type="button" 
-              class="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle"
-              style="width: 32px; height: 32px; padding: 0;"
-              data-bs-toggle="modal"
-              data-bs-target="#changeProfileImageModal"
-              title="Change profile picture">
-        <i class="fas fa-camera"></i>
-      </button>
-      {% endif %}
-    </div>
+  <div class="row g-4">
+    <!-- LEFT SIDEBAR - PROFILE OVERVIEW -->
+    <div class="col-lg-4">
+      <div class="profile-sidebar card">
+        <div class="card-body p-4">
+          <!-- PROFILE IMAGE -->
+          <div class="profile-avatar-wrapper mb-4">
+            {% if profile_user.profile_image %}
+              <img src="{{ profile_user.profile_image.url }}"
+                   class="profile-avatar-img rounded-circle"
+                   width="120"
+                   height="120"
+                   alt="{{ profile_user.get_full_name|default:profile_user.username }}">
+            {% else %}
+              <div class="profile-avatar-default rounded-circle">
+                <i class="fas fa-user"></i>
+              </div>
+            {% endif %}
+            
+            {% if request.user.login_role == 'admin' or request.user.id == profile_user.id %}
+            <button type="button" 
+                    class="btn btn-sm btn-muted-blue profile-avatar-edit-btn"
+                    data-bs-toggle="modal"
+                    data-bs-target="#changeProfileImageModal"
+                    title="Change profile picture">
+              <i class="fas fa-camera"></i>
+            </button>
+            {% endif %}
+          </div>
 
-    <div>
-      <h3 class="fw-bold mb-1">
-        {{ profile_user.get_full_name|default:profile_user.username }}
-      </h3>
+          <!-- USER BASIC INFO -->
+          <div class="profile-basic-info">
+            <h1 class="profile-name h3 mb-2">
+              {{ profile_user.get_full_name|default:profile_user.username }}
+            </h1>
+            
+            {% if profile_user.position_title %}
+            <p class="profile-position text-secondary mb-3">
+              <i class="fas fa-briefcase me-1"></i>
+              {{ profile_user.position_title }}
+            </p>
+            {% endif %}
 
-      <div class="text-muted">
-        {{ profile_user.position_title|default:"No position title" }}
+            <!-- USERNAME -->
+            <div class="profile-username mb-3">
+              <i class="fas fa-at text-secondary"></i>
+              <span class="ms-2 text-dark">@{{ profile_user.username }}</span>
+            </div>
+
+            <!-- ROLE BADGE -->
+            <div class="mb-3">
+              <span class="profile-role-badge {% if profile_user.login_role == 'admin' %}admin{% else %}user{% endif %}">
+                <i class="fas {% if profile_user.login_role == 'admin' %}fa-user-shield{% else %}fa-user{% endif %} me-1"></i>
+                {{ profile_user.get_login_role_display }}
+              </span>
+            </div>
+
+            <!-- STATUS INDICATOR -->
+            <div class="profile-status mb-4">
+              <div class="d-flex align-items-center justify-content-center">
+                <div class="status-indicator {% if profile_user.is_active %}active{% else %}inactive{% endif %} me-2"></div>
+                <span class="status-text">
+                  {% if profile_user.is_active %}
+                    <span class="text-success fw-medium">Active</span>
+                  {% else %}
+                    <span class="text-danger fw-medium">Inactive</span>
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+
+            <!-- LAST LOGIN INFO -->
+            <div class="profile-last-login">
+              <p class="small text-secondary mb-1">
+                <i class="fas fa-clock me-1"></i>
+                Last login
+              </p>
+              <p class="mb-0 text-dark">
+                {% if profile_user.last_login %}
+                  {{ profile_user.last_login|date:"M j, Y" }} at {{ profile_user.last_login|date:"g:i A" }}
+                {% else %}
+                  Never logged in
+                {% endif %}
+              </p>
+            </div>
+
+            <!-- JOIN DATE -->
+            <div class="profile-join-date mt-3 pt-3 border-top">
+              <p class="small text-secondary mb-1">
+                <i class="fas fa-calendar-alt me-1"></i>
+                Member since
+              </p>
+              <p class="mb-0 text-dark">
+                {{ profile_user.date_joined|date:"F j, Y" }}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <span class="badge mt-2 {% if profile_user.login_role == 'admin' %}bg-dark{% else %}bg-primary{% endif %}">
-        {{ profile_user.get_login_role_display }}
-      </span>
-    </div>
-  </div>
-
-  <!-- BASIC INFO -->
-  <div class="card mb-4">
-
-    <!-- HEADER WITH CONTROLS -->
-    <div class="card-header d-flex justify-content-between align-items-center fw-semibold">
-      <div>
-        <i class="fas fa-id-card me-2"></i> Basic Information
+      <!-- USER STATISTICS -->
+      <div class="user-stats card mt-4">
+        <div class="card-body p-3">
+          <h3 class="h6 mb-3 text-dark">
+            <i class="fas fa-chart-line me-2"></i>Activity Overview
+          </h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value">0</div>
+              <div class="stat-label">Active Tasks</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">0</div>
+              <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">0</div>
+              <div class="stat-label">Pending Review</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">0</div>
+              <div class="stat-label">Submissions</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div>
-        <button type="button" id="editBtn" class="btn btn-sm btn-outline-primary">
-          <i class="fas fa-pen"></i> Edit
-        </button>
-
-        <button type="submit" form="basicInfoForm" id="saveBtn"
-                class="btn btn-sm btn-success d-none">
-          <i class="fas fa-check"></i> Save
-        </button>
-
-        <button type="button" id="cancelBtn"
-                class="btn btn-sm btn-outline-secondary d-none">
-          Cancel
-        </button>
+      <!-- ACCOUNT DETAILS -->
+      <div class="account-details card mt-4">
+        <div class="card-body p-3">
+          <h3 class="h6 mb-3 text-dark">
+            <i class="fas fa-info-circle me-2"></i>Account Details
+          </h3>
+          <div class="detail-list">
+            <div class="detail-item">
+              <span class="detail-label">
+                <i class="fas fa-envelope me-2"></i>Email
+              </span>
+              <span class="detail-value">{{ profile_user.email|default:"—" }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">
+                <i class="fas fa-calendar-plus me-2"></i>Joined
+              </span>
+              <span class="detail-value">{{ profile_user.date_joined|date:"M d, Y" }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">
+                <i class="fas fa-clock me-2"></i>Last Active
+              </span>
+              <span class="detail-value">
+                {% if profile_user.last_login %}
+                  {{ profile_user.last_login|timesince }} ago
+                {% else %}
+                  Never
+                {% endif %}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">
+                <i class="fas fa-shield-alt me-2"></i>Role
+              </span>
+              <span class="detail-value">{{ profile_user.get_login_role_display }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- FORM -->
-    <form method="post" id="basicInfoForm">
-      {% csrf_token %}
-
-      <div class="card-body row g-3">
-
-        <!-- USERNAME (EDITABLE) -->
-        <div class="col-md-4">
-          <strong>Username:</strong>
-          <span class="view-field">@{{ profile_user.username }}</span>
-          <input type="text"
-                 name="username"
-                 class="form-control form-control-sm edit-field d-none"
-                 value="{{ profile_user.username }}">
+    <!-- RIGHT MAIN CONTENT -->
+    <div class="col-lg-8">
+      <!-- BASIC INFORMATION CARD -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">
+              <i class="fas fa-id-card me-2"></i>
+              Basic Information
+            </h2>
+            <button type="button" id="editBtn" class="btn btn-sm btn-outline-muted-blue">
+              <i class="fas fa-pen me-1"></i> Edit
+            </button>
+          </div>
         </div>
 
-        <!-- EMAIL -->
-        <div class="col-md-4">
-          <strong>Email:</strong>
-          <span class="view-field">{{ profile_user.email|default:"—" }}</span>
-          <input type="email"
-                 name="email"
-                 class="form-control form-control-sm edit-field d-none"
-                 value="{{ profile_user.email }}">
-        </div>
+        <form method="post" id="basicInfoForm">
+          {% csrf_token %}
+          <div class="card-body">
+            <div class="row">
+              <!-- FULL NAME SECTION -->
+              <div class="col-md-6 mb-3">
+                <div class="form-group">
+                  <label class="form-label small text-secondary">Full Name</label>
+                  <div class="view-field text-dark">{{ profile_user.get_full_name|default:"—" }}</div>
+                  <div class="row edit-field d-none g-2">
+                    <div class="col">
+                      <input type="text"
+                             name="first_name"
+                             class="form-control form-control-sm"
+                             value="{{ profile_user.first_name }}"
+                             placeholder="First">
+                    </div>
+                    <div class="col">
+                      <input type="text"
+                             name="last_name"
+                             class="form-control form-control-sm"
+                             value="{{ profile_user.last_name }}"
+                             placeholder="Last">
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-        <!-- STATUS (READ ONLY) -->
-        <div class="col-md-4">
-          <strong>Status:</strong>
-          {% if profile_user.is_active %}
-            <span class="text-success">Active</span>
-          {% else %}
-            <span class="text-danger">Inactive</span>
+              <!-- EMAIL -->
+              <div class="col-md-6 mb-3">
+                <div class="form-group">
+                  <label class="form-label small text-secondary">Email Address</label>
+                  <div class="view-field text-dark">{{ profile_user.email|default:"—" }}</div>
+                  <input type="email"
+                         name="email"
+                         class="form-control form-control-sm edit-field d-none"
+                         value="{{ profile_user.email }}">
+                </div>
+              </div>
+
+              <!-- USERNAME -->
+              <div class="col-md-6 mb-3">
+                <div class="form-group">
+                  <label class="form-label small text-secondary">Username</label>
+                  <div class="view-field text-dark">@{{ profile_user.username }}</div>
+                  <input type="text"
+                         name="username"
+                         class="form-control form-control-sm edit-field d-none"
+                         value="{{ profile_user.username }}">
+                </div>
+              </div>
+
+              <!-- POSITION TITLE -->
+              <div class="col-md-6 mb-3">
+                <div class="form-group">
+                  <label class="form-label small text-secondary">Position Title</label>
+                  <div class="view-field text-dark">{{ profile_user.position_title|default:"—" }}</div>
+                  <input type="text"
+                         name="position_title"
+                         class="form-control form-control-sm edit-field d-none"
+                         value="{{ profile_user.position_title }}">
+                </div>
+              </div>
+
+              <!-- ACCOUNT STATUS (READ ONLY) -->
+              <div class="col-md-6 mb-3">
+                <div class="form-group">
+                  <label class="form-label small text-secondary">Account Status</label>
+                  <div>
+                    {% if profile_user.is_active %}
+                      <span class="badge bg-success">Active</span>
+                    {% else %}
+                      <span class="badge bg-danger">Inactive</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- ROLE (READ ONLY) -->
+              <div class="col-md-6 mb-3">
+                <div class="form-group">
+                  <label class="form-label small text-secondary">Role</label>
+                  <div>
+                    <span class="badge {% if profile_user.login_role == 'admin' %}bg-dark-blue-admin{% else %}bg-dark-blue-user{% endif %}">
+                      {{ profile_user.get_login_role_display }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- EDIT ACTIONS (HIDDEN BY DEFAULT) -->
+            <div class="edit-actions d-none mt-4 pt-3 border-top">
+              <button type="submit" class="btn btn-muted-blue btn-sm">
+                <i class="fas fa-check me-1"></i> Save changes
+              </button>
+              <button type="button" id="cancelBtn" class="btn btn-outline-secondary btn-sm ms-2">
+                <i class="fas fa-times me-1"></i> Cancel
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- ORGANIZATIONAL ASSIGNMENT -->
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">
+              <i class="fas fa-sitemap me-2"></i>
+              Organizational Assignment
+            </h2>
+            <button type="button"
+                    class="btn btn-sm btn-outline-muted-blue"
+                    onclick="changeOrganization()">
+              <i class="fas fa-exchange-alt me-1"></i> Change
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 col-lg-3 mb-4">
+              <div class="org-item">
+                <div class="org-label small text-secondary mb-1">
+                  <i class="fas fa-building me-1"></i>
+                  Division
+                </div>
+                <div class="org-value text-dark">
+                  {{ profile_user.division.name|default:"—" }}
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+              <div class="org-item">
+                <div class="org-label small text-secondary mb-1">
+                  <i class="fas fa-layer-group me-1"></i>
+                  Section
+                </div>
+                <div class="org-value text-dark">
+                  {{ profile_user.section.name|default:"—" }}
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+              <div class="org-item">
+                <div class="org-label small text-secondary mb-1">
+                  <i class="fas fa-cogs me-1"></i>
+                  Service
+                </div>
+                <div class="org-value text-dark">
+                  {{ profile_user.service.name|default:"—" }}
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+              <div class="org-item">
+                <div class="org-label small text-secondary mb-1">
+                  <i class="fas fa-cube me-1"></i>
+                  Unit
+                </div>
+                <div class="org-value text-dark">
+                  {{ profile_user.unit.name|default:"—" }}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {% if profile_user.division or profile_user.section or profile_user.service or profile_user.unit %}
+          <div class="org-visualization mt-4 pt-3 border-top">
+            <div class="org-visualization-label small text-secondary mb-2">Organization Structure</div>
+            <div class="org-visualization-content">
+              <div class="org-path d-flex align-items-center flex-wrap">
+                {% if profile_user.division %}
+                  <span class="org-path-item">{{ profile_user.division.name }}</span>
+                  <i class="fas fa-chevron-right mx-2 text-secondary"></i>
+                {% endif %}
+                {% if profile_user.section %}
+                  <span class="org-path-item">{{ profile_user.section.name }}</span>
+                  <i class="fas fa-chevron-right mx-2 text-secondary"></i>
+                {% endif %}
+                {% if profile_user.service %}
+                  <span class="org-path-item">{{ profile_user.service.name }}</span>
+                  <i class="fas fa-chevron-right mx-2 text-secondary"></i>
+                {% endif %}
+                {% if profile_user.unit %}
+                  <span class="org-path-item">{{ profile_user.unit.name }}</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
           {% endif %}
         </div>
-
-        <!-- FIRST NAME -->
-        <div class="col-md-4">
-          <strong>First name:</strong>
-          <span class="view-field">{{ profile_user.first_name|default:"—" }}</span>
-          <input type="text"
-                 name="first_name"
-                 class="form-control form-control-sm edit-field d-none"
-                 value="{{ profile_user.first_name }}">
-        </div>
-
-        <!-- LAST NAME -->
-        <div class="col-md-4">
-          <strong>Last name:</strong>
-          <span class="view-field">{{ profile_user.last_name|default:"—" }}</span>
-          <input type="text"
-                 name="last_name"
-                 class="form-control form-control-sm edit-field d-none"
-                 value="{{ profile_user.last_name }}">
-        </div>
-
-        <!-- DATE JOINED -->
-        <div class="col-md-4">
-          <strong>Date joined:</strong>
-          {{ profile_user.date_joined|date:"F j, Y" }}
-        </div>
-
-        <!-- POSITION -->
-        <div class="col-md-4">
-          <strong>Position:</strong>
-          <span class="view-field">{{ profile_user.position_title|default:"—" }}</span>
-          <input type="text"
-                 name="position_title"
-                 class="form-control form-control-sm edit-field d-none"
-                 value="{{ profile_user.position_title }}">
-        </div>
-
       </div>
-    </form>
-  </div>
-
-  <!-- ORGANIZATION -->
-  <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center fw-semibold">
-      <div>
-        <i class="fas fa-sitemap me-2"></i> Organizational Assignment
-      </div>
-      <button type="button"
-        class="btn btn-sm btn-outline-primary"
-        onclick="changeOrganization()">
-        <i class="fas fa-exchange-alt"></i> Change Org
-      </button>
-    </div>
-    <div class="card-body row g-3">
-      <div class="col-md-3"><strong>Division:</strong> {{ profile_user.division.name|default:"—" }}</div>
-      <div class="col-md-3"><strong>Section:</strong> {{ profile_user.section.name|default:"—" }}</div>
-      <div class="col-md-3"><strong>Service:</strong> {{ profile_user.service.name|default:"—" }}</div>
-      <div class="col-md-3"><strong>Unit:</strong> {{ profile_user.unit.name|default:"—" }}</div>
     </div>
   </div>
-
-
 </div>
 
 <!-- ONBOARDING MODAL -->
@@ -210,7 +419,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">
+        <h5 class="modal-title h6">
           <i class="fas fa-camera me-2"></i>
           Change Profile Picture
         </h5>
@@ -226,35 +435,35 @@
             {% if profile_user.profile_image %}
               <img id="currentProfileImage" 
                    src="{{ profile_user.profile_image.url }}" 
-                   class="rounded-3 mb-3" 
-                   width="150" 
-                   height="150"
+                   class="rounded-circle mb-3" 
+                   width="120" 
+                   height="120"
                    style="object-fit: cover;"
                    alt="Current profile">
             {% else %}
-              <img id="currentProfileImage" 
-                   src="https://ui-avatars.com/api/?name={{ profile_user.get_full_name|default:profile_user.username }}&background=3b82f6&color=fff&size=150&bold=true" 
-                   class="rounded-3 mb-3" 
-                   width="150" 
-                   height="150"
-                   alt="Current profile">
+              <div class="rounded-circle mb-3 d-inline-flex align-items-center justify-content-center profile-image-default"
+                   style="width: 120px; height: 120px;">
+                <i class="fas fa-user fa-3x"></i>
+              </div>
             {% endif %}
           </div>
           
           <div class="mb-3">
-            <label for="profileImageInput" class="form-label">Choose new image</label>
+            <label for="profileImageInput" class="form-label small">Choose new image</label>
             <input type="file" 
-                   class="form-control" 
+                   class="form-control form-control-sm" 
                    id="profileImageInput" 
                    name="profile_image" 
                    accept="image/*"
                    required>
-            <div class="form-text">Recommended: Square image, at least 200x200 pixels. Max 5MB.</div>
+            <div class="form-text small">
+              Square image recommended. Max 5MB.
+            </div>
           </div>
 
           <div id="imagePreviewContainer" class="text-center d-none">
-            <p class="text-muted small mb-2">Preview:</p>
-            <img id="imagePreview" class="rounded-3" width="150" height="150" style="object-fit: cover;" alt="Preview">
+            <p class="small text-secondary mb-2">Preview:</p>
+            <img id="imagePreview" class="rounded-circle" width="80" height="80" style="object-fit: cover;" alt="Preview">
           </div>
 
           {% if profile_user.profile_image %}
@@ -264,16 +473,15 @@
                    id="removeImageCheck" 
                    name="remove_image"
                    value="true">
-            <label class="form-check-label" for="removeImageCheck">
-              Remove current profile picture (use default)
+            <label class="form-check-label small" for="removeImageCheck">
+              Remove current profile picture
             </label>
           </div>
           {% endif %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-check me-1"></i>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-muted-blue">
             Update Picture
           </button>
         </div>
@@ -283,7 +491,475 @@
 </div>
 
 <style>
-/* Loading Spinner */
+/* ==========================================================
+   DARK BLUE MUTED PALETTE WITH WHITE BACKGROUND
+========================================================== */
+:root {
+  --muted-blue: #2c5282;           /* Primary dark blue */
+  --muted-blue-light: #4a7cad;     /* Lighter blue */
+  --muted-blue-lighter: #8da0b8;   /* Very light blue */
+  --muted-blue-lightest: #e8f1fb;  /* Lightest blue for backgrounds */
+  --muted-blue-dark: #1a365d;      /* Darker blue */
+  --muted-blue-darker: #0f294d;    /* Darkest blue */
+  
+  /* Role-specific blues */
+  --admin-blue: #553c9a;           /* Purple-ish blue for admin */
+  --user-blue: #2b6cb0;            /* Standard blue for user */
+  
+  /* Status colors */
+  --success: #38a169;
+  --success-light: #c6f6d5;
+  --danger: #e53e3e;
+  --danger-light: #fed7d7;
+  
+  /* Text colors */
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --text-muted: #718096;
+  
+  /* Border colors */
+  --border-color: #e2e8f0;
+  --border-dark: #cbd5e0;
+  
+  /* Backgrounds */
+  --bg-white: #ffffff;
+  --bg-light: #f7fafc;
+  --bg-lighter: #edf2f7;
+}
+
+/* ==========================================================
+   GLOBAL STYLES
+========================================================== */
+body {
+  background-color: var(--bg-white);
+  color: var(--text-primary);
+}
+
+.container-xl {
+  background-color: var(--bg-white);
+}
+
+/* ==========================================================
+   BUTTONS
+========================================================== */
+.btn-outline-muted-blue {
+  color: var(--muted-blue);
+  border-color: var(--muted-blue);
+  background-color: transparent;
+}
+
+.btn-outline-muted-blue:hover {
+  background-color: var(--muted-blue);
+  border-color: var(--muted-blue);
+  color: white;
+}
+
+.btn-muted-blue {
+  background-color: var(--muted-blue);
+  border-color: var(--muted-blue);
+  color: white;
+}
+
+.btn-muted-blue:hover {
+  background-color: var(--muted-blue-dark);
+  border-color: var(--muted-blue-dark);
+  color: white;
+}
+
+/* ==========================================================
+   PROFILE SIDEBAR
+========================================================== */
+.profile-sidebar {
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.profile-avatar-wrapper {
+  position: relative;
+  text-align: center;
+}
+
+.profile-avatar-img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border: 3px solid var(--muted-blue-lightest);
+  box-shadow: 0 2px 8px rgba(44, 82, 130, 0.1);
+}
+
+.profile-avatar-default {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, var(--muted-blue) 0%, var(--muted-blue-dark) 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--muted-blue-lightest);
+  box-shadow: 0 2px 8px rgba(44, 82, 130, 0.1);
+}
+
+.profile-avatar-default i {
+  font-size: 3rem;
+  color: white;
+}
+
+.profile-avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 50%;
+  transform: translateX(25px);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--muted-blue);
+  border-color: var(--muted-blue);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-avatar-edit-btn:hover {
+  background-color: var(--muted-blue-dark);
+  border-color: var(--muted-blue-dark);
+  transform: translateX(25px) scale(1.1);
+}
+
+.profile-name {
+  color: var(--muted-blue-darker);
+  font-weight: 600;
+  text-align: center;
+}
+
+.profile-position {
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.profile-username {
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.profile-role-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+  text-align: center;
+  width: 100%;
+  letter-spacing: 0.3px;
+}
+
+.profile-role-badge.admin {
+  background: linear-gradient(135deg, var(--admin-blue) 0%, #44337a 100%);
+  color: white;
+  border: 1px solid rgba(85, 60, 154, 0.3);
+}
+
+.profile-role-badge.user {
+  background: linear-gradient(135deg, var(--user-blue) 0%, #2c5282 100%);
+  color: white;
+  border: 1px solid rgba(43, 108, 176, 0.3);
+}
+
+.profile-status {
+  text-align: center;
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.status-indicator.active {
+  background-color: var(--success);
+  box-shadow: 0 0 0 3px var(--success-light);
+}
+
+.status-indicator.inactive {
+  background-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-light);
+}
+
+.status-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.profile-last-login,
+.profile-join-date {
+  text-align: center;
+}
+
+/* ==========================================================
+   USER STATISTICS & DETAILS
+========================================================== */
+.user-stats,
+.account-details {
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.stat-item {
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+  border-color: var(--muted-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(44, 82, 130, 0.1);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--muted-blue);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+}
+
+.detail-label i {
+  color: var(--muted-blue);
+  width: 16px;
+}
+
+.detail-value {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  text-align: right;
+}
+
+/* ==========================================================
+   MAIN CONTENT CARDS
+========================================================== */
+.card {
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+  background-color: var(--bg-light);
+  border-bottom: 1px solid var(--border-color);
+  padding: 14px 18px;
+}
+
+.card-header h2 {
+  color: var(--muted-blue-darker);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.card-body {
+  padding: 18px;
+}
+
+/* ==========================================================
+   FORM ELEMENTS
+========================================================== */
+.form-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+}
+
+.form-control {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: var(--muted-blue);
+  box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.1);
+  color: var(--text-primary);
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+}
+
+.view-field {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+}
+
+/* ==========================================================
+   BADGES
+========================================================== */
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.3px;
+}
+
+.bg-dark-blue-admin {
+  background: linear-gradient(135deg, var(--admin-blue) 0%, #44337a 100%) !important;
+  color: white !important;
+}
+
+.bg-dark-blue-user {
+  background: linear-gradient(135deg, var(--user-blue) 0%, #2c5282 100%) !important;
+  color: white !important;
+}
+
+/* ==========================================================
+   ORGANIZATIONAL ASSIGNMENT
+========================================================== */
+.org-item {
+  padding: 10px 0;
+}
+
+.org-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.org-label i {
+  color: var(--muted-blue);
+}
+
+.org-value {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.org-visualization {
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 14px;
+}
+
+.org-visualization-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.org-path {
+  font-size: 0.9rem;
+}
+
+.org-path-item {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 500;
+  color: var(--muted-blue-darker);
+  transition: all 0.2s ease;
+}
+
+.org-path-item:hover {
+  border-color: var(--muted-blue);
+  background-color: var(--muted-blue-lightest);
+}
+
+.org-path i {
+  color: var(--muted-blue-lighter);
+}
+
+/* ==========================================================
+   EDIT ACTIONS
+========================================================== */
+.edit-actions {
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+/* ==========================================================
+   TEXT UTILITIES
+========================================================== */
+.text-dark {
+  color: var(--text-primary) !important;
+}
+
+.text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.border-top {
+  border-top: 1px solid var(--border-color) !important;
+}
+
+/* ==========================================================
+   LOADING SPINNER
+========================================================== */
 .loading-spinner {
   display: flex;
   flex-direction: column;
@@ -294,10 +970,10 @@
 }
 
 .spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #2563eb;
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--muted-blue);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -307,21 +983,94 @@
 }
 
 .loading-spinner p {
-  color: #6b7280;
-  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
   margin: 0;
 }
 
 .onboard-modal-content {
-  background: #fafbfc;
-  border: none;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .modal-onboard-compact {
-  max-width: 580px;
+  max-width: 500px;
+}
+
+/* Modal styles for white theme */
+.modal-header {
+  background-color: var(--bg-light);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  background-color: var(--bg-white);
+  color: var(--text-primary);
+}
+
+.modal-footer {
+  background-color: var(--bg-light);
+  border-top: 1px solid var(--border-color);
+}
+
+.modal-title {
+  color: var(--muted-blue-darker);
+}
+
+.profile-image-default {
+  background: linear-gradient(135deg, var(--muted-blue) 0%, var(--muted-blue-dark) 100%);
+}
+
+.profile-image-default i {
+  color: white;
+}
+
+/* ==========================================================
+   RESPONSIVE ADJUSTMENTS
+========================================================== */
+@media (max-width: 768px) {
+  .profile-avatar-img,
+  .profile-avatar-default {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .profile-avatar-default i {
+    font-size: 2.5rem;
+  }
+  
+  .org-path {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .org-path i {
+    transform: rotate(90deg);
+    margin: 4px 0;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+  
+  .profile-avatar-img,
+  .profile-avatar-default {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .profile-avatar-default i {
+    font-size: 2rem;
+  }
 }
 </style>
 
@@ -330,57 +1079,32 @@
    BASIC INFO EDIT MODE
 ========================================================== */
 const editBtn = document.getElementById("editBtn");
-const saveBtn = document.getElementById("saveBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const viewFields = document.querySelectorAll(".view-field");
 const editFields = document.querySelectorAll(".edit-field");
+const editActions = document.querySelector(".edit-actions");
 
 function enterEditMode() {
-  viewFields.forEach(el => el.classList.add("d-none"));
+  viewFields.forEach(el => el.style.display = "none");
   editFields.forEach(el => el.classList.remove("d-none"));
+  editActions.classList.remove("d-none");
   editBtn?.classList.add("d-none");
-  saveBtn?.classList.remove("d-none");
-  cancelBtn?.classList.remove("d-none");
 }
 
 function exitEditMode() {
-  viewFields.forEach(el => el.classList.remove("d-none"));
+  viewFields.forEach(el => el.style.display = "block");
   editFields.forEach(el => el.classList.add("d-none"));
+  editActions.classList.add("d-none");
   editBtn?.classList.remove("d-none");
-  saveBtn?.classList.add("d-none");
-  cancelBtn?.classList.add("d-none");
 }
 
 editBtn?.addEventListener("click", enterEditMode);
 cancelBtn?.addEventListener("click", exitEditMode);
 
-/* ==========================================================
-   ROLE EDIT MODE (ADMIN)
-========================================================== */
-const editRoleBtn = document.getElementById("editRoleBtn");
-const saveRoleBtn = document.getElementById("saveRoleBtn");
-const cancelRoleBtn = document.getElementById("cancelRoleBtn");
-
-if (editRoleBtn) {
-  const viewRoleFields = document.querySelectorAll(".view-role-field");
-  const editRoleFields = document.querySelectorAll(".edit-role-field");
-
-  editRoleBtn.addEventListener("click", () => {
-    viewRoleFields.forEach(el => el.classList.add("d-none"));
-    editRoleFields.forEach(el => el.classList.remove("d-none"));
-    editRoleBtn.classList.add("d-none");
-    saveRoleBtn?.classList.remove("d-none");
-    cancelRoleBtn?.classList.remove("d-none");
-  });
-
-  cancelRoleBtn?.addEventListener("click", () => {
-    viewRoleFields.forEach(el => el.classList.remove("d-none"));
-    editRoleFields.forEach(el => el.classList.add("d-none"));
-    editRoleBtn.classList.remove("d-none");
-    saveRoleBtn?.classList.add("d-none");
-    cancelRoleBtn?.classList.add("d-none");
-  });
-}
+// Exit edit mode on form submit
+document.getElementById("basicInfoForm")?.addEventListener("submit", function() {
+  setTimeout(exitEditMode, 100);
+});
 
 /* ==========================================================
    ONBOARDING MODAL LOADER
@@ -425,7 +1149,7 @@ function changeOrganization() {
 }
 
 /* ==========================================================
-   ONBOARDING STEP SUBMIT (CRITICAL FIX)
+   ONBOARDING STEP SUBMIT
 ========================================================== */
 document.addEventListener("submit", async function (e) {
   const form = e.target.closest(".onboard-form");
@@ -521,7 +1245,7 @@ removeImageCheck?.addEventListener("change", function () {
 });
 
 /* ==========================================================
-   ONBOARDING COMPLETE HOOK (OPTIONAL)
+   ONBOARDING COMPLETE HOOK
 ========================================================== */
 window.finishOnboarding = function () {
   bootstrap.Modal.getInstance(

@@ -7,6 +7,7 @@ from django.db.models import Q
 from accounts.models import User, Team, OrgAssignment
 from accounts.forms import UserCreateForm
 from django.contrib import messages
+from django.db import transaction
 
 @login_required
 def users(request):
@@ -318,113 +319,68 @@ def user_update_image(request, user_id):
 
 @login_required
 def create_user(request):
-    """
-    AJAX-only user creation endpoint.
-    Always returns JSON with detailed error messages.
-    """
-
-    # ❌ Block GET requests
     if request.method != "POST":
         return JsonResponse(
-            {
-                "success": False,
-                "error": "Invalid request method. Please use POST."
-            },
+            {"success": False, "error": "Invalid request method."},
             status=405
         )
 
     form = UserCreateForm(request.POST)
 
-    # ❌ Invalid form → return field-specific errors
+    # -----------------------------
+    # FORM ERRORS (PASS-THROUGH)
+    # -----------------------------
     if not form.is_valid():
-        # Format errors for better display
-        formatted_errors = {}
-        for field, errors in form.errors.items():
-            if field == '__all__':
-                # Non-field errors
-                formatted_errors['general'] = [str(e) for e in errors]
-            else:
-                # Get field label for better error messages
-                field_label = str(form.fields[field].label or field.replace('_', ' ').title())
-                formatted_errors[field] = [
-                    f"{field_label}: {str(error)}" if not str(error).startswith(field_label) else str(error)
-                    for error in errors
-                ]
-        
         return JsonResponse(
             {
                 "success": False,
-                "errors": formatted_errors,
-                "error": "Please correct the errors below."
+                "errors": {
+                    field: [str(e) for e in errs]
+                    for field, errs in form.errors.items()
+                }
             },
             status=400
         )
 
     try:
-        # ✅ Create user
-        user = form.save()
+        with transaction.atomic():
+            user = form.save()
+            request.session[f"user_form_{user.id}"] = dict(request.POST)
 
-        # (Optional) Store raw form data for onboarding if you still need it
-        request.session[f"user_form_{user.id}"] = dict(request.POST)
-
-        # ✅ SUCCESS (always JSON)
-        return JsonResponse(
-            {
-                "success": True,
-                "message": f"User '{user.username}' created successfully!",
-                "user_id": user.id,
-                "onboard_url": reverse(
-                    "admin_app:onboard-division",
-                    args=[user.id]
-                )
-            },
-            status=201
-        )
-    
-    except IntegrityError as e:
-        # Handle database integrity errors (e.g., duplicate username/email)
-        error_message = str(e)
-        
-        if 'username' in error_message.lower():
-            return JsonResponse(
-                {
-                    "success": False,
-                    "error": "This username is already taken. Please choose another one.",
-                    "errors": {
-                        "username": ["This username is already taken."]
-                    }
-                },
-                status=400
-            )
-        elif 'email' in error_message.lower():
-            return JsonResponse(
-                {
-                    "success": False,
-                    "error": "This email address is already registered.",
-                    "errors": {
-                        "email": ["This email address is already registered."]
-                    }
-                },
-                status=400
-            )
-        else:
-            return JsonResponse(
-                {
-                    "success": False,
-                    "error": "A database error occurred. The user may already exist."
-                },
-                status=400
-            )
-    
-    except Exception as e:
-        # Catch any other unexpected errors
+    except IntegrityError:
         return JsonResponse(
             {
                 "success": False,
-                "error": f"An unexpected error occurred: {str(e)}"
+                "errors": {
+                    "username": ["This username or email already exists."]
+                }
+            },
+            status=400
+        )
+
+    except Exception:
+        return JsonResponse(
+            {
+                "success": False,
+                "errors": {
+                    "__all__": ["Unexpected server error. Please try again."]
+                }
             },
             status=500
         )
+
+    return JsonResponse(
+        {
+            "success": True,
+            "message": f"User '{user.username}' created successfully.",
+            "user_id": user.id,
+            "onboard_url": reverse(
+                "admin_app:onboard-division",
+                args=[user.id]
+            )
+        },
+        status=201
+    )
 
 # ============================================
 # ONBOARDING FLOW
