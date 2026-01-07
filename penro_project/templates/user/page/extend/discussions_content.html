@@ -1,0 +1,231 @@
+{% if work_items %}
+<style>
+/* =========================================================
+   USER DISCUSSION LIST – COMPACT + INLINE STATUS (FIXED)
+========================================================= */
+
+.discussion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ITEM */
+.discussion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.discussion-item:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+/* UNREAD */
+.discussion-item-unread {
+  background: #fff5f5;
+  border-left: 4px solid #ef4444;
+}
+
+.discussion-item-unread:hover {
+  background: linear-gradient(
+    to right,
+    rgba(239, 68, 68, 0.15),
+    rgba(239, 68, 68, 0.04)
+  );
+}
+
+/* ICON */
+.discussion-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #e6edf5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.discussion-item-unread .discussion-icon {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+}
+
+/* CONTENT */
+.discussion-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.discussion-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.discussion-item-unread .discussion-title {
+  font-weight: 700;
+}
+
+.discussion-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.discussion-meta i {
+  margin-right: 4px;
+  color: #94a3b8;
+}
+
+/* STATUS — 🔥 INLINE ROW (FIXED) */
+.discussion-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+/* Date & Time */
+.discussion-status-time {
+  font-weight: 500;
+  color: #475569;
+}
+
+/* Badge */
+.discussion-status-badge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.discussion-status-badge.unread {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.discussion-status-badge.seen {
+  background: #e6edf5;
+  color: #475569;
+}
+
+/* ARROW */
+.discussion-arrow {
+  color: #cbd5e1;
+  margin-left: 2px;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.discussion-item:hover .discussion-arrow {
+  transform: translateX(3px);
+  color: #64748b;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .discussion-status {
+    display: none;
+  }
+}
+</style>
+
+<div class="discussion-list">
+
+  {% for item in work_items %}
+  {% with wi=item.work_item %}
+  <div
+    class="discussion-item {% if item.unread_count > 0 %}discussion-item-unread{% endif %}"
+    data-qxdlg-trigger
+    data-qxdlg-url="{% url 'user_app:work-item-discussion' wi.id %}"
+    data-qxdlg-title="{{ wi.workcycle.title }}"
+    data-qxdlg-subtitle="Assigned by: {{ wi.workcycle.created_by.get_full_name|default:wi.workcycle.created_by.username }}"
+  >
+
+    <!-- ICON -->
+    <div class="discussion-icon">
+      <i class="fas fa-clipboard-list"></i>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="discussion-content">
+      <div class="discussion-title">
+        {{ wi.workcycle.title }}
+      </div>
+
+      <div class="discussion-meta">
+        <span>
+          <i class="far fa-calendar-alt"></i>
+          Due {{ wi.workcycle.due_at|date:"M d, Y" }}
+        </span>
+
+        {% if item.total_message_count > 0 %}
+          <span>
+            <i class="far fa-comments"></i>
+            {{ item.total_message_count }}
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- STATUS (HORIZONTAL) -->
+    <div class="discussion-status">
+      {% if item.last_message_at %}
+        <span class="discussion-status-time">
+          {{ item.last_message_at|date:"M d · g:i A" }}
+        </span>
+
+        {% if item.unread_count > 0 %}
+          <span class="discussion-status-badge unread">
+            {{ item.unread_count }} New
+          </span>
+        {% else %}
+          <span class="discussion-status-badge seen">
+            Seen
+          </span>
+        {% endif %}
+      {% else %}
+        <span class="discussion-status-badge seen">No messages</span>
+      {% endif %}
+    </div>
+
+    <!-- ARROW -->
+    <div class="discussion-arrow">
+      <i class="fas fa-chevron-right"></i>
+    </div>
+
+  </div>
+  {% endwith %}
+  {% endfor %}
+
+</div>
+
+{% else %}
+<div class="text-center py-5">
+  <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+  <h6 class="text-muted">No discussion threads yet</h6>
+  <p class="small text-muted mb-0">
+    Discussions will appear here when you have active work items
+  </p>
+</div>
+{% endif %}

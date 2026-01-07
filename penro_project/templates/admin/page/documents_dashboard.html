@@ -5,57 +5,92 @@
 
 {% block content %}
 
-<!-- PAGE HEADER -->
-<div class="mb-4">
-  <h4 class="fw-bold mb-1">
-    <i class="fas fa-folder-open text-primary me-1"></i>
-    Documents Center
-  </h4>
-  <div class="text-muted small">
-    Centralized access to all uploaded files and records
+<!-- =========================
+     PAGE HEADER (COMPACT + CENTERED)
+========================= -->
+<div class="docs-header-container mb-4">
+  <div class="docs-header-inner">
+
+    <!-- TITLE -->
+    <div class="docs-header-title">
+      <span class="docs-icon">
+        <i class="fas fa-folder-open"></i>
+      </span>
+      <h4>Documents Center</h4>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="docs-header-divider"></div>
+
+    <!-- DESCRIPTION -->
+    <p class="docs-header-desc">
+      Centralized access to files, uploads, and document insights
+    </p>
+
   </div>
 </div>
 
-<!-- DOCUMENT ACTIONS -->
-<div class="row g-3 mb-4">
+<!-- =========================
+     DOCUMENT SECTIONS
+========================= -->
+<div class="row g-4">
 
-  <!-- ALL FILES -->
-  <div class="col-md-3">
+  <!-- FILE MANAGEMENT -->
+  <div class="col-md-4">
     <a href="{% url 'admin_app:file-manager' %}" class="text-decoration-none">
-      <div class="card h-100 shadow-sm dashboard-tile">
-        <div class="card-body">
-          <i class="fas fa-file-alt fa-2x text-primary mb-2"></i>
-          <h6 class="fw-semibold mb-1">File Manager</h6>
-        </div>
-      </div>
-    </a>
-  </div>
-
-  <!-- CURRENT YEAR -->
-  <div class="col-md-3">
-    <a href="{% url 'admin_app:all-files-uploaded' %}" class="text-decoration-none">
-      <div class="card h-100 shadow-sm dashboard-tile">
-        <div class="card-body">
-          <i class="fas fa-calendar-check fa-2x text-success mb-2"></i>
-          <h6 class="fw-semibold mb-1">All Files</h6>
-          <div class="small text-muted">
-            {{ total_files }} files uploaded
+      <div class="docs-card docs-card-primary h-100">
+        <div class="docs-card-body">
+          <div class="docs-card-icon">
+            <i class="fas fa-folder-tree"></i>
+          </div>
+          <h6 class="docs-card-title">File Manager</h6>
+          <p class="docs-card-desc">
+            Browse folders, manage uploads, and organize documents.
+          </p>
+          <div class="docs-card-action">
+            Open File Manager
+            <i class="fas fa-arrow-right"></i>
           </div>
         </div>
       </div>
     </a>
   </div>
 
-
+  <!-- ALL FILES -->
+  <div class="col-md-4">
+    <a href="{% url 'admin_app:all-files-uploaded' %}" class="text-decoration-none">
+      <div class="docs-card docs-card-secondary h-100">
+        <div class="docs-card-body">
+          <div class="docs-card-icon">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <h6 class="docs-card-title">All Uploaded Files</h6>
+          <p class="docs-card-desc">
+            View every document uploaded across all work cycles.
+          </p>
+          <div class="docs-card-metric">
+            <i class="fas fa-database"></i>
+            {{ total_files }} total files
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
 
   <!-- ANALYTICS -->
-  <div class="col-md-3">
-    <div class="card h-100 shadow-sm dashboard-tile bg-light">
-      <div class="card-body">
-        <i class="fas fa-chart-bar fa-2x text-warning mb-2"></i>
-        <h6 class="fw-semibold mb-1">Document Analytics</h6>
-        <div class="small text-muted">
-          Usage & submission insights
+  <div class="col-md-4">
+    <div class="docs-card docs-card-muted h-100">
+      <div class="docs-card-body">
+        <div class="docs-card-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <h6 class="docs-card-title">Document Analytics</h6>
+        <p class="docs-card-desc">
+          Track submission trends, usage frequency, and activity insights.
+        </p>
+        <div class="docs-card-soon">
+          <i class="fas fa-clock"></i>
+          Coming soon
         </div>
       </div>
     </div>
@@ -63,15 +98,267 @@
 
 </div>
 
-
-<!-- STYLES -->
+<!-- =========================
+     STYLES
+========================= -->
 <style>
-.dashboard-tile{
-  transition: transform .15s ease, box-shadow .15s ease;
+:root {
+  /* MUTED BLUEVIOLET PALETTE */
+  --blueviolet-50: #f8f7ff;
+  --blueviolet-100: #f0eeff;
+  --blueviolet-200: #e2deff;
+  --blueviolet-300: #cac4ff;
+  --blueviolet-400: #a89fff;
+  --blueviolet-500: #8b7dff;
+  --blueviolet-600: #7b69ff;
+  --blueviolet-700: #6b54fa;
+  --blueviolet-800: #5a43e8;
+  --blueviolet-900: #4b36c7;
+  
+  /* NEUTRAL MUTED SHADES */
+  --muted-50: #f9fafb;
+  --muted-100: #f3f4f6;
+  --muted-200: #e5e7eb;
+  --muted-300: #d1d5db;
+  --muted-400: #9ca3af;
+  --muted-500: #6b7280;
+  --muted-600: #4b5563;
+  --muted-700: #374151;
+  --muted-800: #1f2937;
+  --muted-900: #111827;
+  
+  /* DOCUMENT-SPECIFIC COLORS */
+  --docs-title-dark: var(--muted-800);
+  --docs-desc-dark: var(--muted-700);
+  --docs-muted: var(--muted-500);
 }
-.dashboard-tile:hover{
+
+/* =========================
+   COMPACT PAGE HEADER
+========================= */
+.docs-header-container {
+  background: #ffffff;
+  border: 1px solid var(--muted-200);
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(123, 105, 255, 0.05);
+  margin-bottom: 24px;
+}
+
+.docs-header-inner {
+  padding: 12px 18px;
+  text-align: center;
+}
+
+/* Title - Compact */
+.docs-header-title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.docs-header-title h4 {
+  font-weight: 700;
+  margin: 0;
+  color: var(--docs-title-dark);
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+/* Icon - Compact */
+.docs-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--blueviolet-600), var(--blueviolet-800));
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  box-shadow: 0 2px 6px rgba(123, 105, 255, 0.2);
+}
+
+/* Divider - Compact */
+.docs-header-divider {
+  height: 1px;
+  width: 400px;
+  max-width: 80%;
+  margin: 6px auto 8px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--blueviolet-200),
+    var(--blueviolet-300),
+    var(--blueviolet-200),
+    transparent
+  );
+}
+
+/* Description - Compact */
+.docs-header-desc {
+  font-size: 12px;
+  color: var(--docs-desc-dark);
+  margin: 0 auto;
+  max-width: 500px;
+  line-height: 1.5;
+}
+
+/* =========================
+   CARDS WITH MUTED BLUEVIOLET
+========================= */
+.docs-card {
+  background: #ffffff;
+  border: 1px solid var(--muted-200);
+  border-radius: 14px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 3px 8px rgba(123, 105, 255, 0.05);
+  height: 100%;
+}
+
+.docs-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(0,0,0,.08);
+  box-shadow: 0 8px 20px rgba(123, 105, 255, 0.12);
+}
+
+.docs-card-body { 
+  padding: 18px; 
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.docs-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--blueviolet-50);
+  color: var(--blueviolet-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.docs-card-title {
+  font-weight: 700;
+  color: var(--muted-800);
+  margin-bottom: 6px;
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.docs-card-desc {
+  font-size: 12.5px;
+  color: var(--docs-muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+  flex-grow: 1;
+}
+
+.docs-card-action,
+.docs-card-metric,
+.docs-card-soon {
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.docs-card-action {
+  color: var(--blueviolet-700);
+  transition: color 0.2s ease;
+}
+
+.docs-card:hover .docs-card-action {
+  color: var(--blueviolet-800);
+}
+
+.docs-card-metric {
+  color: var(--blueviolet-600);
+}
+
+.docs-card-soon {
+  color: var(--muted-400);
+}
+
+/* Card borders */
+.docs-card-primary { 
+  border-left: 4px solid var(--blueviolet-600);
+}
+
+.docs-card-secondary { 
+  border-left: 4px solid var(--blueviolet-500);
+}
+
+.docs-card-muted { 
+  background: var(--muted-50); 
+  border-style: dashed;
+  border-color: var(--muted-300);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .docs-header-container {
+    border-radius: 10px;
+  }
+  
+  .docs-header-inner { 
+    padding: 10px 14px; 
+  }
+  
+  .docs-header-title h4 {
+    font-size: 16px;
+  }
+  
+  .docs-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  
+  .docs-header-divider {
+    width: 300px;
+    margin: 4px auto 6px;
+  }
+  
+  .docs-header-desc {
+    font-size: 11px;
+    max-width: 90%;
+  }
+  
+  .docs-card-body { 
+    padding: 16px; 
+  }
+  
+  .docs-card-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .docs-header-divider {
+    width: 250px;
+  }
+  
+  .docs-header-desc {
+    font-size: 10.5px;
+  }
+  
+  .row.g-4 {
+    gap: 12px !important;
+  }
+  
+  .col-md-4 {
+    margin-bottom: 12px;
+  }
 }
 </style>
 

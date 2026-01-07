@@ -1,308 +1,209 @@
 {% extends "user/layout/base.html" %}
 {% block title %}Discussions{% endblock %}
+
 {% block content %}
 
 {% include "user/page/modals/message_ui_modal.html" %}
-
-<div class="work-wrapper">
-
-  <!-- ===================================================== -->
-  <!-- HEADER -->
-  <!-- ===================================================== -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h5 class="fw-bold mb-1">
-        <i class="fas fa-comment-dots text-primary me-2"></i>
-        Discussions
-      </h5>
-
-      {% if work_items %}
-        <p class="text-muted small mb-0">
-          {{ work_items|length }} conversation{{ work_items|length|pluralize }}
-          {% if total_unread > 0 %}
-            · <span class="text-primary fw-semibold">{{ total_unread }} unread</span>
-          {% endif %}
-        </p>
-      {% endif %}
-    </div>
-
-    {% if total_unread > 0 %}
-      <form method="post"
-            action="{% url 'user_app:discussions-mark-all-read' %}"
-            class="d-inline">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-sm btn-outline-primary">
-          <i class="fas fa-check-double me-1"></i>
-          Mark All Read
-        </button>
-      </form>
-    {% endif %}
-  </div>
-
-  <!-- ===================================================== -->
-  <!-- DISCUSSION LIST -->
-  <!-- ===================================================== -->
-  {% if work_items %}
-    <div class="discussion-list">
-
-      {% for item in work_items %}
-        {% with wi=item.work_item %}
-        <div
-          class="discussion-item {% if item.unread_count > 0 %}discussion-item-unread{% endif %}"
-          data-qxdlg-trigger
-          data-qxdlg-url="{% url 'user_app:work-item-discussion' wi.id %}"
-          data-qxdlg-title="{{ wi.workcycle.title }}"
-          data-qxdlg-subtitle="Assigned by: {{ wi.workcycle.created_by.get_full_name|default:wi.workcycle.created_by.username }}"
-        >
-
-          <!-- ================================================= -->
-          <!-- AVATAR -->
-          <!-- ================================================= -->
-          <div class="discussion-avatar">
-            <div class="avatar-circle">
-              {{ wi.workcycle.created_by.first_name|default:wi.workcycle.created_by.username|slice:":1"|upper }}
-            </div>
-
-            {% if item.unread_count > 0 %}
-              <span class="avatar-badge">
-                {{ item.unread_count }}
-              </span>
-            {% endif %}
-          </div>
-
-          <!-- ================================================= -->
-          <!-- CONTENT -->
-          <!-- ================================================= -->
-          <div class="discussion-content">
-
-            <div class="discussion-title">
-              {{ wi.workcycle.title }}
-            </div>
-
-            <div class="discussion-meta">
-
-              <span class="meta-item">
-                <i class="far fa-calendar-alt"></i>
-                Due {{ wi.workcycle.due_at|date:"M d, Y" }}
-              </span>
-
-              {% if wi.workcycle.lifecycle_state == "due_soon" %}
-                <span class="badge bg-warning text-dark">
-                  Due Soon
-                </span>
-              {% elif wi.workcycle.lifecycle_state == "lapsed" %}
-                <span class="badge bg-danger">
-                  Overdue
-                </span>
-              {% endif %}
-
-              {% if item.total_message_count > 0 %}
-                <span class="meta-item">
-                  <i class="far fa-comment"></i>
-                  {{ item.total_message_count }}
-                </span>
-              {% endif %}
-
-            </div>
-          </div>
-
-          <!-- ================================================= -->
-          <!-- STATUS -->
-          <!-- ================================================= -->
-          <div class="discussion-status">
-
-            {% if item.last_message_at %}
-              <div class="status-time">
-                {{ item.last_message_at|date:"M d" }}<br>
-                <small>{{ item.last_message_at|date:"g:i A" }}</small>
-              </div>
-
-              {% if item.unread_count == 0 %}
-                <div class="status-icon text-success">
-                  <i class="fas fa-check-double"></i>
-                </div>
-              {% else %}
-                <div class="status-icon text-primary">
-                  <i class="fas fa-circle"></i>
-                </div>
-              {% endif %}
-            {% else %}
-              <div class="status-empty">
-                <small class="text-muted">No messages</small>
-              </div>
-            {% endif %}
-
-          </div>
-
-          <!-- ================================================= -->
-          <!-- ARROW -->
-          <!-- ================================================= -->
-          <div class="discussion-arrow">
-            <i class="fas fa-chevron-right"></i>
-          </div>
-
-        </div>
-        {% endwith %}
-      {% endfor %}
-
-    </div>
-
-  {% else %}
-    <!-- ===================================================== -->
-    <!-- EMPTY STATE -->
-    <!-- ===================================================== -->
-    <div class="text-center py-5">
-      <div class="mb-3">
-        <i class="fas fa-comments fa-3x text-muted"></i>
-      </div>
-      <h6 class="text-muted">No discussion threads yet</h6>
-      <p class="small text-muted mb-0">
-        Discussions will appear here when you have active work items
-      </p>
-    </div>
-  {% endif %}
-
-</div>
-
-<!-- ========================================================= -->
-<!-- STYLES -->
-<!-- ========================================================= -->
 <style>
+/* ============================================
+   USER DISCUSSIONS – PROMINENT HEADER ACTION
+============================================ */
 
-/* ========================================================= */
-/* DISCUSSION LIST */
-/* ========================================================= */
-.discussion-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* ---------- PAGE HEADER ---------- */
+.discussion-page-header {
+  background: #ffffff;
+  padding: 16px 28px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  border: 1px solid #d7e1ee;
+  box-shadow: 0 4px 12px rgba(74, 111, 165, 0.08);
 }
 
-/* ========================================================= */
-/* DISCUSSION ITEM */
-/* ========================================================= */
-.discussion-item {
+.discussion-header-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  padding: 16px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+}
+
+/* Title */
+.discussion-page-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #4a6fa5;
+}
+
+.discussion-page-title i {
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.discussion-item:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
-}
-
-.discussion-item-unread {
-  background: linear-gradient(
-    to right,
-    rgba(59, 130, 246, 0.04),
-    transparent
-  );
-  border-left: 3px solid #3b82f6;
-}
-
-/* ========================================================= */
-/* AVATAR */
-/* ========================================================= */
-.discussion-avatar {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.avatar-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #7ba3c4 0%, #5b8db3 100%);
+  background: linear-gradient(135deg, #6b86b3, #4a6fa5);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 18px;
-}
-
-.discussion-item-unread .avatar-circle {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-}
-
-.avatar-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #ef4444;
-  color: #ffffff;
-  border-radius: 10px;
-  padding: 2px 6px;
-  font-size: 10px;
-  font-weight: 700;
-  min-width: 20px;
-  text-align: center;
-}
-
-/* ========================================================= */
-/* CONTENT */
-/* ========================================================= */
-.discussion-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.discussion-title {
-  font-weight: 600;
   font-size: 15px;
-  color: #1e293b;
-  margin-bottom: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  box-shadow: 0 3px 10px rgba(74, 111, 165, 0.3);
 }
 
-.discussion-item-unread .discussion-title {
-  font-weight: 700;
-}
-
-/* ========================================================= */
-/* META */
-/* ========================================================= */
-.discussion-meta {
+/* Right side actions */
+.discussion-header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  color: #64748b;
+  gap: 12px;
 }
 
-/* ========================================================= */
-/* STATUS */
-/* ========================================================= */
-.discussion-status {
-  flex-shrink: 0;
-  text-align: right;
+/* Count pill */
+.discussion-total {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
-  min-width: 80px;
+  padding: 6px 14px;
+  background: #eef3fa;
+  border-radius: 999px;
+  border: 1px solid #d7e1ee;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a6fa5;
 }
 
-/* ========================================================= */
-/* RESPONSIVE */
-/* ========================================================= */
+.discussion-total span {
+  font-weight: 700;
+  color: #3f5f8c;
+}
+
+/* Mark all read button */
+.mark-all-read-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid #4a6fa5;
+  background: linear-gradient(135deg, #6b86b3, #4a6fa5);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.mark-all-read-btn i {
+  font-size: 12px;
+}
+
+.mark-all-read-btn:hover {
+  background: linear-gradient(135deg, #5f7fb0, #3f5f8c);
+  box-shadow: 0 4px 12px rgba(74, 111, 165, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Disabled but visible */
+.mark-all-read-btn:disabled {
+  background: #eef3fa;
+  color: #94a3b8;
+  border-color: #d7e1ee;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Divider */
+.discussion-header-divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(74, 111, 165, 0.25),
+    rgba(74, 111, 165, 0.08),
+    rgba(74, 111, 165, 0)
+  );
+  margin: 10px 0 12px;
+}
+
+/* Description */
+.discussion-page-desc {
+  margin: 0;
+  max-width: 820px;
+  color: #6b7f99;
+  font-size: 12.5px;
+  line-height: 1.55;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.discussion-page-desc i {
+  color: #8aa0bf;
+  margin-top: 2px;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .discussion-status {
-    display: none;
+  .discussion-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .discussion-header-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 }
-
 </style>
 
+<div class="container-fluid">
+
+  <!-- ================= HEADER ================= -->
+  <div class="discussion-page-header">
+
+    <div class="discussion-header-row">
+      <div class="discussion-page-title">
+        <i class="fas fa-comment-dots"></i>
+        <span>Discussions</span>
+      </div>
+
+      <div class="discussion-header-actions">
+
+        {% if work_items %}
+          <div class="discussion-total">
+            Conversations
+            <span>{{ work_items|length }}</span>
+            {% if total_unread > 0 %}
+              · <span>{{ total_unread }} unread</span>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <!-- PROMINENT ACTION -->
+        <form method="post"
+              action="{% url 'user_app:discussions-mark-all-read' %}">
+          {% csrf_token %}
+          <button type="submit"
+                  class="mark-all-read-btn"
+                  {% if total_unread == 0 %}disabled{% endif %}>
+            <i class="fas fa-check-double"></i>
+            Mark all read
+          </button>
+        </form>
+
+      </div>
+    </div>
+
+    <div class="discussion-header-divider"></div>
+
+    <p class="discussion-page-desc">
+      <i class="fas fa-info-circle"></i>
+      Your discussion threads with administrators for assigned work items.
+      Updates appear here when messages are sent or received.
+    </p>
+
+  </div>
+
+  <!-- ================= CONTENT ================= -->
+  {% include "user/page/extend/discussions_content.html" %}
+
+</div>
 {% endblock %}

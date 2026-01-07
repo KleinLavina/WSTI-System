@@ -13,12 +13,15 @@ def admin_work_item_threads(request):
     """
     Admin inbox view for WorkItem conversations.
 
-    - Returns REAL WorkItem objects
-    - Cursor-based unread counts
-    - Safe for multiple admins
+    Ordering rules:
+    1. Threads with unread messages first
+    2. Newest activity first within each group
     """
 
-    work_items = (
+    # --------------------------------------------------
+    # BASE QUERYSET (ONLY THREADS WITH MESSAGES)
+    # --------------------------------------------------
+    work_items = list(
         WorkItem.objects
         .select_related("owner", "workcycle")
         .prefetch_related("messages", "read_states")
@@ -30,9 +33,9 @@ def admin_work_item_threads(request):
         .order_by("-last_message_at", "-submitted_at")
     )
 
-    # ----------------------------------------------------
-    # ATTACH UNREAD COUNT TO EACH WorkItem (NO DICTS)
-    # ----------------------------------------------------
+    # --------------------------------------------------
+    # ATTACH UNREAD COUNT (PER ADMIN)
+    # --------------------------------------------------
     for item in work_items:
         read_state = next(
             (
@@ -51,10 +54,22 @@ def admin_work_item_threads(request):
             .count()
         )
 
+    # --------------------------------------------------
+    # FINAL INBOX SORT
+    # --------------------------------------------------
+    # unread first → newest first
+    work_items.sort(
+        key=lambda item: (
+            item.unread_count == 0,   # False (unread) comes first
+            -(item.last_message_at.timestamp() if item.last_message_at else 0),
+        )
+    )
+
     return render(
         request,
         "admin/page/work_item_thread_list.html",
         {
             "work_items": work_items,
+            "total_active_threads": len(work_items),
         }
     )

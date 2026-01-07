@@ -6,449 +6,330 @@
 
 <style>
 /* ============================================
-   SOFT COLOR PALETTE & CUSTOM STYLES
+   MUTED BLUEVIOLET COLOR PALETTE
 ============================================ */
-.discussion-page-header {
-  background: linear-gradient(135deg, #f0f4f8 0%, #e6eef5 100%);
-  padding: 24px;
-  border-radius: 16px;
-  margin-bottom: 24px;
-  border: 1px solid #d9e6f2;
+:root {
+  /* Primary BlueViolet Shades */
+  --blueviolet-50: #f8f7ff;
+  --blueviolet-100: #f0eeff;
+  --blueviolet-200: #e2deff;
+  --blueviolet-300: #cac4ff;
+  --blueviolet-400: #a89fff;
+  --blueviolet-500: #8b7dff;
+  --blueviolet-600: #7b69ff;
+  --blueviolet-700: #6b54fa;
+  --blueviolet-800: #5a43e8;
+  --blueviolet-900: #4b36c7;
+  
+  /* Neutral Muted Shades */
+  --muted-50: #f9fafb;
+  --muted-100: #f3f4f6;
+  --muted-200: #e5e7eb;
+  --muted-300: #d1d5db;
+  --muted-400: #9ca3af;
+  --muted-500: #6b7280;
+  --muted-600: #4b5563;
+  --muted-700: #374151;
+  --muted-800: #1f2937;
+  --muted-900: #111827;
+  
+  /* Accent Colors */
+  --accent-violet: #8b5cf6;
+  --accent-indigo: #6366f1;
+  --accent-lavender: #c4b5fd;
+  --accent-teal: #14b8a6;
 }
 
-.discussion-page-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #475569;
+/* ============================================
+   DISCUSSION PAGE – COMPACT HEADER + MUTED BLUEVIOLET
+============================================ */
+
+/* ---------- COMPACT PAGE HEADER ---------- */
+.discussion-page-header {
+  background: #ffffff;
+  padding: 14px 20px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  border: 1px solid var(--muted-200);
+  box-shadow: 0 3px 10px rgba(123, 105, 255, 0.05);
+}
+
+/* Header row - compact layout */
+.discussion-header-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 8px;
 }
 
+/* Title - compact */
+.discussion-page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--muted-800);
+}
+
 .discussion-page-title i {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #8fa6c5 0%, #7ba3c4 100%);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--blueviolet-600), var(--blueviolet-800));
   color: #ffffff;
-  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  box-shadow: 0 4px 12px rgba(123, 163, 196, 0.25);
-}
-
-.discussion-page-desc {
-  color: #64748b;
   font-size: 14px;
-  line-height: 1.6;
+  box-shadow: 0 2px 8px rgba(123, 105, 255, 0.2);
+}
+
+/* Count badge - compact */
+.discussion-total {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--blueviolet-50);
+  border-radius: 999px;
+  border: 1px solid var(--blueviolet-200);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blueviolet-700);
+  flex-shrink: 0;
+}
+
+.discussion-total span {
+  font-weight: 700;
+  color: var(--blueviolet-800);
+}
+
+/* Divider - subtle */
+.discussion-header-divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    var(--blueviolet-100),
+    var(--muted-200),
+    transparent
+  );  
+  margin: 8px 0 10px;
+}
+
+/* Description - compact */
+.discussion-page-desc {
   margin: 0;
+  max-width: 800px;
+  color: var(--muted-500);
+  font-size: 11.5px;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
 }
 
-/* Accordion Styling */
+.discussion-page-desc i {
+  color: var(--blueviolet-400);
+  margin-top: 1px;
+  font-size: 11px;
+}
+
+/* ---------- ACCORDION ---------- */
 .discussion-accordion .accordion-item {
-  border: 1px solid #d9e6f2;
-  border-radius: 16px;
+  border: 1px solid var(--muted-200);
+  border-radius: 12px;
+  margin-bottom: 14px;
   background: #ffffff;
-  margin-bottom: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(91, 141, 179, 0.08);
-  transition: all 0.2s ease;
-}
-
-.discussion-accordion .accordion-item:hover {
-  box-shadow: 0 4px 16px rgba(91, 141, 179, 0.15);
 }
 
 .discussion-accordion .accordion-button {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  color: #475569;
-  font-size: 15px;
+  background: var(--muted-50);
   font-weight: 600;
-  padding: 18px 24px;
-  border: none;
-  box-shadow: none;
-  transition: all 0.2s ease;
+  color: var(--muted-700);
+  padding: 14px 18px;
+  font-size: 14px;
 }
 
 .discussion-accordion .accordion-button:not(.collapsed) {
-  background: linear-gradient(135deg, #a8bedb 0%, #8fa6c5 100%);
-  color: #ffffff;
-  box-shadow: none;
-}
-
-.discussion-accordion .accordion-button:focus {
-  box-shadow: 0 0 0 3px rgba(143, 166, 197, 0.15);
-  border-color: transparent;
-}
-
-.discussion-accordion .accordion-button::after {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23475569'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
-}
-
-.discussion-accordion .accordion-button:not(.collapsed)::after {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
-}
-
-.discussion-accordion .accordion-button i {
-  font-size: 16px;
-  color: #7ba3c4;
-}
-
-.discussion-accordion .accordion-button:not(.collapsed) i {
+  background: linear-gradient(135deg, var(--blueviolet-600), var(--blueviolet-800));
   color: #ffffff;
 }
 
 .cycle-badge {
-  background: linear-gradient(135deg, #d9e6f2 0%, #c7d9e8 100%);
-  color: #5b7a99;
-  padding: 4px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  margin-left: 8px;
-}
-
-.discussion-accordion .accordion-button:not(.collapsed) .cycle-badge {
   background: rgba(255, 255, 255, 0.25);
   color: #ffffff;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 6px;
 }
 
-/* List Items */
+/* ---------- LIST ITEMS ---------- */
 .discussion-list-item {
-  padding: 18px 24px;
-  border: none;
-  border-bottom: 1px solid #e6eef5;
-  background: #ffffff;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.discussion-list-item:last-child {
-  border-bottom: none;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--muted-100);
+  transition: background 0.15s ease;
 }
 
 .discussion-list-item:hover {
-  background: linear-gradient(135deg, #f8fafc 0%, #f0f4f8 100%);
-  transform: translateX(4px);
+  background: var(--muted-50);
 }
 
 .discussion-list-item.has-unread {
-  background: linear-gradient(135deg, #fff5f5 0%, #fef2f2 100%);
+  background: #fef2f2;
   border-left: 4px solid #ef4444;
 }
 
-.discussion-list-item.has-unread:hover {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-}
-
+/* Icons */
 .discussion-icon-wrapper {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  font-size: 18px;
-  transition: all 0.2s ease;
+  font-size: 14px;
 }
 
 .discussion-icon-wrapper.unread {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  background: #fee2e2;
   color: #ef4444;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 .discussion-icon-wrapper.read {
-  background: linear-gradient(135deg, #e6eef5 0%, #d9e6f2 100%);
-  color: #94a3b8;
-}
-
-.discussion-list-item:hover .discussion-icon-wrapper.read {
-  background: linear-gradient(135deg, #a8bedb 0%, #8fa6c5 100%);
-  color: #ffffff;
+  background: var(--blueviolet-50);
+  color: var(--blueviolet-500);
 }
 
 .discussion-owner-name {
-  font-size: 15px;
   font-weight: 600;
-  color: #334155;
-  margin-bottom: 4px;
-}
-
-.discussion-list-item.has-unread .discussion-owner-name {
-  color: #1e293b;
+  color: var(--muted-800);
+  font-size: 14px;
 }
 
 .discussion-meta-info {
+  font-size: 12px;
+  color: var(--muted-500);
   display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  color: #64748b;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.discussion-meta-info i {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.discussion-meta-separator {
-  color: #cbd5e1;
-}
-
+/* ---------- STATUS ---------- */
 .discussion-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
   font-weight: 600;
 }
 
 .discussion-status-badge.unread {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  background: #fee2e2;
   color: #dc2626;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
-}
-
-.discussion-status-badge.unread i {
-  animation: pulse 2s ease-in-out infinite;
 }
 
 .discussion-status-badge.seen {
-  background: linear-gradient(135deg, #e6eef5 0%, #d9e6f2 100%);
-  color: #5b8db3;
+  background: var(--blueviolet-50);
+  color: var(--blueviolet-700);
 }
 
-.discussion-timestamp {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #94a3b8;
-  font-size: 12px;
-  margin-top: 6px;
-}
-
-.discussion-timestamp i {
-  font-size: 11px;
-}
-
+/* ---------- EMPTY STATE ---------- */
 .discussion-empty-state {
   text-align: center;
-  padding: 60px 20px;
-  color: #64748b;
+  padding: 50px 20px;
+  color: var(--muted-500);
 }
 
 .discussion-empty-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 20px;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #e6eef5 0%, #d9e6f2 100%);
+  background: var(--blueviolet-50);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(91, 141, 179, 0.1);
 }
 
 .discussion-empty-icon i {
-  font-size: 32px;
-  color: #7ba3c4;
+  font-size: 26px;
+  color: var(--blueviolet-600);
 }
 
-.discussion-empty-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: #475569;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.1);
-  }
-}
-
-/* Responsive */
+/* ---------- RESPONSIVE ---------- */
 @media (max-width: 768px) {
-  .discussion-meta-info {
+  .discussion-page-header {
+    padding: 12px 16px;
+    border-radius: 12px;
+  }
+
+  .discussion-header-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
+    gap: 10px;
+  }
+
+  .discussion-total {
+    align-self: flex-start;
+  }
+
+  .discussion-meta-info {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .discussion-page-title {
+    font-size: 16px;
   }
   
-  .discussion-meta-separator {
-    display: none;
+  .discussion-page-title i {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  
+  .discussion-page-desc {
+    font-size: 11px;
   }
 }
 </style>
 
 <div class="container-fluid">
 
-  <!-- ======================================================
-       HEADER
-  ======================================================= -->
+  <!-- ================= COMPACT HEADER ================= -->
   <div class="discussion-page-header">
-    <div class="discussion-page-title">
-      <i class="fas fa-comments"></i>
-      <span>Work Item Discussions</span>
+
+    <div class="discussion-header-row">
+      <div class="discussion-page-title">
+        <i class="fas fa-comments"></i>
+        <span>Work Item Discussions</span>
+      </div>
+
+      <div class="discussion-total">
+        Active
+        <span>{{ total_active_threads }}</span>
+      </div>
     </div>
+
+    <div class="discussion-header-divider"></div>
+
     <p class="discussion-page-desc">
-      <i class="fas fa-info-circle me-2"></i>
+      <i class="fas fa-info-circle"></i>
       Discussions are grouped by work cycle. Each item represents a shared conversation
       between the assigned worker and administrators.
     </p>
-  </div>
-
-{% regroup work_items by workcycle_id as grouped_cycles %}
-
-<!-- ======================================================
-     ACCORDION
-======================================================= -->
-{% if grouped_cycles %}
-  <div class="accordion discussion-accordion" id="discussionAccordion">
-
-    {% for group in grouped_cycles %}
-    {% with wc=group.list.0.workcycle %}
-    <div class="accordion-item">
-
-      <!-- ================= WORK CYCLE HEADER ================= -->
-      <h2 class="accordion-header" id="heading{{ forloop.counter }}">
-        <button class="accordion-button collapsed"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#cycle{{ forloop.counter }}">
-
-          <i class="fas fa-folder-open me-2"></i>
-          {{ wc.title }}
-
-          <span class="cycle-badge">
-            <i class="fas fa-comments me-1"></i>
-            {{ group.list|length }}
-          </span>
-        </button>
-      </h2>
-
-      <!-- ================= WORK ITEMS ================= -->
-      <div id="cycle{{ forloop.counter }}"
-           class="accordion-collapse collapse"
-           data-bs-parent="#discussionAccordion">
-
-        <div class="list-group list-group-flush">
-
-          {% for item in group.list %}
-          <a href="#"
-             class="list-group-item discussion-list-item
-                    {% if item.unread_count > 0 %}has-unread{% endif %}"
-
-             data-qxdlg-trigger
-             data-qxdlg-url="{% url 'admin_app:work-item-discussion' item.pk %}"
-             data-qxdlg-title="{{ wc.title }}"
-             data-qxdlg-subtitle="Assigned to: {{ item.owner.get_full_name|default:item.owner.username }}">
-
-            <div class="d-flex justify-content-between align-items-start gap-3">
-
-              <!-- ================= LEFT ================= -->
-              <div class="d-flex gap-3 flex-grow-1">
-
-                <!-- THREAD ICON -->
-                <div class="discussion-icon-wrapper
-                     {% if item.unread_count > 0 %}unread{% else %}read{% endif %}">
-                  {% if item.unread_count > 0 %}
-                    <i class="fas fa-envelope"></i>
-                  {% else %}
-                    <i class="fas fa-envelope-open"></i>
-                  {% endif %}
-                </div>
-
-                <!-- THREAD META -->
-                <div class="flex-grow-1">
-                  <div class="discussion-owner-name">
-                    <i class="fas fa-user me-2"></i>
-                    {{ item.owner.get_full_name|default:item.owner.username }}
-                  </div>
-
-                  <div class="discussion-meta-info">
-                    <span>
-                      <i class="far fa-calendar-alt me-1"></i>
-                      Due {{ wc.due_at|date:"D, M d, Y" }}
-                    </span>
-                    <span class="discussion-meta-separator">·</span>
-                    <span>
-                      <i class="fas fa-hashtag me-1"></i>
-                      Thread {{ item.pk }}
-                    </span>
-                  </div>
-
-                  <!-- LAST MESSAGE TIME (Mobile) -->
-                  {% if item.last_message_at %}
-                    <div class="discussion-timestamp d-md-none">
-                      <i class="far fa-clock"></i>
-                      {{ item.last_message_at|date:"D, M d · g:i A" }}
-                    </div>
-                  {% endif %}
-                </div>
-              </div>
-
-              <!-- ================= RIGHT ================= -->
-              <div class="text-end">
-
-                <!-- UNREAD BADGE / SEEN -->
-                {% if item.unread_count > 0 %}
-                  <span class="discussion-status-badge unread">
-                    <i class="fas fa-circle"></i>
-                    {{ item.unread_count }} New
-                  </span>
-                {% else %}
-                  <span class="discussion-status-badge seen">
-                    <i class="fas fa-check-double"></i>
-                    Seen
-                  </span>
-                {% endif %}
-
-                <!-- LAST MESSAGE TIME (Desktop) -->
-                {% if item.last_message_at %}
-                  <div class="discussion-timestamp d-none d-md-flex justify-content-end">
-                    <i class="far fa-clock"></i>
-                    {{ item.last_message_at|date:"D, M d · g:i A" }}
-                  </div>
-                {% endif %}
-
-              </div>
-
-            </div>
-          </a>
-          {% endfor %}
-
-        </div>
-      </div>
-
-    </div>
-    {% endwith %}
-    {% endfor %}
 
   </div>
-{% else %}
-  <div class="discussion-empty-state">
-    <div class="discussion-empty-icon">
-      <i class="far fa-comment-dots"></i>
+
+    <div>
+      {% include "admin/page/includes/work_item_discussions_content.html" %}
     </div>
-    <div class="discussion-empty-text">
-      No discussion threads yet
-    </div>
-    <p class="text-muted mt-2 mb-0">
-      Discussions will appear here when work items are assigned
-    </p>
-  </div>
-{% endif %}
+
 </div>
 {% endblock %}

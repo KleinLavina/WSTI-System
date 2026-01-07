@@ -20,12 +20,12 @@
 }
 
 /* ===========================
-   USER GRID - ENHANCED COMPACT (5 CARDS PER ROW)
+   USER GRID - ENHANCED COMPACT
 =========================== */
 .user-grid-compact {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.875rem;
   padding: 0.5rem 0;
   background: var(--dark-blue-50);
 }
@@ -33,15 +33,15 @@
 .user-card-compact {
   background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid var(--dark-blue-200);
-  border-radius: 12px;
-  padding: 1.25rem;
+  border-radius: 10px;
+  padding: 0.875rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   position: relative;
-  min-height: 240px;
+  min-height: 210px;
   overflow: hidden;
 }
 
@@ -51,7 +51,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
+  height: 3px;
   background: linear-gradient(90deg, var(--accent-blue-soft), var(--accent-teal));
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -71,8 +71,8 @@
 .badges-context {
   display: flex;
   justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
 }
 
 .context-item {
@@ -81,30 +81,30 @@
 }
 
 .context-label {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--dark-blue-500);
   font-weight: 600;
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.25rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.25rem;
   letter-spacing: 0.02em;
 }
 
 .context-label i {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   color: var(--dark-blue-400);
 }
 
 .badge-division-compact,
 .badge-role-compact {
   display: block;
-  font-size: 0.7rem !important;
-  padding: 0.375rem 0.5rem !important;
-  border-radius: 8px;
+  font-size: 0.65rem !important;
+  padding: 0.3rem 0.4rem !important;
+  border-radius: 6px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -139,18 +139,18 @@
 .user-profile-enhanced {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
-  padding: 0.75rem 0;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
   border-top: 1px solid var(--dark-blue-100);
   border-bottom: 1px solid var(--dark-blue-100);
 }
 
 .avatar-compact {
-  width: 56px !important;
-  height: 56px !important;
-  border-radius: 12px;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 10px;
   flex-shrink: 0;
-  border: 3px solid white;
+  border: 2px solid white;
   box-shadow: 0 4px 12px rgba(30, 41, 59, 0.1), 0 0 0 1px var(--dark-blue-200);
   object-fit: cover;
 }
@@ -161,7 +161,7 @@
 }
 
 .detail-group {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
 }
 
 .detail-group:last-child {
@@ -169,29 +169,29 @@
 }
 
 .detail-label {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--dark-blue-500);
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.25rem;
   letter-spacing: 0.02em;
 }
 
 .detail-label i {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--dark-blue-400);
-  width: 12px;
+  width: 10px;
   text-align: center;
 }
 
 .user-name-compact {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: var(--dark-blue-900);
   white-space: nowrap;
   overflow: hidden;
@@ -201,7 +201,7 @@
 }
 
 .user-position-compact {
-  font-size: 0.8rem;
+  font-size: 0.725rem;
   color: var(--dark-blue-700);
   white-space: nowrap;
   overflow: hidden;
@@ -213,9 +213,9 @@
 /* ORGANIZATIONAL STRUCTURE */
 .org-structure-compact {
   background: linear-gradient(135deg, var(--dark-blue-50) 0%, #ffffff 100%);
-  border-radius: 10px;
-  padding: 0.75rem;
-  margin: 0.25rem 0 0.5rem 0;
+  border-radius: 8px;
+  padding: 0.5rem;
+  margin: 0.25rem 0 0.375rem 0;
   border: 1px solid var(--dark-blue-200);
   position: relative;
 }
@@ -223,7 +223,7 @@
 .org-structure-compact::before {
   content: '';
   position: absolute;
-  left: 1rem;
+  left: 0.75rem;
   top: 0;
   bottom: 0;
   width: 2px;
@@ -234,9 +234,9 @@
 .org-level {
   display: flex;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
   position: relative;
-  padding-left: 1.5rem;
+  padding-left: 1.25rem;
 }
 
 .org-level:last-child {
@@ -247,8 +247,8 @@
   content: '';
   position: absolute;
   left: 0;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--accent-blue-soft);
   border: 2px solid white;
@@ -256,24 +256,24 @@
 }
 
 .level-label {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--dark-blue-600);
   font-weight: 600;
   flex-shrink: 0;
-  width: 65px;
+  width: 55px;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.25rem;
 }
 
 .level-label i {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   flex-shrink: 0;
   color: var(--dark-blue-500);
 }
 
 .level-value {
-  font-size: 0.75rem;
+  font-size: 0.675rem;
   color: var(--dark-blue-800);
   font-weight: 500;
   text-align: left;
@@ -281,49 +281,49 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 0.375rem 0.75rem;
+  padding: 0.3rem 0.6rem;
   background: white;
-  border-radius: 6px;
+  border-radius: 5px;
   border: 1px solid var(--dark-blue-200);
-  margin-left: 0.75rem;
+  margin-left: 0.5rem;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* STATUS SECTION */
 .status-section {
   min-width: 0;
-  padding-top: 0.5rem;
+  padding-top: 0.375rem;
   border-top: 1px solid var(--dark-blue-100);
 }
 
 .status-label {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--dark-blue-500);
   font-weight: 600;
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.3rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.25rem;
   letter-spacing: 0.02em;
 }
 
 .status-label i {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--dark-blue-400);
 }
 
 .status-badge {
-  font-size: 0.7rem;
-  padding: 0.375rem 0.5rem;
-  border-radius: 8px;
+  font-size: 0.65rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: 6px;
   font-weight: 600;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.3rem;
   width: 100%;
   text-align: center;
   justify-content: center;
@@ -351,7 +351,7 @@
 /* QUICK ACTION BUTTON */
 .card-actions {
   margin-top: auto;
-  padding-top: 0.5rem;
+  padding-top: 0.375rem;
   border-top: 1px solid var(--dark-blue-100);
 }
 
@@ -360,9 +360,9 @@
   background: linear-gradient(135deg, white 0%, var(--dark-blue-50) 100%);
   color: var(--dark-blue-700);
   border: 1px solid var(--dark-blue-300);
-  padding: 0.625rem;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.725rem;
   text-decoration: none;
   font-weight: 600;
   cursor: pointer;
@@ -371,7 +371,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   letter-spacing: 0.02em;
 }
 
@@ -384,7 +384,7 @@
 }
 
 .btn-view-details i {
-  font-size: 0.8rem;
+  font-size: 0.725rem;
   transition: transform 0.2s ease;
 }
 
@@ -395,58 +395,61 @@
 /* ===========================
    RESPONSIVE GRID
 =========================== */
-@media (max-width: 2500px) {
+@media (max-width: 1400px) {
+  .user-grid-compact {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (max-width: 1100px) {
   .user-grid-compact {
     grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+  
+  .user-card-compact {
+    padding: 1rem;
   }
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 900px) {
   .user-grid-compact {
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.125rem;
+    gap: 1rem;
   }
   
   .user-card-compact {
-    min-height: 260px;
-  }
-}
-
-@media (max-width: 992px) {
-  .user-grid-compact {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.125rem;
-  }
-  
-  .user-card-compact {
-    padding: 1.5rem;
-    min-height: auto;
+    padding: 1.125rem;
   }
 }
 
 @media (max-width: 768px) {
   .user-grid-compact {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.25rem;
   }
   
   .user-card-compact {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
   
   .user-profile-enhanced {
-    gap: 1.125rem;
+    gap: 1rem;
   }
   
   .avatar-compact {
-    width: 64px !important;
-    height: 64px !important;
+    width: 56px !important;
+    height: 56px !important;
   }
 }
 
 @media (max-width: 480px) {
+  .user-grid-compact {
+    grid-template-columns: 1fr;
+  }
+  
   .user-card-compact {
-    padding: 1.25rem;
+    padding: 1rem;
   }
   
   .badges-context {
@@ -455,11 +458,11 @@
   }
   
   .org-structure-compact {
-    padding: 1rem;
+    padding: 0.875rem;
   }
   
   .org-level {
-    padding-left: 1.75rem;
+    padding-left: 1.5rem;
   }
 }
 </style>
@@ -501,7 +504,7 @@
              title="User Avatar">
       {% else %}
         <img class="avatar-compact"
-             src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username }}&background=3b82f6&color=fff&size=56&bold=true"
+             src="https://ui-avatars.com/api/?name={{ user.get_full_name|default:user.username }}&background=3b82f6&color=fff&size=48&bold=true"
              alt="{{ user.get_full_name|default:user.username }}"
              title="User Avatar">
       {% endif %}

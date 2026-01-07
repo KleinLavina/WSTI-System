@@ -78,7 +78,7 @@ urlpatterns = [
         name="documents"
     ),
     path(
-        "documents/files/",
+        "documents/file-manager/",
         admin_file_manager,
         name="file-manager"
     ),

@@ -10,14 +10,22 @@
   <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Montserrat Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 
   <style>
     /* =========================================================
-       GLOBAL MONTESSRAT FONT SETUP
+       LOCAL MONTSERRAT FONT SETUP
+    ========================================================= */
+    @font-face {
+      font-family: "Montserrat";
+      src: url("{% static 'fonts/Montserrat-VariableFont_wght.ttf' %}")
+           format("truetype-variations");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    /* =========================================================
+       GLOBAL FONT SETUP
     ========================================================= */
     * { 
       box-sizing: border-box;
@@ -141,6 +149,9 @@
       flex-direction: row-reverse;
     }
 
+    /* =========================================================
+       AVATAR WITH PROFILE PICTURE SUPPORT
+    ========================================================= */
     .zxchat-avatar-ring {
       width: 36px;
       height: 36px;
@@ -157,6 +168,24 @@
       border: 2px solid #ffffff;
       font-family: "Montserrat", sans-serif;
       margin-top: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Profile image styling */
+    .zxchat-avatar-ring img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    /* Initials fallback */
+    .zxchat-avatar-ring .zxchat-avatar-initials {
+      position: relative;
+      z-index: 1;
     }
 
     .zxchat-bubble-row--self .zxchat-avatar-ring {
@@ -446,7 +475,13 @@
       {% for m in messages %}
         <div class="zxchat-bubble-row {% if m.sender == request.user %}zxchat-bubble-row--self{% endif %}">
           <div class="zxchat-avatar-ring">
-            {{ m.sender.first_name|default:m.sender.username|slice:":1"|upper }}
+            {% if m.sender.profile_image %}
+              <img src="{{ m.sender.profile_image.url }}" alt="{{ m.sender.get_full_name|default:m.sender.username }}">
+            {% else %}
+              <span class="zxchat-avatar-initials">
+                {{ m.sender.first_name|default:m.sender.username|slice:":1"|upper }}
+              </span>
+            {% endif %}
           </div>
 
           <div class="zxchat-bubble-content">

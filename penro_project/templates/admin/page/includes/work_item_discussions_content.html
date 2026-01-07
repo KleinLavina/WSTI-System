@@ -1,0 +1,137 @@
+{% regroup work_items by workcycle_id as grouped_cycles %}
+
+{% if grouped_cycles %}
+<div class="accordion discussion-accordion" id="discussionAccordion">
+
+  {% for group in grouped_cycles %}
+  {% with wc=group.list.0.workcycle %}
+  <div class="accordion-item">
+
+    <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+      <button class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#cycle{{ forloop.counter }}"
+              aria-expanded="false">
+        <i class="fas fa-folder-open me-2"></i>
+        {{ wc.title }}
+
+        <span class="cycle-badge">
+          <i class="fas fa-comments me-1"></i>
+          {{ group.list|length }}
+        </span>
+      </button>
+    </h2>
+
+    <div id="cycle{{ forloop.counter }}" class="accordion-collapse collapse">
+      <div class="list-group list-group-flush">
+
+        {% for item in group.list %}
+        <a href="#"
+           class="list-group-item discussion-list-item {% if item.unread_count > 0 %}has-unread{% endif %}"
+           data-qxdlg-trigger
+           data-qxdlg-url="{% url 'admin_app:work-item-discussion' item.pk %}">
+
+          <div class="d-flex justify-content-between gap-3">
+
+            <div class="d-flex gap-3 flex-grow-1">
+              <div class="discussion-icon-wrapper {% if item.unread_count > 0 %}unread{% else %}read{% endif %}">
+                <i class="fas fa-envelope{% if not item.unread_count %}-open{% endif %}"></i>
+              </div>
+
+              <div>
+                <div class="discussion-owner-name">
+                  {{ item.owner.get_full_name|default:item.owner.username }}
+                </div>
+
+                <div class="discussion-meta-info">
+                  <span>Due {{ wc.due_at|date:"D, M d, Y" }}</span>
+                  <span class="discussion-meta-separator">·</span>
+                  <span>Thread {{ item.pk }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-end">
+              {% if item.unread_count > 0 %}
+                <span class="discussion-status-badge unread">
+                  {{ item.unread_count }} New
+                </span>
+              {% else %}
+                <span class="discussion-status-badge seen">Seen</span>
+              {% endif %}
+            </div>
+
+          </div>
+        </a>
+        {% endfor %}
+
+      </div>
+    </div>
+
+  </div>
+  {% endwith %}
+  {% endfor %}
+
+</div>
+
+{% else %}
+<div class="discussion-empty-state">
+  <strong>No discussion threads yet</strong>
+</div>
+{% endif %}
+<script>
+(function () {
+  const KEY = "open_cycles";
+
+  function restoreAccordionState() {
+    const openIds = JSON.parse(localStorage.getItem(KEY) || "[]");
+
+    openIds.forEach(id => {
+      const collapseEl = document.getElementById(id);
+      if (!collapseEl) return;
+
+      const btn = document.querySelector(
+        `[data-bs-target="#${id}"]`
+      );
+
+      // 🔥 Force Bootstrap state
+      const instance = bootstrap.Collapse.getOrCreateInstance(
+        collapseEl,
+        { toggle: false }
+      );
+      instance.show();
+
+      // 🔥 Fix button state
+      btn?.classList.remove("collapsed");
+      btn?.setAttribute("aria-expanded", "true");
+    });
+  }
+
+  function bindAccordionTracking() {
+    document.querySelectorAll(".accordion-collapse").forEach(el => {
+
+      el.addEventListener("shown.bs.collapse", () => {
+        const set = new Set(JSON.parse(localStorage.getItem(KEY) || "[]"));
+        set.add(el.id);
+        localStorage.setItem(KEY, JSON.stringify([...set]));
+      });
+
+      el.addEventListener("hidden.bs.collapse", () => {
+        const set = new Set(JSON.parse(localStorage.getItem(KEY) || "[]"));
+        set.delete(el.id);
+        localStorage.setItem(KEY, JSON.stringify([...set]));
+      });
+
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // ⏱ Wait until Bootstrap finishes wiring collapse
+    setTimeout(() => {
+      restoreAccordionState();
+      bindAccordionTracking();
+    }, 0);
+  });
+})();
+</script>
