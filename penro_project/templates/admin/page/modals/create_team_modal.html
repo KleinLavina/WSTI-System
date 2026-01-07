@@ -36,29 +36,41 @@
                    placeholder="e.g. Information Technology">
           </div>
 
-          <!-- PARENT CARDS -->
-          <div class="mb-3 d-none" id="parentCardsWrapper">
-            <label class="form-label">Select Parent Unit</label>
+          <!-- BREADCRUMB NAVIGATION -->
+          <div class="mb-3 d-none" id="breadcrumbWrapper">
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb mb-2" id="breadcrumbNav">
+                <li class="breadcrumb-item"><a href="#" data-level="root">Start</a></li>
+              </ol>
+            </nav>
+          </div>
 
-            <div class="row g-2" id="parentCards">
-              {% for team in teams %}
-              <div class="col-md-6 parent-card"
-                   data-id="{{ team.id }}"
-                   data-type="{{ team.team_type }}">
-                <div class="card h-100 selectable-card">
-                  <div class="card-body py-2">
-                    <strong>{{ team.name }}</strong>
-                    <div class="text-muted small">
-                      {{ team.get_team_type_display }}
-                    </div>
-                  </div>
-                </div>
+          <!-- PARENT SELECTOR (HIERARCHICAL) -->
+          <div class="mb-3 d-none" id="parentSelectorWrapper">
+            <label class="form-label" id="parentLabel">Select Parent Division</label>
+            
+            <div id="hierarchicalSelector" class="hierarchy-container">
+              <!-- Cards will be populated by JavaScript -->
+            </div>
+
+            <!-- Selected parent indicator -->
+            <div class="mt-3 d-none" id="selectedParentInfo">
+              <div class="alert alert-info mb-0">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Selected Parent:</strong> <span id="selectedParentName"></span>
               </div>
-              {% endfor %}
             </div>
 
             <!-- hidden input -->
             <input type="hidden" name="parent" id="parentInput">
+          </div>
+
+          <!-- SIMPLE PARENT SELECTOR (FOR SECTION) -->
+          <div class="mb-3 d-none" id="simpleParentWrapper">
+            <label class="form-label">Select Parent Division</label>
+            <div class="row g-2" id="simpleParentCards">
+              <!-- Division cards for sections -->
+            </div>
           </div>
 
           <div class="text-danger small d-none" id="teamError"></div>
@@ -71,7 +83,7 @@
                   data-bs-dismiss="modal">
             Cancel
           </button>
-          <button class="btn btn-primary" type="submit">
+          <button class="btn btn-primary" type="submit" id="submitBtn">
             Create
           </button>
         </div>
@@ -81,71 +93,426 @@
     </div>
   </div>
 </div>
+
 <style>
-.selectable-card {
-  cursor: pointer;
+.hierarchy-container {
+  max-height: 400px;
+  overflow-y: auto;
   border: 1px solid #e5e7eb;
-  transition: all .15s ease;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f9fafb;
 }
 
-.selectable-card:hover {
+.hierarchy-card {
+  cursor: pointer;
+  border: 1.5px solid #e5e7eb;
+  transition: all .2s ease;
+  margin-bottom: 8px;
+  background: white;
+  border-radius: 6px;
+}
+
+.hierarchy-card:hover {
   border-color: #2563eb;
   background: #f8fafc;
+  transform: translateX(2px);
 }
 
-.parent-card.selected .selectable-card {
+.hierarchy-card.selected {
   border-color: #2563eb;
   background: #eef2ff;
 }
 
-.parent-card.disabled {
-  display: none;
+.hierarchy-card.selectable {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.hierarchy-card.selectable:hover {
+  background: #dcfce7;
+  border-color: #22c55e;
+}
+
+.hierarchy-card.navigable::after {
+  content: '\f054';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  float: right;
+  color: #94a3b8;
+}
+
+.hierarchy-card.selectable::after {
+  content: '\f00c';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  float: right;
+  color: #22c55e;
+}
+
+.simple-parent-card {
+  cursor: pointer;
+}
+
+.simple-parent-card .card {
+  border: 1.5px solid #e5e7eb;
+  transition: all .2s ease;
+  height: 100%;
+}
+
+.simple-parent-card .card:hover {
+  border-color: #2563eb;
+  background: #f8fafc;
+}
+
+.simple-parent-card.selected .card {
+  border-color: #2563eb;
+  background: #eef2ff;
+}
+
+.breadcrumb-item a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+  text-decoration: underline;
+}
+
+.card-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.card-badge.selectable {
+  background: #dcfce7;
+  color: #166534;
 }
 </style>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const teamType = document.getElementById("teamType");
-  const wrapper = document.getElementById("parentCardsWrapper");
-  const cards = document.querySelectorAll(".parent-card");
+  const breadcrumbWrapper = document.getElementById("breadcrumbWrapper");
+  const parentSelectorWrapper = document.getElementById("parentSelectorWrapper");
+  const simpleParentWrapper = document.getElementById("simpleParentWrapper");
+  const hierarchicalSelector = document.getElementById("hierarchicalSelector");
+  const simpleParentCards = document.getElementById("simpleParentCards");
   const parentInput = document.getElementById("parentInput");
+  const breadcrumbNav = document.getElementById("breadcrumbNav");
+  const selectedParentInfo = document.getElementById("selectedParentInfo");
+  const selectedParentName = document.getElementById("selectedParentName");
+  const parentLabel = document.getElementById("parentLabel");
+  const submitBtn = document.getElementById("submitBtn");
 
-  const rules = {
-    section: ["division"],
-    service: ["section"],
-    unit: ["section", "service"]
-  };
+  // Build team hierarchy from all_teams
+  const allTeams = [
+    {% for team in all_teams %}
+    {
+      id: {{ team.id }},
+      name: "{{ team.name|escapejs }}",
+      type: "{{ team.team_type }}",
+      parent_id: {{ team.parent_id|default:"null" }}
+    },
+    {% endfor %}
+  ];
 
-  teamType.addEventListener("change", () => {
-    const type = teamType.value;
+  // Organize teams by parent
+  const teamsByParent = {};
+  const teamsById = {};
+  
+  allTeams.forEach(team => {
+    teamsById[team.id] = team;
+    const parentKey = team.parent_id || 'root';
+    if (!teamsByParent[parentKey]) {
+      teamsByParent[parentKey] = [];
+    }
+    teamsByParent[parentKey].push(team);
+  });
 
+  // Navigation state
+  let currentPath = [];
+  let selectedTeamId = null;
+  let currentTeamType = null;
+
+  // Reset state
+  function resetState() {
+    currentPath = [];
+    selectedTeamId = null;
     parentInput.value = "";
-    cards.forEach(c => {
-      c.classList.remove("selected", "disabled");
-    });
+    breadcrumbWrapper.classList.add("d-none");
+    parentSelectorWrapper.classList.add("d-none");
+    simpleParentWrapper.classList.add("d-none");
+    selectedParentInfo.classList.add("d-none");
+  }
 
-    if (!rules[type]) {
-      wrapper.classList.add("d-none");
+  // Check if a team has children
+  function hasChildren(teamId) {
+    return teamsByParent[teamId] && teamsByParent[teamId].length > 0;
+  }
+
+  // Check if team is valid parent for the current type
+  function isValidParent(team) {
+    if (currentTeamType === 'service') {
+      return team.type === 'section';
+    } else if (currentTeamType === 'unit') {
+      // Unit can be under Section OR Service (lowest level only)
+      if (team.type === 'service') {
+        return true; // Services are always valid (they're leaf nodes)
+      }
+      if (team.type === 'section') {
+        // Section is valid ONLY if it has no services
+        return !hasChildren(team.id) || !teamsByParent[team.id].some(child => child.type === 'service');
+      }
+    }
+    return false;
+  }
+
+  // Check if we should show this team in the current context
+  function shouldShowTeam(team, parentId) {
+    if (currentTeamType === 'service') {
+      // For service: show divisions (navigate) and sections (select)
+      if (parentId === 'root') return team.type === 'division';
+      return team.type === 'section';
+    } else if (currentTeamType === 'unit') {
+      // For unit: show divisions, sections, and services
+      if (parentId === 'root') return team.type === 'division';
+      const parentTeam = teamsById[parentId];
+      if (parentTeam && parentTeam.type === 'division') return team.type === 'section';
+      if (parentTeam && parentTeam.type === 'section') return team.type === 'service' || team.type === 'section';
+      return true;
+    }
+    return false;
+  }
+
+  // Determine if team is navigable (has relevant children)
+  function isNavigable(team) {
+    if (currentTeamType === 'service') {
+      return team.type === 'division' && hasChildren(team.id);
+    } else if (currentTeamType === 'unit') {
+      if (team.type === 'division') return hasChildren(team.id);
+      if (team.type === 'section') return hasChildren(team.id);
+      return false; // Services are leaf nodes for units
+    }
+    return false;
+  }
+
+  // Render hierarchical selector
+  function renderHierarchy(parentId = 'root') {
+    const teams = teamsByParent[parentId] || [];
+    hierarchicalSelector.innerHTML = '';
+
+    // Filter teams to show
+    const teamsToShow = teams.filter(team => shouldShowTeam(team, parentId));
+
+    if (teamsToShow.length === 0) {
+      hierarchicalSelector.innerHTML = '<p class="text-muted text-center py-3">No items available at this level</p>';
       return;
     }
 
-    wrapper.classList.remove("d-none");
+    teamsToShow.forEach(team => {
+      const navigable = isNavigable(team);
+      const selectable = isValidParent(team);
+      
+      const card = document.createElement('div');
+      card.className = `hierarchy-card ${navigable ? 'navigable' : ''} ${selectable ? 'selectable' : ''} ${selectedTeamId === team.id ? 'selected' : ''}`;
+      
+      const badgeClass = selectable ? 'selectable' : '';
+      const instruction = selectable ? ' <small class="text-success">(Click to select)</small>' : '';
+      
+      card.innerHTML = `
+        <div class="card-body py-2 px-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>${team.name}</strong>
+              <span class="card-badge ${badgeClass} ms-2">${getTeamTypeLabel(team.type)}</span>
+              ${instruction}
+            </div>
+          </div>
+        </div>
+      `;
 
-    cards.forEach(card => {
-      const parentType = card.dataset.type;
-      if (!rules[type].includes(parentType)) {
-        card.classList.add("disabled");
-      }
+      card.addEventListener('click', () => {
+        if (selectable) {
+          // This is a valid parent - select it
+          selectParent(team);
+        } else if (navigable) {
+          // Navigate deeper
+          navigateToTeam(team);
+        }
+      });
+
+      hierarchicalSelector.appendChild(card);
     });
+  }
+
+  // Navigate to a team's children
+  function navigateToTeam(team) {
+    currentPath.push(team);
+    updateBreadcrumb();
+    renderHierarchy(team.id);
+  }
+
+  // Select a team as parent
+  function selectParent(team) {
+    selectedTeamId = team.id;
+    parentInput.value = team.id;
+    selectedParentName.textContent = `${team.name} (${getTeamTypeLabel(team.type)})`;
+    selectedParentInfo.classList.remove('d-none');
+    
+    // Re-render to show selection
+    const currentParentId = currentPath.length > 0 ? currentPath[currentPath.length - 1].id : 'root';
+    renderHierarchy(currentParentId);
+  }
+
+  // Update breadcrumb navigation
+  function updateBreadcrumb() {
+    breadcrumbNav.innerHTML = '<li class="breadcrumb-item"><a href="#" data-level="root">Start</a></li>';
+    
+    currentPath.forEach((team, index) => {
+      const li = document.createElement('li');
+      li.className = 'breadcrumb-item';
+      li.innerHTML = `<a href="#" data-level="${index}">${team.name}</a>`;
+      breadcrumbNav.appendChild(li);
+    });
+
+    // Add click handlers to breadcrumb
+    breadcrumbNav.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const level = e.target.dataset.level;
+        
+        if (level === 'root') {
+          currentPath = [];
+          renderHierarchy('root');
+        } else {
+          const index = parseInt(level);
+          currentPath = currentPath.slice(0, index + 1);
+          renderHierarchy(currentPath[index].id);
+        }
+        updateBreadcrumb();
+      });
+    });
+  }
+
+  // Render simple parent selector (for sections)
+  function renderSimpleParentSelector() {
+    const divisions = allTeams.filter(t => t.type === 'division');
+    simpleParentCards.innerHTML = '';
+
+    divisions.forEach(div => {
+      const col = document.createElement('div');
+      col.className = 'col-md-6 simple-parent-card';
+      col.dataset.id = div.id;
+      col.innerHTML = `
+        <div class="card">
+          <div class="card-body py-2">
+            <strong>${div.name}</strong>
+            <div class="text-muted small">Division</div>
+          </div>
+        </div>
+      `;
+
+      col.addEventListener('click', () => {
+        document.querySelectorAll('.simple-parent-card').forEach(c => c.classList.remove('selected'));
+        col.classList.add('selected');
+        parentInput.value = div.id;
+      });
+
+      simpleParentCards.appendChild(col);
+    });
+  }
+
+  // Get team type label
+  function getTeamTypeLabel(type) {
+    const labels = {
+      'division': 'Division',
+      'section': 'Section',
+      'service': 'Service',
+      'unit': 'Unit'
+    };
+    return labels[type] || type;
+  }
+
+  // Handle team type change
+  teamType.addEventListener("change", () => {
+    const type = teamType.value;
+    resetState();
+    currentTeamType = type;
+
+    if (type === 'division') {
+      // Division has no parent
+      return;
+    }
+
+    if (type === 'section') {
+      // Section: simple selector showing divisions
+      simpleParentWrapper.classList.remove('d-none');
+      renderSimpleParentSelector();
+    } else if (type === 'service') {
+      // Service: hierarchical selector (Division → Section)
+      parentLabel.textContent = 'Navigate to Select Parent Section';
+      breadcrumbWrapper.classList.remove('d-none');
+      parentSelectorWrapper.classList.remove('d-none');
+      renderHierarchy('root');
+      updateBreadcrumb();
+    } else if (type === 'unit') {
+      // Unit: hierarchical selector (Division → Section or Section → Service)
+      parentLabel.textContent = 'Navigate to Select Parent Section or Service (Lowest Level)';
+      breadcrumbWrapper.classList.remove('d-none');
+      parentSelectorWrapper.classList.remove('d-none');
+      renderHierarchy('root');
+      updateBreadcrumb();
+    }
   });
 
-  cards.forEach(card => {
-    card.addEventListener("click", () => {
-      if (card.classList.contains("disabled")) return;
+  // Handle form submission
+  const form = document.getElementById("createTeamForm");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      cards.forEach(c => c.classList.remove("selected"));
-      card.classList.add("selected");
-      parentInput.value = card.dataset.id;
-    });
+    // Validate parent selection
+    const type = teamType.value;
+    if ((type === 'section' || type === 'service' || type === 'unit') && !parentInput.value) {
+      const errorDiv = document.getElementById("teamError");
+      errorDiv.textContent = "Please select a parent unit";
+      errorDiv.classList.remove("d-none");
+      return;
+    }
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch(form.action, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const modal = bootstrap.Modal.getInstance(document.getElementById("createTeamModal"));
+        modal.hide();
+        window.location.reload();
+      } else {
+        const errorDiv = document.getElementById("teamError");
+        errorDiv.textContent = data.error || "An error occurred";
+        errorDiv.classList.remove("d-none");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      const errorDiv = document.getElementById("teamError");
+      errorDiv.textContent = "An unexpected error occurred";
+      errorDiv.classList.remove("d-none");
+    }
   });
 });
 </script>

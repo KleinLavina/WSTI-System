@@ -16,20 +16,6 @@
             {{ team.get_team_type_display }}
           </span>
         </div>
-
-        <div class="division-actions">
-          <button class="btn-icon-action"
-                  onclick="editTeam({{ team.id }}, '{{ team.name|escapejs }}', '{{ team.team_type }}')"
-                  title="Edit">
-            <i class="fas fa-edit"></i>
-          </button>
-
-          <button class="btn-icon-action btn-danger"
-                  onclick="deleteTeam({{ team.id }}, '{{ team.name|escapejs }}')"
-                  title="Delete">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
       </div>
 
 <div class="division-stats">

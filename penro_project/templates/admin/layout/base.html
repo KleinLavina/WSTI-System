@@ -166,8 +166,13 @@
   <div class="notifications" id="notifications">
     {% if messages %}
       {% for message in messages %}
-        <div class="notification notification-{{ message.tags|default:'info' }}"
-             data-timeout="5000">
+          <div class="notification
+            {% if 'error' in message.tags %}notification-error
+            {% elif 'success' in message.tags %}notification-success
+            {% elif 'warning' in message.tags %}notification-warning
+            {% else %}notification-info{% endif %}"
+            data-timeout="5000">
+
           <div class="d-flex align-items-center gap-2">
             <i class="fas
               {% if 'error' in message.tags %}fa-exclamation-circle

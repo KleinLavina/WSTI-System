@@ -5,6 +5,7 @@ from django.views.decorators.http import require_http_methods
 from django.core.exceptions import ValidationError
 from django.shortcuts import render, get_object_or_404
 from accounts.models import Team, User
+from django.contrib import messages
 
 import json
 
@@ -40,6 +41,60 @@ def compute_subunit_counts(team):
 
 
 # ============================================================
+# SORTING HELPERS
+# ============================================================
+
+def sort_teams_recursively(teams, sort_by):
+    """
+    Sort a list of teams based on the sort criteria.
+    Also recursively sorts children.
+    """
+    if not teams:
+        return teams
+    
+    # Define sort key functions
+    def get_sort_key(team):
+        if sort_by == "name_asc":
+            return (team.name.lower(),)
+        elif sort_by == "name_desc":
+            return (team.name.lower(),)
+        elif sort_by == "size_desc":
+            return (team.total_user_count,)
+        elif sort_by == "size_asc":
+            return (team.total_user_count,)
+        elif sort_by == "date_desc":
+            return (team.created_at,)
+        elif sort_by == "date_asc":
+            return (team.created_at,)
+        else:  # type_name (default)
+            # Sort by team type order, then name
+            type_order = {
+                'division': 1,
+                'section': 2,
+                'service': 3,
+                'unit': 4
+            }
+            return (type_order.get(team.team_type, 5), team.name.lower())
+    
+    # Sort the current level
+    if sort_by == "name_desc":
+        sorted_teams = sorted(teams, key=get_sort_key, reverse=True)
+    elif sort_by == "size_desc":
+        sorted_teams = sorted(teams, key=get_sort_key, reverse=True)
+    elif sort_by == "date_desc":
+        sorted_teams = sorted(teams, key=get_sort_key, reverse=True)
+    else:
+        sorted_teams = sorted(teams, key=get_sort_key)
+    
+    # Recursively sort children
+    for team in sorted_teams:
+        if team.children_list:
+            team.children_list = sort_teams_recursively(team.children_list, sort_by)
+    
+    return sorted_teams
+
+
+# ============================================================
 # MANAGE ORGANIZATION (DIVISION CARDS)
 # ============================================================
 
@@ -47,11 +102,20 @@ def compute_subunit_counts(team):
 def manage_organization(request):
 
     # --------------------------------------------
-    # 1. Load ALL teams
+    # 1. Get sort parameter
+    # --------------------------------------------
+    sort_by = request.GET.get("sort", "type_name")
+    
+    # Validate sort parameter
+    valid_sorts = ["type_name", "name_asc", "name_desc", "size_desc", "size_asc", "date_desc", "date_asc"]
+    if sort_by not in valid_sorts:
+        sort_by = "type_name"
+
+    # --------------------------------------------
+    # 2. Load ALL teams
     # --------------------------------------------
     teams = Team.objects.select_related("parent").order_by("team_type", "name")
     team_by_id = {t.id: t for t in teams}
-    sort_by = request.GET.get("sort", "type_name")
 
     # Initialize containers
     for t in teams:
@@ -61,7 +125,7 @@ def manage_organization(request):
         t.total_subunit_count = 0
 
     # --------------------------------------------
-    # 2. Build tree (manual, fast)
+    # 3. Build tree (manual, fast)
     # --------------------------------------------
     root_teams = []
     for t in teams:
@@ -71,7 +135,7 @@ def manage_organization(request):
             root_teams.append(t)
 
     # --------------------------------------------
-    # 3. Load users + org assignments
+    # 4. Load users + org assignments
     # --------------------------------------------
     users = (
         User.objects
@@ -85,7 +149,7 @@ def manage_organization(request):
     )
 
     # --------------------------------------------
-    # 4. Attach users to LOWEST team only (SAFE)
+    # 5. Attach users to LOWEST team only (SAFE)
     # --------------------------------------------
     for user in users:
         org = user.primary_org
@@ -102,14 +166,19 @@ def manage_organization(request):
             team_by_id[org.division_id].users.append(user)
 
     # --------------------------------------------
-    # 5. Compute accurate counts (THIS WAS MISSING)
+    # 6. Compute accurate counts (MUST happen before sorting)
     # --------------------------------------------
     for division in root_teams:
         compute_user_counts(division)
         compute_subunit_counts(division)
 
     # --------------------------------------------
-    # 6. Render
+    # 7. Apply sorting recursively
+    # --------------------------------------------
+    root_teams = sort_teams_recursively(root_teams, sort_by)
+
+    # --------------------------------------------
+    # 8. Render (pass ALL teams for modal)
     # --------------------------------------------
     return render(
         request,
@@ -117,13 +186,14 @@ def manage_organization(request):
         {
             "teams": root_teams,
             "current_sort": sort_by,
+            "all_teams": teams,  # ← Pass all teams for the create modal
         },
     )
+
 
 # ============================================================
 # CREATE TEAM
 # ============================================================
-
 @login_required
 def create_team(request):
     if request.method == "POST":
@@ -142,26 +212,37 @@ def create_team(request):
             team.full_clean()
             team.save()
 
-            return JsonResponse({"success": True})
+            # ✅ MESSAGE
+            messages.success(
+                request,
+                f"{team.get_team_type_display()} '{team.name}' created successfully.",
+                extra_tags="create"
+            )
 
-        except (Team.DoesNotExist, ValidationError) as e:
+            return JsonResponse({
+                "success": True,
+                "message": f"{team.get_team_type_display()} '{team.name}' created."
+            })
+
+        except Team.DoesNotExist:
+            messages.error(request, "Selected parent does not exist.", extra_tags="create")
+            return JsonResponse(
+                {"success": False, "error": "Parent not found"},
+                status=400
+            )
+
+        except ValidationError as e:
+            messages.error(request, str(e), extra_tags="create")
             return JsonResponse(
                 {"success": False, "error": str(e)},
                 status=400
             )
 
-    teams = Team.objects.order_by("team_type", "name")
-    return render(
-        request,
-        "admin/page/modals/create_team_modal.html",
-        {"teams": teams},
-    )
-
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=405)
 
 # ============================================================
 # EDIT TEAM
 # ============================================================
-
 @login_required
 @require_http_methods(["POST"])
 def edit_team(request):
@@ -169,6 +250,7 @@ def edit_team(request):
     name = request.POST.get("name", "").strip()
 
     if not team_id or not name:
+        messages.error(request, "Team ID and name are required.", extra_tags="update")
         return JsonResponse(
             {"success": False, "error": "Team ID and name are required"},
             status=400
@@ -176,28 +258,40 @@ def edit_team(request):
 
     try:
         team = Team.objects.get(id=team_id)
+        old_name = team.name
+
         team.name = name
         team.full_clean()
         team.save()
 
-        return JsonResponse({"success": True})
+        messages.success(
+            request,
+            f"'{old_name}' renamed to '{team.name}'.",
+            extra_tags="update"
+        )
+
+        return JsonResponse({
+            "success": True,
+            "message": "Team updated successfully."
+        })
 
     except Team.DoesNotExist:
+        messages.error(request, "Team not found.", extra_tags="update")
         return JsonResponse(
             {"success": False, "error": "Team not found"},
             status=404
         )
+
     except ValidationError as e:
+        messages.error(request, str(e), extra_tags="update")
         return JsonResponse(
             {"success": False, "error": str(e)},
             status=400
         )
 
-
 # ============================================================
 # DELETE TEAM
 # ============================================================
-
 @login_required
 @require_http_methods(["POST"])
 def delete_team(request):
@@ -206,6 +300,7 @@ def delete_team(request):
         team_id = data.get("team_id")
 
         if not team_id:
+            messages.error(request, "Team ID is required.", extra_tags="delete")
             return JsonResponse(
                 {"success": False, "error": "Team ID is required"},
                 status=400
@@ -221,19 +316,30 @@ def delete_team(request):
         if children_count:
             message += f" {children_count} sub-unit(s) were also removed."
 
-        return JsonResponse({"success": True, "message": message})
+        messages.warning(
+            request,
+            message,
+            extra_tags="delete"
+        )
+
+        return JsonResponse({
+            "success": True,
+            "message": message
+        })
 
     except Team.DoesNotExist:
+        messages.error(request, "Team not found.", extra_tags="delete")
         return JsonResponse(
             {"success": False, "error": "Team not found"},
             status=404
         )
+
     except Exception as e:
+        messages.error(request, str(e), extra_tags="delete")
         return JsonResponse(
             {"success": False, "error": str(e)},
             status=500
         )
-
 
 # ============================================================
 # VIEW HIERARCHY (SINGLE DIVISION TREE)

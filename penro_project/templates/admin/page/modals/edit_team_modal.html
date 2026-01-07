@@ -1,57 +1,122 @@
-<!-- Edit Team Modal -->
-<div class="modal fade" id="editTeamModal" tabindex="-1">
+<!-- =========================
+     EDIT TEAM MODAL
+========================= -->
+<div class="modal fade" id="editTeamModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
+
       <div class="modal-header">
         <h5 class="modal-title">Edit Organizational Unit</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form id="editTeamForm">
+
+      <form id="editTeamForm" method="post">
         {% csrf_token %}
+
         <input type="hidden" id="editTeamId" name="team_id">
+
         <div class="modal-body">
+
           <div class="mb-3">
             <label class="form-label">Unit Name</label>
-            <input type="text" class="form-control" id="editTeamName" name="name" required>
+            <input
+              type="text"
+              class="form-control"
+              id="editTeamName"
+              name="name"
+              required
+            >
           </div>
+
           <div class="mb-3">
             <label class="form-label">Unit Type</label>
-            <input type="text" class="form-control" id="editTeamType" readonly>
+            <input
+              type="text"
+              class="form-control"
+              id="editTeamType"
+              readonly
+            >
           </div>
+
         </div>
+
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <button type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Save Changes
+          </button>
         </div>
+
       </form>
+
     </div>
   </div>
 </div>
 
+<!-- =========================
+     EDIT TEAM LOGIC
+========================= -->
 <script>
-document.getElementById('editTeamForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const formData = new FormData(e.target);
-  
-  try {
-    const response = await fetch("{% url 'admin_app:edit-team' %}", {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    });
-    
-    if (response.ok) {
-      bootstrap.Modal.getInstance(document.getElementById('editTeamModal')).hide();
-      window.location.reload();
-    } else {
-      const data = await response.json();
-      alert('Error: ' + (data.error || 'Failed to update team'));
-    }
-  } catch (error) {
-    alert('Error: ' + error.message);
+/* ======================================================
+   REQUIRED: OPEN EDIT MODAL (FIXES UNIT ISSUE)
+====================================================== */
+function editTeam(teamId, teamName, teamType) {
+  // Defensive guard
+  if (!teamId) {
+    console.error("editTeam called without teamId");
+    return;
   }
+
+  // Populate fields
+  document.getElementById("editTeamId").value = teamId;
+  document.getElementById("editTeamName").value = teamName || "";
+  document.getElementById("editTeamType").value =
+    (teamType || "unit").toUpperCase();
+
+  // ALWAYS create or reuse modal instance
+  const modalEl = document.getElementById("editTeamModal");
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  modal.show();
+}
+
+
+/* ======================================================
+   SUBMIT FORM (AJAX)
+====================================================== */
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("editTeamForm");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch("{% url 'admin_app:edit-team' %}", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "X-Requested-With": "XMLHttpRequest"
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        const modalEl = document.getElementById("editTeamModal");
+        bootstrap.Modal.getInstance(modalEl).hide();
+        window.location.reload();
+      } else {
+        alert(data.error || "Failed to update team");
+      }
+
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  });
 });
 </script>
